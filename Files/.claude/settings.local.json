@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(RGL_USE_NULL=TRUE Rscript eda_philadelphia.R)"
+    ]
+  }
+}
