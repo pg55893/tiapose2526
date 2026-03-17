@@ -1,12 +1,12 @@
 ============================================================
-EDA - BALTIMORE | Executado em: 2026-03-16 23:10:52 
-Fj: 1 | Fx: 1.15 | Ws: 700 
+EDA - PHILADELPHIA | Executado em: 2026-03-16 23:21:03 
+Fj: 1.1 | Fx: 1.15 | Ws: 760 
 ============================================================
 
 ========================================
 1. CARREGAR E PREPARAR DADOS
 ========================================
-Ficheiro lido: baltimore.csv 
+Ficheiro lido: philadelphia.csv 
 Dimensao: 714 linhas x 8 colunas
 Periodo: 2012-07-01 a 2014-06-14 
 Duracao (dias): 713 
@@ -16,22 +16,22 @@ Duracao (dias): 713
 ========================================
 'data.frame':	714 obs. of  8 variables:
  $ Date         : Date, format: "2012-07-01" "2012-07-02" "2012-07-03" ...
- $ Num_Employees: int  20 12 10 16 19 25 24 19 11 13 ...
- $ Num_Customers: int  170 152 185 182 155 175 261 172 125 125 ...
- $ Pct_On_Sale  : num  10.11 8.78 9.09 10.23 9.95 ...
+ $ Num_Employees: int  25 17 15 24 22 33 24 24 18 17 ...
+ $ Num_Customers: int  238 213 258 255 216 246 367 242 175 175 ...
+ $ Pct_On_Sale  : num  10.37 9 9.32 10.5 10.2 ...
  $ TouristEvent : Factor w/ 2 levels "No","Yes": 1 1 1 1 1 1 1 1 1 1 ...
- $ Sales        : int  40669 35360 40741 33871 36880 43441 47133 40165 37262 37718 ...
+ $ Sales        : int  53618 50357 39831 56826 55282 71907 50442 52975 58618 55134 ...
  $ DayOfWeek    : Factor w/ 7 levels "Monday","Tuesday",..: 7 1 2 3 4 5 6 7 1 2 ...
  $ Month        : Factor w/ 12 levels "January","February",..: 7 7 7 7 7 7 7 7 7 7 ...
 
-      Date            Num_Employees   Num_Customers     Pct_On_Sale    TouristEvent     Sales       
- Min.   :2012-07-01   Min.   : 0.00   Min.   :   0.0   Min.   : 0.00   No :678      Min.   :     0  
- 1st Qu.:2012-12-26   1st Qu.:12.00   1st Qu.:  76.0   1st Qu.: 8.62   Yes: 36      1st Qu.: 31203  
- Median :2013-06-22   Median :16.00   Median : 106.0   Median :10.55                Median : 36647  
- Mean   :2013-06-22   Mean   :17.99   Mean   : 138.0   Mean   :11.25                Mean   : 40267  
- 3rd Qu.:2013-12-17   3rd Qu.:21.00   3rd Qu.: 150.8   3rd Qu.:13.06                3rd Qu.: 44636  
- Max.   :2014-06-14   Max.   :83.00   Max.   :1088.0   Max.   :28.01                Max.   :171345  
-                                                       NA's   :1                                    
+      Date            Num_Employees    Num_Customers     Pct_On_Sale    TouristEvent     Sales       
+ Min.   :2012-07-01   Min.   :  0.00   Min.   :   0.0   Min.   : 0.00   No :678      Min.   :     0  
+ 1st Qu.:2012-12-26   1st Qu.: 22.00   1st Qu.: 147.0   1st Qu.: 8.84   Yes: 36      1st Qu.: 57552  
+ Median :2013-06-22   Median : 29.00   Median : 190.5   Median :10.82                Median : 65306  
+ Mean   :2013-06-22   Mean   : 32.38   Mean   : 249.3   Mean   :11.54                Mean   : 72770  
+ 3rd Qu.:2013-12-17   3rd Qu.: 37.00   3rd Qu.: 258.8   3rd Qu.:13.40                3rd Qu.: 79047  
+ Max.   :2014-06-14   Max.   :184.00   Max.   :1693.0   Max.   :28.73                Max.   :252073  
+                                                        NA's   :1                                    
      DayOfWeek       Month    
  Monday   :102   January: 62  
  Tuesday  :102   March  : 62  
@@ -63,14 +63,14 @@ Datas duplicadas: 0
 ========================================
 4. ESTATISTICAS DO TARGET (Num_Customers)
 ========================================
-Media:           137.99 
-Mediana:         106 
-Desvio Padrao:   115.37 
+Media:           249.33 
+Mediana:         190.5 
+Desvio Padrao:   206.99 
 Minimo:          0 
-Maximo:          1088 
-IQR:             74.75 
-Coef. Variacao:  83.61 %
-Outliers (IQR):  57 
+Maximo:          1693 
+IQR:             111.75 
+Coef. Variacao:  83.02 %
+Outliers (IQR):  62 
 
 ========================================
 5. HISTOGRAMAS
@@ -93,45 +93,45 @@ Proporcao Yes: 5 %
 ========================================
 Media de Num_Customers por dia da semana:
    Monday   Tuesday Wednesday  Thursday    Friday  Saturday    Sunday 
-    126.7      85.9      97.8     104.9     141.9     234.1     174.7 
+    229.7     154.3     174.5     189.7     256.0     424.9     316.2 
 
 Media de Sales por dia da semana:
    Monday   Tuesday Wednesday  Thursday    Friday  Saturday    Sunday 
-  39438.2   35595.0   36524.1   37629.8   41293.3   49019.3   42371.6 
+  71333.1   65289.2   65539.8   68208.3   75560.9   88121.0   75338.6 
 
 ========================================
 9. ANALISE POR MES
 ========================================
 Media de Num_Customers por mes:
   January  February     March     April       May      June      July    August September   October 
-    129.8     127.9      93.0      95.2     139.5     103.3     142.5     130.5     127.8     140.5 
+    240.4     240.4     180.0     189.4     282.8     201.5     229.6     214.1     214.9     242.2 
  November  December 
-    209.4     206.1 
+    370.1     372.5 
 
 Media de Sales por mes:
   January  February     March     April       May      June      July    August September   October 
-  41337.7   32641.3   32166.3   32407.7   35802.0   33099.5   37796.7   37312.7   38160.9   41199.9 
+  75307.8   60954.9   63977.7   65471.6   71772.9   64823.2   61979.4   61596.9   64132.5   69445.4 
  November  December 
-  57023.1   61660.1 
+  99126.7  111538.2 
 
 ========================================
 10. MATRIZ DE CORRELACAO (Pearson)
 ========================================
               Num_Customers Num_Employees Pct_On_Sale Sales
-Num_Customers         1.000         0.787       0.275 0.796
-Num_Employees         0.787         1.000       0.191 0.713
-Pct_On_Sale           0.275         0.191       1.000 0.426
-Sales                 0.796         0.713       0.426 1.000
+Num_Customers         1.000         0.796       0.314 0.788
+Num_Employees         0.796         1.000       0.247 0.662
+Pct_On_Sale           0.314         0.247       1.000 0.534
+Sales                 0.788         0.662       0.534 1.000
 
 ========================================
 11. INPUTS vs TARGET
 ========================================
-Correlacao Num_Customers ~ Sales:         0.796 
-Correlacao Num_Customers ~ Num_Employees: 0.787 
-Correlacao Num_Customers ~ Pct_On_Sale:   0.275 
+Correlacao Num_Customers ~ Sales:         0.788 
+Correlacao Num_Customers ~ Num_Employees: 0.796 
+Correlacao Num_Customers ~ Pct_On_Sale:   0.314 
 
-Media Num_Customers SEM evento: 119.18 
-Media Num_Customers COM evento: 492.31 
+Media Num_Customers SEM evento: 214.65 
+Media Num_Customers COM evento: 902.33 
 
 ========================================
 12. SERIE TEMPORAL - Num_Customers
@@ -148,30 +148,30 @@ Media Num_Customers COM evento: 492.31
 ========================================
 15. DECOMPOSICAO - Num_Customers
 ========================================
-Amplitude sazonal semanal: 149.88 
+Amplitude sazonal semanal: 272.68 
 
 ========================================
 16. ANALISE DETALHADA - Pct_On_Sale
 ========================================
 Estatisticas Pct_On_Sale:
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
-   0.00    8.62   10.55   11.25   13.06   28.01       1 
-Desvio Padrao: 3.666 
+   0.00    8.84   10.82   11.54   13.40   28.73       1 
+Desvio Padrao: 3.76 
 Zeros:         2 
 NAs:           1 
 
 ============================================================
-17. RESUMO FINAL - BALTIMORE 
+17. RESUMO FINAL - PHILADELPHIA 
 ============================================================
 Registos: 714 | Variaveis originais: 6 (+ DayOfWeek, Month)
 Periodo: 2012-07-01 a 2014-06-14 
-Target (Num_Customers) - Media: 138 | Sd: 115.4 
+Target (Num_Customers) - Media: 249.3 | Sd: 207 
 NAs totais: 1 
-Correlacao Num_Customers ~ Sales:         0.796 
-Correlacao Num_Customers ~ Num_Employees: 0.787 
-Correlacao Num_Customers ~ Pct_On_Sale:   0.275 
+Correlacao Num_Customers ~ Sales:         0.788 
+Correlacao Num_Customers ~ Num_Employees: 0.796 
+Correlacao Num_Customers ~ Pct_On_Sale:   0.314 
 Proporcao TouristEvent=Yes: 5 %
-Amplitude sazonal semanal: 149.88 
-Fj: 1 | Fx: 1.15 | Ws: 700 
+Amplitude sazonal semanal: 272.68 
+Fj: 1.1 | Fx: 1.15 | Ws: 760 
 ============================================================
 

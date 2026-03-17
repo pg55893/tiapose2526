@@ -1,0 +1,144 @@
+============================================================
+EDA COMPARATIVA - 4 Lojas | Executado em: 2026-03-16 23:26:37 
+============================================================
+
+========================================
+1. CARREGAR DADOS
+========================================
+baltimore | Periodo: 2012-07-01 a 2014-06-14 | Registos: 714 
+lancaster | Periodo: 2012-07-01 a 2014-06-14 | Registos: 714 
+philadelphia | Periodo: 2012-07-01 a 2014-06-14 | Registos: 714 
+richmond | Periodo: 2012-07-01 a 2014-06-14 | Registos: 714 
+
+Total combinado: 2856 registos
+
+========================================
+2. RESUMO ESTATISTICO - Num_Customers (TARGET)
+========================================
+BALTIMORE       | Media:  138.0 | Mediana:  106.0 | Sd:  115.4 | Min:    0 | Max:  1088 | CV:  83.6%
+LANCASTER       | Media:  211.7 | Mediana:  159.0 | Sd:  185.0 | Min:    0 | Max:  1862 | CV:  87.4%
+PHILADELPHIA    | Media:  249.3 | Mediana:  190.5 | Sd:  207.0 | Min:    0 | Max:  1693 | CV:  83.0%
+RICHMOND        | Media:   80.3 | Mediana:   63.0 | Sd:   66.5 | Min:    0 | Max:   596 | CV:  82.9%
+
+========================================
+RESUMO ESTATISTICO - Sales
+========================================
+BALTIMORE       | Media:   40267 | Mediana:   36647 | Sd:   15249 | Min:      0 | Max:  171345
+LANCASTER       | Media:   61816 | Mediana:   57330 | Sd:   26544 | Min:      0 | Max:  298630
+PHILADELPHIA    | Media:   72770 | Mediana:   65306 | Sd:   25220 | Min:      0 | Max:  252073
+RICHMOND        | Media:   23247 | Mediana:   21141 | Sd:    8074 | Min:      0 | Max:   83973
+
+========================================
+3. QUALIDADE DOS DADOS
+========================================
+BALTIMORE 
+  NAs:           1 
+  Zeros Cust:    4 
+  Zeros Sales:   2 
+  Dup. Datas:    0 
+LANCASTER 
+  NAs:           1 
+  Zeros Cust:    4 
+  Zeros Sales:   2 
+  Dup. Datas:    0 
+PHILADELPHIA 
+  NAs:           1 
+  Zeros Cust:    4 
+  Zeros Sales:   2 
+  Dup. Datas:    0 
+RICHMOND 
+  NAs:           1 
+  Zeros Cust:    4 
+  Zeros Sales:   2 
+  Dup. Datas:    0 
+
+========================================
+4. SERIE TEMPORAL - Num_Customers
+========================================
+
+========================================
+7. BOXPLOT COMPARATIVO
+========================================
+
+========================================
+8. DIA DA SEMANA - Num_Customers
+========================================
+          baltimore lancaster philadelphia richmond
+Monday        126.7     193.9        229.7     73.8
+Tuesday        85.9     132.6        154.3     49.9
+Wednesday      97.8     151.4        174.5     56.6
+Thursday      104.9     160.9        189.7     61.0
+Friday        141.9     218.0        256.0     82.5
+Saturday      234.1     357.6        424.9    136.5
+Sunday        174.7     267.7        316.2    101.7
+
+========================================
+9. MES - Num_Customers
+========================================
+          baltimore lancaster philadelphia richmond
+January       129.8     194.3        240.4     76.4
+February      127.9     188.9        240.4     75.7
+March          93.0     134.1        180.0     55.7
+April          95.2     133.7        189.4     57.6
+May           139.5     193.1        282.8     85.2
+June          103.3     147.0        201.5     62.0
+July          142.5     240.5        229.6     79.1
+August        130.5     216.6        214.1     72.9
+September     127.8     207.9        214.9     72.2
+October       140.5     223.5        242.2     80.2
+November      209.4     326.3        370.1    120.8
+December      206.1     315.1        372.5    120.0
+
+========================================
+11. CORRELACOES - Num_Customers vs outros
+========================================
+BALTIMORE 
+  ~ Sales:         0.796 
+  ~ Num_Employees: 0.787 
+  ~ Pct_On_Sale:   0.275 
+
+LANCASTER 
+  ~ Sales:         0.8 
+  ~ Num_Employees: 0.782 
+  ~ Pct_On_Sale:   0.229 
+
+PHILADELPHIA 
+  ~ Sales:         0.788 
+  ~ Num_Employees: 0.796 
+  ~ Pct_On_Sale:   0.314 
+
+RICHMOND 
+  ~ Sales:         0.787 
+  ~ Num_Employees: 0.781 
+  ~ Pct_On_Sale:   0.294 
+
+========================================
+12. TOURIST EVENT - Impacto em Num_Customers
+========================================
+BALTIMORE       | Yes:  36 dias (5.0%) | Media sem evento:  119.2 | Media com evento:  492.3
+LANCASTER       | Yes:  36 dias (5.0%) | Media sem evento:  183.4 | Media com evento:  745.7
+PHILADELPHIA    | Yes:  36 dias (5.0%) | Media sem evento:  214.7 | Media com evento:  902.3
+RICHMOND        | Yes:  36 dias (5.0%) | Media sem evento:   69.2 | Media com evento:  288.1
+
+========================================
+13. ACF - Num_Customers (4 lojas)
+========================================
+
+========================================
+14. Pct_On_Sale COMPARATIVO
+========================================
+BALTIMORE       | Media: 11.25 | Sd: 3.67 | Min: 0.00 | Max: 28.01 | NAs: 1
+LANCASTER       | Media: 10.86 | Sd: 3.54 | Min: 0.00 | Max: 27.04 | NAs: 1
+PHILADELPHIA    | Media: 11.54 | Sd: 3.76 | Min: 0.00 | Max: 28.73 | NAs: 1
+RICHMOND        | Media: 11.75 | Sd: 3.83 | Min: 0.00 | Max: 29.26 | NAs: 1
+
+============================================================
+15. RESUMO FINAL COMPARATIVO
+============================================================
+LOJA            | Med.Cust | Sd.Cust  | Med.Sales | Sd.Sales | NA.tot
+BALTIMORE       |    138.0 |    115.4 |    40267 |    15249 |      1
+LANCASTER       |    211.7 |    185.0 |    61816 |    26544 |      1
+PHILADELPHIA    |    249.3 |    207.0 |    72770 |    25220 |      1
+RICHMOND        |     80.3 |     66.5 |    23247 |     8074 |      1
+============================================================
+
