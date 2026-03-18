@@ -11,8 +11,20 @@
 # STORES DISPONIVEIS: "baltimore" | "lancaster" | "philadelphia" | "richmond"
 # ============================================================
 
+# ---- WORKING DIRECTORY (automatico) ----
+# Garante que o script corre na pasta onde esta guardado
+# O CSV deve estar na mesma pasta que este ficheiro .R
+if (requireNamespace("rstudioapi", quietly=TRUE) && rstudioapi::isAvailable()) {
+  setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+}
+cat("Working directory:", getwd(), "\n")
+
+# ---- PACKAGES ----
+if (!requireNamespace("corrplot", quietly=TRUE)) install.packages("corrplot")
+library(corrplot)
+
 # ---- PARAMETRO UNICO A ALTERAR ----
-STORE = "lancaster"   # <-- altera aqui para mudar de loja
+STORE = "baltimore"   # <-- altera aqui para mudar de loja
 # ------------------------------------
 
 # ---- CONFIGURACAO POR LOJA ----
@@ -237,7 +249,16 @@ tryCatch({
   cat("\n")
   
   par(mfrow=c(1,1))
-  plot(nums, main=paste(toupper(STORE), "- Scatterplot Matrix"))
+  corrplot(cor_matrix,
+           method      = "color",
+           type        = "upper",
+           tl.col      = "black",
+           tl.srt      = 45,
+           col         = colorRampPalette(c("#6D9EC1","white","#E46726"))(200),
+           addCoef.col = "black",
+           number.cex  = 0.8,
+           title       = paste(toupper(STORE), "- Correlacao entre atributos"),
+           mar         = c(0,0,2,0))
   
   # ============================================================
   # 11. INPUTS vs TARGET
@@ -310,18 +331,50 @@ tryCatch({
        xlab="Data", ylab="0=No | 1=Yes")
   
   # ============================================================
-  # 14. ACF e PACF
+  # 14. ACF e PACF - lag.max=28 (4 ciclos semanais)
+  # confirma sazonalidade K=7, alinhado com 3-passengers.R do professor
   # ============================================================
   
   cat("========================================\n")
   cat("14. ACF e PACF - Num_Customers\n")
   cat("========================================\n\n")
   
+  # ts necessario para decompose (bloco 15)
   ts_customers = ts(d$Num_Customers, frequency=7)
   
+  # ACF e PACF com vector directo para o eixo x ficar em dias (nao em semanas)
   par(mfrow=c(1,2))
-  acf(ts_customers,  lag.max=60, main="ACF - Num_Customers")
-  pacf(ts_customers, lag.max=60, main="PACF - Num_Customers")
+  
+  # --- ACF ---
+  acf_result = acf(d$Num_Customers, lag.max=28, plot=FALSE)
+  plot(acf_result,
+       main="ACF - Num_Customers",
+       xlab="Lag (dias)",
+       col="steelblue", lwd=2)
+  # linhas de referencia nas semanas (K=7)
+  abline(v=c(7,14,21,28), col="red", lty=2, lwd=1)
+  legend("topright",
+         legend=c("Autocorrelacao","Intervalo 95%","Ciclo semanal (7 dias)"),
+         col=c("steelblue","blue","red"),
+         lty=c(1,2,2), lwd=c(2,1,1),
+         cex=0.7, bg="white")
+  mtext("Picos em lag=7,14,21,28 confirmam sazonalidade semanal (K=7)",
+        side=3, line=0.3, cex=0.7, col="darkred")
+  
+  # --- PACF ---
+  pacf_result = pacf(d$Num_Customers, lag.max=28, plot=FALSE)
+  plot(pacf_result,
+       main="PACF - Num_Customers",
+       xlab="Lag (dias)",
+       col="steelblue", lwd=2)
+  abline(v=c(7,14,21,28), col="red", lty=2, lwd=1)
+  legend("topright",
+         legend=c("Autocorr. Parcial","Intervalo 95%","Ciclo semanal (7 dias)"),
+         col=c("steelblue","blue","red"),
+         lty=c(1,2,2), lwd=c(2,1,1),
+         cex=0.7, bg="white")
+  mtext("Lag 1 domina; lag 7 confirma dependencia no mesmo dia da semana anterior",
+        side=3, line=0.3, cex=0.7, col="darkred")
   
   # ============================================================
   # 15. DECOMPOSICAO DA SERIE TEMPORAL
@@ -333,7 +386,7 @@ tryCatch({
   
   par(mfrow=c(1,1))
   dec = decompose(ts_customers)
-  plot(dec)    # decompose nao aceita argumento main
+  plot(dec)
   
   cat("Amplitude sazonal semanal:",
       round(max(dec$seasonal, na.rm=TRUE) - min(dec$seasonal, na.rm=TRUE), 2), "\n\n")
@@ -358,11 +411,38 @@ tryCatch({
   boxplot(d$Pct_On_Sale, main="Boxplot Pct_On_Sale", col="steelblue")
   
   # ============================================================
-  # 17. RESUMO FINAL
+  # 17. CORRPLOT - Correlacao entre atributos (Pearson)
+  # ============================================================
+  
+  cat("========================================\n")
+  cat("17. CORRPLOT - Correlacao entre atributos\n")
+  cat("========================================\n\n")
+  
+  nums_corrplot = d[, c("Num_Employees","Num_Customers","Pct_On_Sale","Sales")]
+  cor_full      = round(cor(nums_corrplot, use="complete.obs"), 3)
+  
+  cat("Matriz de correlacao:\n")
+  print(cor_full)
+  cat("\n")
+  
+  par(mfrow=c(1,1))
+  corrplot(cor_full,
+           method      = "color",
+           type        = "upper",
+           tl.col      = "black",
+           tl.srt      = 45,
+           col         = colorRampPalette(c("#6D9EC1","white","#E46726"))(200),
+           addCoef.col = "black",
+           number.cex  = 0.8,
+           title       = paste(toupper(STORE), "- Correlacao entre atributos"),
+           mar         = c(0,0,2,0))
+  
+  # ============================================================
+  # 18. RESUMO FINAL
   # ============================================================
   
   cat("============================================================\n")
-  cat("17. RESUMO FINAL -", toupper(STORE), "\n")
+  cat("18. RESUMO FINAL -", toupper(STORE), "\n")
   cat("============================================================\n")
   cat("Registos:", nrow(d), "| Variaveis originais:", ncol(d) - 2, "(+ DayOfWeek, Month)\n")
   cat("Periodo:", as.character(min(d$Date)), "a", as.character(max(d$Date)), "\n")

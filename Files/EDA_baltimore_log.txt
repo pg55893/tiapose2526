@@ -1,5 +1,5 @@
 ============================================================
-EDA - BALTIMORE | Executado em: 2026-03-16 23:10:52 
+EDA - BALTIMORE | Executado em: 2026-03-18 15:05:52 
 Fj: 1 | Fx: 1.15 | Ws: 700 
 ============================================================
 
@@ -160,8 +160,19 @@ Desvio Padrao: 3.666
 Zeros:         2 
 NAs:           1 
 
+========================================
+17. CORRPLOT - Correlacao entre atributos
+========================================
+
+Matriz de correlacao:
+              Num_Employees Num_Customers Pct_On_Sale Sales
+Num_Employees         1.000         0.787       0.191 0.713
+Num_Customers         0.787         1.000       0.275 0.796
+Pct_On_Sale           0.191         0.275       1.000 0.426
+Sales                 0.713         0.796       0.426 1.000
+
 ============================================================
-17. RESUMO FINAL - BALTIMORE 
+18. RESUMO FINAL - BALTIMORE 
 ============================================================
 Registos: 714 | Variaveis originais: 6 (+ DayOfWeek, Month)
 Periodo: 2012-07-01 a 2014-06-14 

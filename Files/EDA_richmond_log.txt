@@ -1,5 +1,5 @@
 ============================================================
-EDA - RICHMOND | Executado em: 2026-03-16 23:21:35 
+EDA - RICHMOND | Executado em: 2026-03-18 15:11:15 
 Fj: 1.15 | Fx: 1.25 | Ws: 800 
 ============================================================
 
@@ -160,8 +160,19 @@ Desvio Padrao: 3.829
 Zeros:         2 
 NAs:           1 
 
+========================================
+17. CORRPLOT - Correlacao entre atributos
+========================================
+
+Matriz de correlacao:
+              Num_Employees Num_Customers Pct_On_Sale Sales
+Num_Employees         1.000         0.781       0.200 0.676
+Num_Customers         0.781         1.000       0.294 0.787
+Pct_On_Sale           0.200         0.294       1.000 0.468
+Sales                 0.676         0.787       0.468 1.000
+
 ============================================================
-17. RESUMO FINAL - RICHMOND 
+18. RESUMO FINAL - RICHMOND 
 ============================================================
 Registos: 714 | Variaveis originais: 6 (+ DayOfWeek, Month)
 Periodo: 2012-07-01 a 2014-06-14 

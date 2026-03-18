@@ -1,5 +1,5 @@
 ============================================================
-EDA - PHILADELPHIA | Executado em: 2026-03-16 23:21:03 
+EDA - PHILADELPHIA | Executado em: 2026-03-18 15:11:03 
 Fj: 1.1 | Fx: 1.15 | Ws: 760 
 ============================================================
 
@@ -160,8 +160,19 @@ Desvio Padrao: 3.76
 Zeros:         2 
 NAs:           1 
 
+========================================
+17. CORRPLOT - Correlacao entre atributos
+========================================
+
+Matriz de correlacao:
+              Num_Employees Num_Customers Pct_On_Sale Sales
+Num_Employees         1.000         0.796       0.247 0.662
+Num_Customers         0.796         1.000       0.314 0.788
+Pct_On_Sale           0.247         0.314       1.000 0.534
+Sales                 0.662         0.788       0.534 1.000
+
 ============================================================
-17. RESUMO FINAL - PHILADELPHIA 
+18. RESUMO FINAL - PHILADELPHIA 
 ============================================================
 Registos: 714 | Variaveis originais: 6 (+ DayOfWeek, Month)
 Periodo: 2012-07-01 a 2014-06-14 

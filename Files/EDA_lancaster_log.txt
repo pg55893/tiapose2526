@@ -1,5 +1,5 @@
 ============================================================
-EDA - LANCASTER | Executado em: 2026-03-16 23:21:51 
+EDA - LANCASTER | Executado em: 2026-03-18 15:11:29 
 Fj: 1.05 | Fx: 1.2 | Ws: 730 
 ============================================================
 
@@ -160,8 +160,19 @@ Desvio Padrao: 3.539
 Zeros:         2 
 NAs:           1 
 
+========================================
+17. CORRPLOT - Correlacao entre atributos
+========================================
+
+Matriz de correlacao:
+              Num_Employees Num_Customers Pct_On_Sale Sales
+Num_Employees         1.000         0.782       0.131 0.738
+Num_Customers         0.782         1.000       0.229 0.800
+Pct_On_Sale           0.131         0.229       1.000 0.300
+Sales                 0.738         0.800       0.300 1.000
+
 ============================================================
-17. RESUMO FINAL - LANCASTER 
+18. RESUMO FINAL - LANCASTER 
 ============================================================
 Registos: 714 | Variaveis originais: 6 (+ DayOfWeek, Month)
 Periodo: 2012-07-01 a 2014-06-14 
