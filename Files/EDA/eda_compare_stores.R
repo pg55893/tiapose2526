@@ -18,7 +18,7 @@ tryCatch({
   
   # ---- CORES E CONFIGURACOES POR LOJA ----
   stores  = c("baltimore","lancaster","philadelphia","richmond")
-  cores   = c("steelblue","tomato","seagreen","hotpink")
+  cores   = c("steelblue","tomato","seagreen","darkorange")
   configs = list(
     baltimore    = list(Fj=1.00, Fx=1.15, Ws=700),
     lancaster    = list(Fj=1.05, Fx=1.20, Ws=730),
@@ -299,20 +299,27 @@ tryCatch({
   }
   
   # ============================================================
-  # 13. ACF COMPARATIVA
+  # 13. ACF COMPARATIVA - Num_Customers, Sales, Pct_On_Sale, Num_Employees
   # ============================================================
   
   cat("========================================\n")
-  cat("13. ACF - Num_Customers (4 lojas)\n")
+  cat("13. ACF - todas as variaveis numericas (4 lojas)\n")
   cat("========================================\n\n")
   
-  par(mfrow=c(2,2))
-  for (i in 1:4) {
-    s  = stores[i]
-    d  = data_list[[s]]
-    ts_c = ts(d$Num_Customers, frequency=7)
-    acf(ts_c, lag.max=30, main=paste(toupper(s), "- ACF Num_Customers"),
-        col=cores[i])
+  num_vars_acf = c("Num_Customers", "Sales", "Pct_On_Sale", "Num_Employees")
+  
+  for (vname in num_vars_acf) {
+    par(mfrow=c(2,2))
+    for (i in 1:4) {
+      s = stores[i]
+      d = data_list[[s]]
+      if (vname %in% colnames(d)) {
+        ts_v = ts(d[[vname]], frequency=7)
+        acf(ts_v, lag.max=30,
+            main=paste(toupper(s), "-", vname),
+            col=cores[i], na.action=na.pass)
+      }
+    }
   }
   
   # ============================================================
@@ -346,11 +353,159 @@ tryCatch({
   legend("topleft", legend=toupper(stores), col=cores, lty=1, lwd=2, cex=0.8)
   
   # ============================================================
-  # 15. RESUMO FINAL
+  # 15. HEATMAP DE CORRELACAO - por loja (todas as variaveis)
+  # ============================================================
+  
+  cat("========================================\n")
+  cat("15. HEATMAP DE CORRELACAO - por loja\n")
+  cat("========================================\n")
+  
+  num_vars = c("Num_Customers","Sales","Num_Employees","Pct_On_Sale")
+  cor_pal  = colorRampPalette(c("tomato","white","steelblue"))(50)
+  
+  par(mfrow=c(2,2))
+  for (i in 1:4) {
+    s     = stores[i]
+    d     = data_list[[s]]
+    cor_m = cor(d[, num_vars], use="complete.obs")
+    nv    = length(num_vars)
+    
+    cat(toupper(s), "\n")
+    print(round(cor_m, 3))
+    cat("\n")
+    
+    image(1:nv, 1:nv,
+          t(cor_m[nrow(cor_m):1, ]),
+          col=cor_pal, zlim=c(-1,1),
+          axes=FALSE,
+          main=paste(toupper(s), "- Correlacoes"),
+          xlab="", ylab="")
+    axis(1, at=1:nv, labels=num_vars, las=2, cex.axis=0.75)
+    axis(2, at=1:nv, labels=rev(num_vars), las=2, cex.axis=0.75)
+    for (r in 1:nv)
+      for (cc in 1:nv)
+        text(cc, nv+1-r, round(cor_m[r,cc],2),
+             cex=0.85, font=ifelse(abs(cor_m[r,cc])>0.5,2,1))
+  }
+  
+  # ============================================================
+  # 16. DISTANCIA COMPORTAMENTAL ENTRE LOJAS
+  #     Baseada em: medias mensais + dia-da-semana de Num_Customers
+  #     (perfil temporal normalizado -> distancia euclidiana)
+  # ============================================================
+  
+  cat("========================================\n")
+  cat("16. DISTANCIA COMPORTAMENTAL ENTRE LOJAS\n")
+  cat("========================================\n")
+  
+  # -- periodo comum para comparacao justa
+  dates_common = Reduce(intersect, lapply(data_list, function(d) as.character(d$Date)))
+  cat("Periodo comum:", length(dates_common), "dias\n\n")
+  
+  aligned = lapply(data_list, function(d) {
+    d[as.character(d$Date) %in% dates_common, ]
+  })
+  
+  # perfil = vetor com medias por dia-da-semana (7) + medias por mes (12)
+  # normalizado com scale() para remover diferenca de escala entre lojas
+  get_profile = function(d) {
+    dow = tapply(d$Num_Customers, d$DayOfWeek, mean, na.rm=TRUE)
+    mon = tapply(d$Num_Customers, d$Month,     mean, na.rm=TRUE)
+    v   = c(dow, mon)
+    as.numeric(scale(v))  # z-score para remover efeito de escala absoluta
+  }
+  
+  profiles = sapply(aligned, get_profile)   # matriz: (19 features) x (4 lojas)
+  
+  # --- matriz de distancia euclidiana (comportamento temporal)
+  dist_mat = as.matrix(dist(t(profiles), method="euclidean"))
+  rownames(dist_mat) = colnames(dist_mat) = toupper(stores)
+  
+  cat("Distancia euclidiana (perfil semanal + mensal normalizado):\n")
+  print(round(dist_mat, 3))
+  cat("\n")
+  
+  # --- matriz de correlacao entre series (periodo comum)
+  aligned_nc = sapply(aligned, function(d) d$Num_Customers)
+  cor_stores  = cor(aligned_nc, use="complete.obs")
+  colnames(cor_stores) = rownames(cor_stores) = toupper(stores)
+  
+  cat("Correlacao entre series Num_Customers (periodo comum):\n")
+  print(round(cor_stores, 3))
+  cat("\n")
+  
+  # --- heatmap: distancia comportamental
+  par(mfrow=c(1,2))
+  
+  dist_norm = dist_mat / max(dist_mat)  # normaliza 0-1 para visualizacao
+  image(1:4, 1:4,
+        t(dist_norm[4:1, ]),
+        col=colorRampPalette(c("steelblue","white","tomato"))(50),
+        zlim=c(0,1), axes=FALSE,
+        main="Distancia Comportamental\n(perfil dia+mes normalizado)",
+        xlab="", ylab="")
+  axis(1, at=1:4, labels=toupper(stores), las=2, cex.axis=0.8)
+  axis(2, at=1:4, labels=rev(toupper(stores)), las=2, cex.axis=0.8)
+  for (r in 1:4)
+    for (cc in 1:4)
+      text(cc, 5-r, round(dist_mat[r,cc],2), cex=0.85,
+           font=ifelse(dist_mat[r,cc] < quantile(dist_mat[dist_mat>0],0.33),2,1))
+  
+  # --- heatmap: correlacao entre series
+  image(1:4, 1:4,
+        t(cor_stores[4:1, ]),
+        col=colorRampPalette(c("tomato","white","steelblue"))(50),
+        zlim=c(-1,1), axes=FALSE,
+        main="Correlacao entre Series\nNum_Customers (periodo comum)",
+        xlab="", ylab="")
+  axis(1, at=1:4, labels=toupper(stores), las=2, cex.axis=0.8)
+  axis(2, at=1:4, labels=rev(toupper(stores)), las=2, cex.axis=0.8)
+  for (r in 1:4)
+    for (cc in 1:4)
+      text(cc, 5-r, round(cor_stores[r,cc],2), cex=0.85,
+           font=ifelse(abs(cor_stores[r,cc])>0.7,2,1))
+  
+  # ============================================================
+  # 17. CCF CRUZADA ENTRE LOJAS - Num_Customers
+  # ============================================================
+  
+  cat("========================================\n")
+  cat("17. CCF CRUZADA - Num_Customers entre lojas\n")
+  cat("========================================\n\n")
+  
+  pares = list(
+    c("baltimore",    "philadelphia"),
+    c("baltimore",    "lancaster"),
+    c("philadelphia", "lancaster"),
+    c("richmond",     "philadelphia")
+  )
+  
+  par(mfrow=c(2,2))
+  for (p in pares) {
+    s1 = p[1]; s2 = p[2]
+    x1 = aligned[[s1]]$Num_Customers
+    x2 = aligned[[s2]]$Num_Customers
+    ccf_res = ccf(x1, x2, lag.max=21, plot=FALSE)
+    
+    lag0_idx = which(ccf_res$lag == 0)
+    cor0     = round(ccf_res$acf[lag0_idx], 3)
+    cat(sprintf("%-13s vs %-13s | r(lag=0): %+.3f\n",
+                toupper(s1), toupper(s2), cor0))
+    
+    plot(ccf_res,
+         main=paste(toupper(s1), "vs", toupper(s2)),
+         col=ifelse(abs(cor0) > 0.5, "seagreen","tomato"),
+         ylim=c(-1,1))
+    abline(h=0, lty=2, col="gray50")
+  }
+  cat("\n")
+  
+  # ============================================================
+  # 18. RESUMO FINAL
   # ============================================================
   
   cat("============================================================\n")
-  cat("15. RESUMO FINAL COMPARATIVO\n")
+  cat("18. RESUMO FINAL COMPARATIVO\n")
   cat("============================================================\n")
   cat(sprintf("%-15s | %-8s | %-8s | %-8s | %-8s | %-6s\n",
               "LOJA", "Med.Cust", "Sd.Cust", "Med.Sales", "Sd.Sales", "NA.tot"))
