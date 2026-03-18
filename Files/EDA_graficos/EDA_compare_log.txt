@@ -1,5 +1,5 @@
 ============================================================
-EDA COMPARATIVA - 4 Lojas | Executado em: 2026-03-16 23:26:37 
+EDA COMPARATIVA - 4 Lojas | Executado em: 2026-03-18 15:25:37 
 ============================================================
 
 ========================================
@@ -121,7 +121,7 @@ PHILADELPHIA    | Yes:  36 dias (5.0%) | Media sem evento:  214.7 | Media com ev
 RICHMOND        | Yes:  36 dias (5.0%) | Media sem evento:   69.2 | Media com evento:  288.1
 
 ========================================
-13. ACF - Num_Customers (4 lojas)
+13. ACF - todas as variaveis numericas (4 lojas)
 ========================================
 
 ========================================
@@ -132,8 +132,67 @@ LANCASTER       | Media: 10.86 | Sd: 3.54 | Min: 0.00 | Max: 27.04 | NAs: 1
 PHILADELPHIA    | Media: 11.54 | Sd: 3.76 | Min: 0.00 | Max: 28.73 | NAs: 1
 RICHMOND        | Media: 11.75 | Sd: 3.83 | Min: 0.00 | Max: 29.26 | NAs: 1
 
+========================================
+15. HEATMAP DE CORRELACAO - por loja
+========================================
+BALTIMORE 
+              Num_Customers Sales Num_Employees Pct_On_Sale
+Num_Customers         1.000 0.796         0.787       0.275
+Sales                 0.796 1.000         0.713       0.426
+Num_Employees         0.787 0.713         1.000       0.191
+Pct_On_Sale           0.275 0.426         0.191       1.000
+
+LANCASTER 
+              Num_Customers Sales Num_Employees Pct_On_Sale
+Num_Customers         1.000 0.800         0.782       0.229
+Sales                 0.800 1.000         0.738       0.300
+Num_Employees         0.782 0.738         1.000       0.131
+Pct_On_Sale           0.229 0.300         0.131       1.000
+
+PHILADELPHIA 
+              Num_Customers Sales Num_Employees Pct_On_Sale
+Num_Customers         1.000 0.788         0.796       0.314
+Sales                 0.788 1.000         0.662       0.534
+Num_Employees         0.796 0.662         1.000       0.247
+Pct_On_Sale           0.314 0.534         0.247       1.000
+
+RICHMOND 
+              Num_Customers Sales Num_Employees Pct_On_Sale
+Num_Customers         1.000 0.787         0.781       0.294
+Sales                 0.787 1.000         0.676       0.468
+Num_Employees         0.781 0.676         1.000       0.200
+Pct_On_Sale           0.294 0.468         0.200       1.000
+
+========================================
+16. DISTANCIA COMPORTAMENTAL ENTRE LOJAS
+========================================
+Periodo comum: 714 dias
+
+Distancia euclidiana (perfil semanal + mensal normalizado):
+             BALTIMORE LANCASTER PHILADELPHIA RICHMOND
+BALTIMORE        0.000     0.639        0.784    0.325
+LANCASTER        0.639     0.000        1.417    0.962
+PHILADELPHIA     0.784     1.417        0.000    0.460
+RICHMOND         0.325     0.962        0.460    0.000
+
+Correlacao entre series Num_Customers (periodo comum):
+             BALTIMORE LANCASTER PHILADELPHIA RICHMOND
+BALTIMORE        1.000     0.983        0.973    0.995
+LANCASTER        0.983     1.000        0.913    0.960
+PHILADELPHIA     0.973     0.913        1.000    0.991
+RICHMOND         0.995     0.960        0.991    1.000
+
+========================================
+17. CCF CRUZADA - Num_Customers entre lojas
+========================================
+
+BALTIMORE     vs PHILADELPHIA  | r(lag=0): +0.973
+BALTIMORE     vs LANCASTER     | r(lag=0): +0.983
+PHILADELPHIA  vs LANCASTER     | r(lag=0): +0.913
+RICHMOND      vs PHILADELPHIA  | r(lag=0): +0.991
+
 ============================================================
-15. RESUMO FINAL COMPARATIVO
+18. RESUMO FINAL COMPARATIVO
 ============================================================
 LOJA            | Med.Cust | Sd.Cust  | Med.Sales | Sd.Sales | NA.tot
 BALTIMORE       |    138.0 |    115.4 |    40267 |    15249 |      1
