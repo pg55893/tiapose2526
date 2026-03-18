@@ -24,7 +24,7 @@ if (!requireNamespace("corrplot", quietly=TRUE)) install.packages("corrplot")
 library(corrplot)
 
 # ---- PARAMETRO UNICO A ALTERAR ----
-STORE = "baltimore"   # <-- altera aqui para mudar de loja
+STORE = "lancaster"   # <-- altera aqui para mudar de loja
 # ------------------------------------
 
 # ---- CONFIGURACAO POR LOJA ----
