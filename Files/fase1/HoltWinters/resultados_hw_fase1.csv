@@ -1,0 +1,5 @@
+"Loja","NMAE","RMSE","R2","Alpha","Beta","Gamma","Variante"
+"baltimore",4.64,58.19,0.8768,0.663,0.0017,0.0489,"Aditiva"
+"lancaster",3.88,84.48,0.8216,0.6333,0.0022,0.0544,"Aditiva"
+"philadelphia",6.03,113.33,0.8742,0.6934,7e-04,0.0685,"Aditiva"
+"richmond",5.06,34.07,0.8883,0.6761,0.0013,0.0546,"Aditiva"
