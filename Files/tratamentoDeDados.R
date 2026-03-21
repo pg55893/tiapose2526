@@ -1,3 +1,5 @@
+setwd("~/TIAPOSE_projeto/tiapose2526/Files")
+
 preparar_dados <- function(df) {
   df$Date <- as.Date(df$Date)
   
@@ -33,8 +35,7 @@ preparar_dados <- function(df) {
   return(df)
 }
 
-# --- Aplicar a cada loja ---
-baltimore    <- preparar_dados(read.csv("baltimore.csv"))
-lancaster    <- preparar_dados(read.csv("lancaster.csv"))
-richmond     <- preparar_dados(read.csv("richmond.csv"))
-philadelphia <- preparar_dados(read.csv("philadelphia.csv"))
+baltimore    <- preparar_dados(read.csv("CSV/baltimore.csv"))
+lancaster    <- preparar_dados(read.csv("CSV/lancaster.csv"))
+richmond     <- preparar_dados(read.csv("CSV/richmond.csv"))
+philadelphia <- preparar_dados(read.csv("CSV/philadelphia.csv"))

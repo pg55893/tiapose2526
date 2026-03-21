@@ -1,0 +1,5 @@
+"Loja","Target","Metodo","Iteracoes","Horizonte","Incremento","Mediana_MAE","Mediana_NMAE","Mediana_RMSE","Mediana_RRSE"
+"Baltimore","Num_Customers","Growing Window",12,7,7,29.7166,2.7313,33.1668,103.2575
+"Lancaster","Num_Customers","Growing Window",12,7,7,48.0465,2.5804,51.8762,133.9721
+"Philadelphia","Num_Customers","Growing Window",12,7,7,74.7043,4.4125,84.2375,115.0476
+"Richmond","Num_Customers","Growing Window",12,7,7,27.2207,4.5672,29.2954,144.474
