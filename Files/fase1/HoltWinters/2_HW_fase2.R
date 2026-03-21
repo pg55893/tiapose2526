@@ -3,12 +3,48 @@
 # Objetivo: Avaliação robusta com múltiplas iterações
 # Método: Holt-Winters (pacote forecast)
 # Lojas: Baltimore, Lancaster, Philadelphia, Richmond
+# Nota: Dados pré-tratados (Natal, Black Friday, NA em 2014-04-20)
 # ============================================================
 
 # --- Carregar bibliotecas ---
 library(forecast)
 options(rgl.useNULL = TRUE)
 library(rminer)
+
+# ============================================================
+# Função de tratamento dos dados (do script do grupo)
+# ============================================================
+preparar_dados <- function(df) {
+  df$Date <- as.Date(df$Date)
+  
+  # --- Natal: substituir valores pela mediana do mesmo dia da semana ---
+  natais <- as.Date(c("2012-12-25", "2013-12-25"))
+  for (data_natal in natais) {
+    data_natal <- as.Date(data_natal, origin = "1970-01-01")
+    idx   <- which(df$Date == data_natal)
+    wday  <- weekdays(data_natal)
+    antes <- df[df$Date < data_natal, ]
+    mesmo <- antes[weekdays(antes$Date) == wday, ]
+    df$Sales[idx]         <- median(mesmo$Sales)
+    df$Num_Customers[idx] <- median(mesmo$Num_Customers)
+    df$Num_Employees[idx] <- median(mesmo$Num_Employees)
+    df$Pct_On_Sale[idx]   <- median(mesmo$Pct_On_Sale)
+  }
+  
+  # --- 2014-04-20: corrigir NA em Pct_On_Sale e 0 suspeito em Num_Customers ---
+  idx_na  <- which(df$Date == as.Date("2014-04-20"))
+  wday_na <- weekdays(as.Date("2014-04-20"))
+  antes_na <- df[df$Date < as.Date("2014-04-20"), ]
+  mesmo_na <- antes_na[weekdays(antes_na$Date) == wday_na, ]
+  df$Pct_On_Sale[idx_na]   <- median(antes_na$Pct_On_Sale, na.rm = TRUE)
+  df$Num_Customers[idx_na] <- median(mesmo_na$Num_Customers)
+  
+  # --- Black Friday: marcar como TouristEvent ---
+  black_fridays <- as.Date(c("2012-11-23", "2013-11-29"))
+  df$TouristEvent[df$Date %in% black_fridays] <- "Yes"
+  
+  return(df)
+}
 
 # --- Configuração geral ---
 K <- 7                          # período sazonal (semanal)
@@ -19,7 +55,7 @@ Runs <- 10                      # número de iterações de backtesting
 # Lista das 4 lojas
 lojas <- c("baltimore", "lancaster", "philadelphia", "richmond")
 
-# Data frame para guardar resultados finais (medianas por loja e estratégia)
+# Data frame para guardar resultados finais
 resultados <- data.frame(
   Loja = character(),
   Estrategia = character(),
@@ -31,8 +67,12 @@ resultados <- data.frame(
 
 cat("############################################################\n")
 cat("# FASE II — HOLT-WINTERS — BACKTESTING (4 LOJAS)          #\n")
+cat("# Dados com tratamento aplicado                            #\n")
 cat("############################################################\n\n")
 cat("Configuração: K =", K, "| Test =", Test, "| S =", S, "| Runs =", Runs, "\n\n")
+
+# --- Abrir PDF para guardar todos os gráficos ---
+pdf("Files/fase1/HoltWinters/graficos_fase2.pdf", width = 10, height = 6)
 
 # ============================================================
 # Ciclo principal: aplicar backtesting a cada loja
@@ -43,8 +83,8 @@ for (loja in lojas) {
   cat("# LOJA:", toupper(loja), "\n")
   cat("############################################################\n\n")
   
-  # --- Carregar dados ---
-  dados <- read.csv(paste0("Files/csv/", loja, ".csv"))
+  # --- Carregar e tratar dados ---
+  dados <- preparar_dados(read.csv(paste0("Files/csv/", loja, ".csv")))
   clientes <- dados$Num_Customers
   L <- length(clientes)
   W <- (L - Test) - (Runs - 1) * S  # janela inicial de treino
@@ -57,42 +97,32 @@ for (loja in lojas) {
   # ========================================================
   cat("---------- GROWING WINDOW ----------\n")
   
-  # vetores para guardar métricas de cada iteração
   gw_nmae <- vector(length = Runs)
   gw_rmse <- vector(length = Runs)
   gw_r2   <- vector(length = Runs)
   
   for (b in 1:Runs) {
-    # holdout incremental (growing window)
     H <- holdout(clientes, ratio = Test, mode = "incremental",
                  iter = b, window = W, increment = S)
-    
-    # criar ts de treino e ajustar modelo
     dtr <- ts(clientes[H$tr], frequency = K)
     modelo <- suppressWarnings(HoltWinters(dtr))
-    
-    # prever H passos à frente
     pred <- forecast(modelo, h = length(H$ts))$mean[1:Test]
     
-    # calcular métricas
     gw_nmae[b] <- mmetric(y = clientes[H$ts], x = pred, metric = "NMAE", val = YR)
     gw_rmse[b] <- mmetric(y = clientes[H$ts], x = pred, metric = "RMSE")
     gw_r2[b]   <- mmetric(y = clientes[H$ts], x = pred, metric = "R2")
     
-    # output da iteração
     cat(sprintf("  Iter %2d | TR: %3d-%3d (n=%d) | TS: %3d-%3d | NMAE: %5.2f | RMSE: %6.2f | R2: %.4f\n",
                 b, H$tr[1], H$tr[length(H$tr)], length(H$tr),
                 H$ts[1], H$ts[length(H$ts)],
                 gw_nmae[b], gw_rmse[b], gw_r2[b]))
   }
   
-  # medianas growing window
   cat("\n  Medianas Growing Window:\n")
   cat("    NMAE:", round(median(gw_nmae), 2), "%\n")
   cat("    RMSE:", round(median(gw_rmse), 2), "\n")
   cat("    R2:  ", round(median(gw_r2), 4), "\n\n")
   
-  # guardar resultados
   resultados <- rbind(resultados, data.frame(
     Loja = loja, Estrategia = "Growing Window",
     Mediana_NMAE = round(median(gw_nmae), 2),
@@ -106,42 +136,32 @@ for (loja in lojas) {
   # ========================================================
   cat("---------- ROLLING WINDOW ----------\n")
   
-  # vetores para guardar métricas de cada iteração
   rw_nmae <- vector(length = Runs)
   rw_rmse <- vector(length = Runs)
   rw_r2   <- vector(length = Runs)
   
   for (b in 1:Runs) {
-    # holdout rolling (janela fixa)
     H <- holdout(clientes, ratio = Test, mode = "rolling",
                  iter = b, window = W, increment = S)
-    
-    # criar ts de treino e ajustar modelo
     dtr <- ts(clientes[H$tr], frequency = K)
     modelo <- suppressWarnings(HoltWinters(dtr))
-    
-    # prever H passos à frente
     pred <- forecast(modelo, h = length(H$ts))$mean[1:Test]
     
-    # calcular métricas
     rw_nmae[b] <- mmetric(y = clientes[H$ts], x = pred, metric = "NMAE", val = YR)
     rw_rmse[b] <- mmetric(y = clientes[H$ts], x = pred, metric = "RMSE")
     rw_r2[b]   <- mmetric(y = clientes[H$ts], x = pred, metric = "R2")
     
-    # output da iteração
     cat(sprintf("  Iter %2d | TR: %3d-%3d (n=%d) | TS: %3d-%3d | NMAE: %5.2f | RMSE: %6.2f | R2: %.4f\n",
                 b, H$tr[1], H$tr[length(H$tr)], length(H$tr),
                 H$ts[1], H$ts[length(H$ts)],
                 rw_nmae[b], rw_rmse[b], rw_r2[b]))
   }
   
-  # medianas rolling window
   cat("\n  Medianas Rolling Window:\n")
   cat("    NMAE:", round(median(rw_nmae), 2), "%\n")
   cat("    RMSE:", round(median(rw_rmse), 2), "\n")
   cat("    R2:  ", round(median(rw_r2), 4), "\n\n")
   
-  # guardar resultados
   resultados <- rbind(resultados, data.frame(
     Loja = loja, Estrategia = "Rolling Window",
     Mediana_NMAE = round(median(rw_nmae), 2),
@@ -150,17 +170,18 @@ for (loja in lojas) {
     stringsAsFactors = FALSE
   ))
   
-  # ========================================================
-  # Gráfico da última iteração (real vs previsto)
-  # ========================================================
+  # Gráfico da última iteração
   cat("  Gráfico da última iteração (ver painel Plots)\n\n")
   mgraph(y = clientes[H$ts], x = pred, graph = "REG", Grid = 10,
          col = c("black", "blue"),
          leg = list(pos = "topleft", leg = c("Real", "Holt-Winters")),
          main = paste("Fase II — Rolling Window — Última Iter. —", toupper(loja)))
-  mpause()
   
-} # fim do ciclo de lojas
+}
+
+# --- Fechar PDF ---
+dev.off()
+cat("Gráficos guardados em: Files/fase1/HoltWinters/graficos_fase2.pdf\n\n")
 
 # ============================================================
 # Resumo comparativo final
@@ -171,28 +192,18 @@ cat("############################################################\n\n")
 print(resultados)
 
 cat("\n------------------------------------------------------------\n")
-# Melhor combinação por NMAE
 idx_best <- which.min(resultados$Mediana_NMAE)
 cat("Melhor combinação (NMAE):", resultados$Loja[idx_best],
     "-", resultados$Estrategia[idx_best],
     "(", resultados$Mediana_NMAE[idx_best], "% )\n")
-
-# Melhor combinação por R2
 idx_best_r2 <- which.max(resultados$Mediana_R2)
 cat("Melhor combinação (R2):  ", resultados$Loja[idx_best_r2],
     "-", resultados$Estrategia[idx_best_r2],
     "(", resultados$Mediana_R2[idx_best_r2], ")\n")
-cat("------------------------------------------------------------\n\n")
-
-cat("CONCLUSÃO FASE II:\n")
-cat("O Holt-Winters foi avaliado com backtesting em 10 iterações usando\n")
-cat("growing window e rolling window para as 4 lojas. A mediana das métricas\n")
-cat("oferece uma avaliação mais robusta do que o holdout simples da Fase I.\n")
-cat("Estes resultados podem agora ser comparados com os outros métodos de\n")
-cat("forecasting implementados pelo grupo (ex: ARIMA) sob as mesmas condições.\n")
+cat("------------------------------------------------------------\n")
 
 # ============================================================
-# Exportar resultados para CSV
+# Exportar resultados
 # ============================================================
 write.csv(resultados, "Files/fase1/HoltWinters/resultados_hw_fase2.csv", row.names = FALSE)
 cat("\nResultados exportados para: Files/fase1/HoltWinters/resultados_hw_fase2.csv\n")
