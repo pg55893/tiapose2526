@@ -3,7 +3,7 @@
 # Target  : Num_Customers, H = 7 dias à frente
 # Baseline: Seasonal Naive (repete a semana anterior)
 # Fase I  : holdout simples (treino = tudo menos últimos 7 dias)
-# Fase II : backtesting rolling window, 12 iterações, guardar CSV
+# Fase II : backtesting growing window, 12 iterações, guardar CSV
 # 4 lojas : Philadelphia, Baltimore, Richmond, Lancaster
 # =============================================================================
 
@@ -13,7 +13,7 @@ options(rgl.useNULL = TRUE)
 library(rminer)
 
 # --- Tratamento de dados ------------------------------------------------------
-source("../tratamentoDeDados.R")
+source("~/Desktop/Mestrado/TIAPOSE/project/Files/tratamentoDeDados.R")
 
 # --- Configuração global ------------------------------------------------------
 H      <- 7       # horizonte de previsão
@@ -118,11 +118,11 @@ cat("\n\n====== TABELA FASE I ======\n")
 print(df_fase1, row.names = FALSE, digits = 3)
 
 # =============================================================================
-# FASE II — Backtesting (rolling window, 12 iterações)
+# FASE II — Backtesting (growing window, 12 iterações)
 # =============================================================================
 cat("\n\n")
 cat("=============================================================\n")
-cat("  FASE II - Backtesting rolling window (12 iterações)       \n")
+cat("  FASE II - Backtesting growing window (12 iterações)       \n")
 cat("=============================================================\n")
 
 resultados_fase2 <- list()
@@ -158,8 +158,8 @@ for (nome in names(stores)) {
   all_real        <- c()
   
   for (b in 1:RUNS) {
-    # Rolling window em D
-    H2 <- holdout(D$y, ratio = H, mode = "rolling",
+    # Growing window em D
+    H2 <- holdout(D$y, ratio = H, mode = "incremental",
                   iter = b, window = W2, increment = S)
     
     real <- D[H2$ts, ]$y
