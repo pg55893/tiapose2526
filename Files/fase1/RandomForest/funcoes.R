@@ -11,7 +11,8 @@ mostrar_metricas <- function(label, Y, Pred, srange) {
 }
 
 fase1_rf <- function(dados, nome_loja) {
-  S      <- dados$Sales
+  # --- prever Num_Customers em vez de Sales ---
+  S      <- dados$Num_Customers
   L      <- length(S)
   LTR    <- L - H
   srange <- diff(range(S))
@@ -35,8 +36,8 @@ fase1_rf <- function(dados, nome_loja) {
   
   plot(Y, type = "o", col = "black",
        ylim = range(c(Y, P_naive, P_rf)),
-       main = paste("Fase I -", nome_loja, ": RF vs Naive vs Real"),
-       ylab = "Sales", xlab = "Dia")
+       main = paste("Fase I -", nome_loja, ": RF vs Naive vs Real (Num_Customers)"),
+       ylab = "Num_Customers", xlab = "Dia")
   lines(P_naive, col = "gray",   lty = 2)
   lines(P_rf,    col = "purple", lty = 1)
   legend("topright",

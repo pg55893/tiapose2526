@@ -1,7 +1,8 @@
-setwd("~/TIAPOSE_projeto/tiapose2526/Files")
-
 preparar_dados <- function(df) {
   df$Date <- as.Date(df$Date)
+  
+  # --- Garantir ordenação cronológica antes de qualquer operação ---
+  df <- df[order(df$Date), ]
   
   # --- Natal: substituir todos os campos pela mediana do mesmo dia da semana, usando apenas dados anteriores ---
   natais <- as.Date(c("2012-12-25", "2013-12-25"))
@@ -20,8 +21,8 @@ preparar_dados <- function(df) {
   }
   
   # --- 2014-04-20: substituir Pct_On_Sale (NA) e Num_Customers (0 suspeito) pela mediana, usando apenas dados anteriores ---
-  idx_na  <- which(df$Date == as.Date("2014-04-20"))
-  wday_na <- weekdays(as.Date("2014-04-20"))
+  idx_na   <- which(df$Date == as.Date("2014-04-20"))
+  wday_na  <- weekdays(as.Date("2014-04-20"))
   antes_na <- df[df$Date < as.Date("2014-04-20"), ]
   mesmo_na <- antes_na[weekdays(antes_na$Date) == wday_na, ]
   
@@ -35,7 +36,41 @@ preparar_dados <- function(df) {
   return(df)
 }
 
-baltimore    <- preparar_dados(read.csv("CSV/baltimore.csv"))
-lancaster    <- preparar_dados(read.csv("CSV/lancaster.csv"))
-richmond     <- preparar_dados(read.csv("CSV/richmond.csv"))
-philadelphia <- preparar_dados(read.csv("CSV/philadelphia.csv"))
+# --- Aplicar a cada loja ---
+baltimore    <- preparar_dados(read.csv("baltimore.csv"))
+lancaster    <- preparar_dados(read.csv("lancaster.csv"))
+richmond     <- preparar_dados(read.csv("richmond.csv"))
+philadelphia <- preparar_dados(read.csv("philadelphia.csv"))
+
+# --- Verificação 1: registos alterados ---
+datas_verificar <- as.Date(c("2012-12-25", "2013-12-25", "2014-04-20", "2012-11-23", "2013-11-29"))
+
+cat("=== Baltimore ===\n")
+print(baltimore[baltimore$Date %in% datas_verificar, ])
+
+cat("=== Lancaster ===\n")
+print(lancaster[lancaster$Date %in% datas_verificar, ])
+
+cat("=== Richmond ===\n")
+print(richmond[richmond$Date %in% datas_verificar, ])
+
+cat("=== Philadelphia ===\n")
+print(philadelphia[philadelphia$Date %in% datas_verificar, ])
+
+# --- Verificação 2: datas em falta em cada loja ---
+for (nome in c("baltimore", "lancaster", "richmond", "philadelphia")) {
+  df <- get(nome)
+  datas_esperadas <- seq(min(df$Date), max(df$Date), by = "day")
+  datas_em_falta  <- datas_esperadas[!datas_esperadas %in% df$Date]
+  cat(nome, "- datas em falta:", length(datas_em_falta), "\n")
+  if (length(datas_em_falta) > 0) print(datas_em_falta)
+}
+
+# --- Verificação 3: Sales <= 0 fora do Natal ---
+natais <- as.Date(c("2012-12-25", "2013-12-25"))
+for (nome in c("baltimore", "lancaster", "richmond", "philadelphia")) {
+  df       <- get(nome)
+  anomalos <- df[df$Sales <= 0 & !df$Date %in% natais, ]
+  cat(nome, "- registos com Sales <= 0 fora do Natal:", nrow(anomalos), "\n")
+  if (nrow(anomalos) > 0) print(anomalos)
+}
