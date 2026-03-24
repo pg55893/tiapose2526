@@ -1,0 +1,5 @@
+"Loja","Modelo","MAE","NMAE","RMSE","RRSE","Naive_MAE","Naive_NMAE","Naive_RMSE","Naive_RRSE"
+"Baltimore","Random Forest",5894.8,3.83,7657,134.4,5192.9,3.38,6894.8,137.41
+"Lancaster","Random Forest",5825,2.11,7407.4,147.03,6534,2.37,8043.2,140.06
+"Richmond","Random Forest",3338.9,4.67,4180.2,153.59,2643.8,3.7,3353.8,133.56
+"Philadelphia","Random Forest",10988,5.05,13587.4,116.88,12646.4,5.81,14645.3,127.29
