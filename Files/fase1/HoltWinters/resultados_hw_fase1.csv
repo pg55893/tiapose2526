@@ -1,5 +1,5 @@
-"Loja","NMAE","RMSE","R2","Alpha","Beta","Gamma","Variante"
-"baltimore",4.79,59.68,0.881,0.6844,0.0016,0.0524,"Aditiva"
-"lancaster",3.97,86.73,0.8277,0.6549,0.0023,0.0572,"Aditiva"
-"philadelphia",6.22,116.37,0.8785,0.7121,6e-04,0.0739,"Aditiva"
-"richmond",5.2,34.85,0.8933,0.6961,0.0013,0.0585,"Aditiva"
+"Loja","MAE","NMAE","RMSE","RRSE","R2","Alpha","Beta","Gamma","Variante","Naive_MAE","Naive_NMAE","Naive_RMSE","Naive_RRSE"
+"baltimore",52.1,4.79,59.68,276.4,0.881,0.6844,0.0016,0.0524,"Aditiva",4.7,0.43,6.29,29.14
+"lancaster",73.9,3.97,86.73,333.3,0.8277,0.6549,0.0023,0.0572,"Aditiva",6,0.32,7.75,29.77
+"philadelphia",105.3,6.22,116.37,224.69,0.8785,0.7121,6e-04,0.0739,"Aditiva",11.7,0.69,15.54,30
+"richmond",31,5.2,34.85,242.51,0.8933,0.6961,0.0013,0.0585,"Aditiva",3.4,0.58,4.44,30.9

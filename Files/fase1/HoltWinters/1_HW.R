@@ -3,6 +3,7 @@
 # Objetivo: Previsão univariada de Num_Customers (H=7 dias)
 # Método: Holt-Winters (pacote forecast)
 # Avaliação: Holdout simples (treino com tudo exceto últimos 7 dias)
+# Baseline: Seasonal Naive (repete a semana anterior)
 # Nota: Dados pré-tratados (Natal, Black Friday, NA em 2014-04-20)
 # ============================================================
 
@@ -55,14 +56,20 @@ lojas <- c("baltimore", "lancaster", "philadelphia", "richmond")
 
 # Data frame para guardar os resultados de todas as lojas
 resultados <- data.frame(
-  Loja = character(),
-  NMAE = numeric(),
-  RMSE = numeric(),
-  R2 = numeric(),
-  Alpha = numeric(),
-  Beta = numeric(),
-  Gamma = numeric(),
-  Variante = character(),
+  Loja        = character(),
+  MAE         = numeric(),
+  NMAE        = numeric(),
+  RMSE        = numeric(),
+  RRSE        = numeric(),
+  R2          = numeric(),
+  Alpha       = numeric(),
+  Beta        = numeric(),
+  Gamma       = numeric(),
+  Variante    = character(),
+  Naive_MAE   = numeric(),     # MAE do baseline Seasonal Naive
+  Naive_NMAE  = numeric(),     # NMAE do baseline Seasonal Naive
+  Naive_RMSE  = numeric(),     # RMSE do baseline Seasonal Naive
+  Naive_RRSE  = numeric(),     # RRSE do baseline Seasonal Naive
   stringsAsFactors = FALSE
 )
 
@@ -122,60 +129,90 @@ for (loja in lojas) {
   cat("   gamma (sazonalidade):", round(modelo$gamma, 4), "\n\n")
   
   # ----------------------------------------------------------
-  # 4. Gerar previsões
+  # 4. Gerar previsões HW
   # ----------------------------------------------------------
   previsoes <- forecast(modelo, h = Test)$mean
   
+  # ----------------------------------------------------------
+  # 4b. Baseline: Seasonal Naive
+  # Previsão = últimos K valores do treino (semana anterior)
+  # ----------------------------------------------------------
+  naive_pred <- treino[(length(treino) - K + 1):length(treino)]  # repete a última semana do treino
+  
   cat("4. PREVISÕES vs VALORES REAIS\n")
-  cat("   Dia | Real | Previsto |  Erro\n")
-  cat("   ----+------+----------+------\n")
+  cat("   Dia | Real | HW Prev | HW Erro | Naive Prev | Naive Erro\n")
+  cat("   ----+------+---------+---------+------------+-----------\n")
   for (i in 1:Test) {
-    erro <- round(teste[i] - previsoes[i], 1)
-    cat(sprintf("    %d  | %4d |  %6.1f  | %5.1f\n", i, teste[i], previsoes[i], erro))
+    cat(sprintf("    %d  | %4d |  %6.1f | %7.1f |     %6.1f |     %5.1f\n",
+                i, teste[i],
+                previsoes[i], round(teste[i] - previsoes[i], 1),
+                naive_pred[i], round(teste[i] - naive_pred[i], 1)))
   }
   
   neg <- sum(previsoes < 0)
-  if (neg > 0) {
-    cat("\n   AVISO:", neg, "previsão(ões) negativa(s).\n")
-  }
+  if (neg > 0) cat("\n   AVISO:", neg, "previsão(ões) HW negativa(s).\n")
   cat("\n")
   
   # ----------------------------------------------------------
   # 5. Métricas de avaliação
   # ----------------------------------------------------------
-  YR <- diff(range(clientes))
+  YR <- diff(range(clientes))   # range global para NMAE
+  
+  mae  <- mmetric(y = teste, x = previsoes, metric = "MAE")
   nmae <- mmetric(y = teste, x = previsoes, metric = "NMAE", val = YR)
   rmse <- mmetric(y = teste, x = previsoes, metric = "RMSE")
-  r2 <- mmetric(y = teste, x = previsoes, metric = "R2")
+  rrse <- mmetric(y = teste, x = previsoes, metric = "RRSE")
+  r2   <- mmetric(y = teste, x = previsoes, metric = "R2")
   
-  cat("5. MÉTRICAS\n")
-  cat("   NMAE:", round(nmae, 2), "%\n")
-  cat("   RMSE:", round(rmse, 2), "\n")
-  cat("   R2:  ", round(r2, 4), "\n\n")
+  # Métricas do Naive
+  n_mae  <- mmetric(y = teste, x = naive_pred, metric = "MAE")
+  n_nmae <- mmetric(y = teste, x = naive_pred, metric = "NMAE", val = YR)
+  n_rmse <- mmetric(y = teste, x = naive_pred, metric = "RMSE")
+  n_rrse <- mmetric(y = teste, x = naive_pred, metric = "RRSE")
+  
+  cat("5. METRICAS\n")
+  cat("                HW        Naive\n")
+  cat(sprintf("   MAE:   %8.1f   %8.1f\n", mae,  n_mae))
+  cat(sprintf("   NMAE:  %7.2f%%  %7.2f%%\n", nmae, n_nmae))
+  cat(sprintf("   RMSE:  %8.2f   %8.2f\n", rmse, n_rmse))
+  cat(sprintf("   RRSE:  %7.2f%%  %7.2f%%\n", rrse, n_rrse))
+  cat(sprintf("   R2:    %8.4f\n", r2))
+  cat("\n")
   
   # ----------------------------------------------------------
   # 6. Gráfico: real vs previsão
   # ----------------------------------------------------------
-  cat("6. GRÁFICO (ver painel Plots)\n\n")
+  cat("6. GRAFICO (ver painel Plots)\n\n")
   mgraph(y = teste, x = previsoes, graph = "REG", Grid = 10,
          col = c("black", "blue"),
          leg = list(pos = "topleft", leg = c("Real", "Holt-Winters")),
-         main = paste("Fase I — Holt-Winters —", toupper(loja)))
+         main = paste("Fase I - Holt-Winters -", toupper(loja)))
   
   # ----------------------------------------------------------
   # 7. Guardar resultados
   # ----------------------------------------------------------
   resultados <- rbind(resultados, data.frame(
-    Loja = loja, NMAE = round(nmae, 2), RMSE = round(rmse, 2),
-    R2 = round(r2, 4), Alpha = round(modelo$alpha, 4),
-    Beta = round(modelo$beta, 4), Gamma = round(modelo$gamma, 4),
-    Variante = variante, stringsAsFactors = FALSE
+    Loja      = loja,
+    MAE       = round(mae, 1),
+    NMAE      = round(nmae, 2),
+    RMSE      = round(rmse, 2),
+    RRSE      = round(rrse, 2),
+    R2        = round(r2, 4),
+    Alpha     = round(modelo$alpha, 4),
+    Beta      = round(modelo$beta, 4),
+    Gamma     = round(modelo$gamma, 4),
+    Variante  = variante,
+    Naive_MAE  = round(n_mae, 1),
+    Naive_NMAE = round(n_nmae, 2),
+    Naive_RMSE = round(n_rmse, 2),
+    Naive_RRSE = round(n_rrse, 2),
+    stringsAsFactors = FALSE
   ))
 }
 
 # --- Fechar PDF ---
 dev.off()
-cat("Gráficos guardados em: Files/fase1/HoltWinters/graficos_fase1.pdf\n\n")
+cat("Graficos guardados em: Files/fase1/HoltWinters/graficos_fase1.pdf\n\n")
 
 # ============================================================
 # Resumo comparativo das 4 lojas
