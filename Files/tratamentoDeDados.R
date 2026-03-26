@@ -20,13 +20,14 @@ preparar_dados <- function(df) {
     df$Pct_On_Sale[idx]   <- median(mesmo$Pct_On_Sale)
   }
   
-  # --- 2014-04-20: substituir Pct_On_Sale (NA) e Num_Customers (0 suspeito) pela mediana, usando apenas dados anteriores ---
+  # --- 2014-04-20 (Domingo de Páscoa): Pct_On_Sale é NA e Num_Customers é 0 (loja fechada) ---
+  # --- Imputar com mediana do mesmo dia da semana, usando apenas dados anteriores ---
   idx_na   <- which(df$Date == as.Date("2014-04-20"))
   wday_na  <- weekdays(as.Date("2014-04-20"))
   antes_na <- df[df$Date < as.Date("2014-04-20"), ]
   mesmo_na <- antes_na[weekdays(antes_na$Date) == wday_na, ]
   
-  df$Pct_On_Sale[idx_na]   <- median(antes_na$Pct_On_Sale, na.rm = TRUE)
+  df$Pct_On_Sale[idx_na]   <- median(mesmo_na$Pct_On_Sale, na.rm = TRUE)
   df$Num_Customers[idx_na] <- median(mesmo_na$Num_Customers)
   
   # --- Black Friday: marcar como TouristEvent = "Yes" ---
@@ -47,13 +48,10 @@ datas_verificar <- as.Date(c("2012-12-25", "2013-12-25", "2014-04-20", "2012-11-
 
 cat("=== Baltimore ===\n")
 print(baltimore[baltimore$Date %in% datas_verificar, ])
-
 cat("=== Lancaster ===\n")
 print(lancaster[lancaster$Date %in% datas_verificar, ])
-
 cat("=== Richmond ===\n")
 print(richmond[richmond$Date %in% datas_verificar, ])
-
 cat("=== Philadelphia ===\n")
 print(philadelphia[philadelphia$Date %in% datas_verificar, ])
 

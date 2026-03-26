@@ -3,49 +3,52 @@
 # Target  : Num_Customers, H = 7 dias à frente
 # Baseline: Seasonal Naive (repete a semana anterior)
 # Fase I  : holdout simples (treino = tudo menos últimos 7 dias)
-# Fase II : backtesting rolling window, 12 iterações, guardar CSV
-# 4 lojas : Philadelphia, Baltimore, Richmond, Lancaster
+# Fase II : backtesting growing window, 12 iterações
+# 4 lojas : Baltimore, Lancaster, Philadelphia, Richmond
 # =============================================================================
 
-# install.packages("rminer")
-# Usar rminer (desativar inicialização do RGL devido ao sistema operativo usado)
 options(rgl.useNULL = TRUE)
 library(rminer)
 
-# --- Tratamento de dados ------------------------------------------------------
-source("../tratamentoDeDados.R")
+# --- Carregar dados tratados (fonte unica para todo o grupo) ---
+setwd("~/TIAPOSE2526/Files/csv")
+source("~/TIAPOSE2526/Files/tratamentoDeDados.R")
 
-# --- Configuração global ------------------------------------------------------
-H      <- 7       # horizonte de previsão
-RUNS   <- 12      # iterações de backtesting (Fase II)
-S      <- 7       # passo entre janelas (1 semana)
-LAGS   <- 1:7     # lags t-1 a t-7 (captura sazonalidade semanal)
+# --- Criar pasta e definir como destino dos resultados ---
+dir.create("~/TIAPOSE2526/Files/fase1/MLPE", showWarnings=FALSE)
+setwd("~/TIAPOSE2526/Files/fase1/MLPE")
 
-# Usar directamente os data.frames já tratados
+# --- Configuração global ---
+H      <- 7
+RUNS   <- 12
+S      <- 7
+LAGS   <- c(1:3, 7, 28)   # lags sugeridos pelo professor
+
+# --- Datas em que a loja esta fechada (Natal e Pascoa) ---
+datas_fecho <- as.Date(c("2012-12-25","2013-12-25","2013-03-31","2014-04-20"))
+
+# --- Lojas ---
 stores <- list(
-  Philadelphia = philadelphia,
   Baltimore    = baltimore,
-  Richmond     = richmond,
-  Lancaster    = lancaster
+  Lancaster    = lancaster,
+  Philadelphia = philadelphia,
+  Richmond     = richmond
 )
+lojas_cores <- c("steelblue", "tomato", "seagreen", "hotpink")
 
-# --- Seasonal Naive -----------------------------------------------------------
-# Previsão: repete os últimos 7 valores observados (semana anterior)
+# --- Seasonal Naive ---
 seasonal_naive <- function(train, h = 7) {
-  n <- length(train)
-  tail(train, h)   # últimos h valores = "semana anterior"
+  tail(train, h)
 }
 
 # =============================================================================
 # FASE I — Holdout simples
 # =============================================================================
-cat("\n\n")
-cat("=============================================================\n")
-cat("  FASE I — Holdout simples (últimos 7 dias como teste)      \n")
+cat("\n=============================================================\n")
+cat("  FASE I — Holdout simples (ultimos 7 dias como teste)      \n")
 cat("=============================================================\n")
 
-# Para guardar todos os plots em PDF
-pdf("../MLPE_plots.pdf")
+pdf("graficos_mlpe_fase1.pdf", width = 10, height = 6)
 
 resultados_fase1 <- list()
 
@@ -53,44 +56,53 @@ for (nome in names(stores)) {
   cat("\n--- Loja:", nome, "---\n")
   
   d  <- stores[[nome]]
+  d$Date <- as.Date(d$Date)
+  d <- d[order(d$Date), ]
   TS <- d$Num_Customers
+  datas <- d$Date
   L  <- length(TS)
   YR <- diff(range(TS))
   
-  # Índices treino / teste
-  TR <- 1:(L - H)
+  # Indices treino / teste
+  TR_idx <- 1:(L - H)
   TS_idx <- (L - H + 1):L
   real <- TS[TS_idx]
+  datas_teste <- datas[TS_idx]
   
   # ---- Seasonal Naive ----
-  pred_naive <- seasonal_naive(TS[TR], h = H)
+  pred_naive <- seasonal_naive(TS[TR_idx], h = H)
   
-  mae_naive  <- mmetric(real, pred_naive, metric = "MAE")
+  # Pos-processamento naive
+  pred_naive[pred_naive < 0] <- 0
+  pred_naive[datas_teste %in% datas_fecho] <- 0
+  
   nmae_naive <- mmetric(real, pred_naive, metric = "NMAE", val = YR)
-  rmse_naive <- mmetric(real, pred_naive, metric = "RMSE")
   rrse_naive <- mmetric(real, pred_naive, metric = "RRSE")
+  r2_naive   <- 1 - (sum((real - pred_naive)^2) / sum((real - mean(real))^2))
   
-  cat(sprintf("  Seasonal Naive | MAE=%.1f | NMAE=%.2f%% | RMSE=%.1f | RRSE=%.3f\n",
-              mae_naive, nmae_naive, rmse_naive, rrse_naive))
+  cat(sprintf("  Seasonal Naive | NMAE=%.4f | RRSE=%.4f | R2=%.4f\n",
+              nmae_naive, rrse_naive, r2_naive))
   
   # ---- mlpe ----
   D   <- CasesSeries(TS, LAGS)
   LD  <- nrow(D)
-  hd  <- holdout(D$y, ratio = H, mode = "order")  # split temporal simples
+  hd  <- holdout(D$y, ratio = H, mode = "order")
   
   model_mlpe <- fit(y~., D[hd$tr, ], model = "mlpe")
   pred_mlpe  <- lforecast(model_mlpe, D, start = hd$ts[1], horizon = H)
   
-  mae_mlpe  <- mmetric(real, pred_mlpe, metric = "MAE")
-  nmae_mlpe <- mmetric(real, pred_mlpe, metric = "NMAE", val = YR)
-  rmse_mlpe <- mmetric(real, pred_mlpe, metric = "RMSE")
-  rrse_mlpe <- mmetric(real, pred_mlpe, metric = "RRSE")
+  # Pos-processamento mlpe
+  pred_mlpe[pred_mlpe < 0] <- 0
+  pred_mlpe[datas_teste %in% datas_fecho] <- 0
   
-  cat(sprintf("  mlpe (lags 1:7)| MAE=%.1f | NMAE=%.2f%% | RMSE=%.1f | RRSE=%.3f\n",
-              mae_mlpe, nmae_mlpe, rmse_mlpe, rrse_mlpe))
+  nmae_mlpe <- mmetric(real, pred_mlpe, metric = "NMAE", val = YR)
+  rrse_mlpe <- mmetric(real, pred_mlpe, metric = "RRSE")
+  r2_mlpe   <- 1 - (sum((real - pred_mlpe)^2) / sum((real - mean(real))^2))
+  
+  cat(sprintf("  mlpe           | NMAE=%.4f | RRSE=%.4f | R2=%.4f\n",
+              nmae_mlpe, rrse_mlpe, r2_mlpe))
   
   # ---- Gráfico Fase I ----
-  par(mfrow = c(1, 1))
   yrange <- range(real, pred_naive, pred_mlpe)
   plot(1:H, real, type = "b", pch = 19, col = "black",
        ylim = yrange, xlab = "Dia (horizonte)", ylab = "Num_Customers",
@@ -103,158 +115,200 @@ for (nome in names(stores)) {
          pch    = c(19, 2, 17), lty = c(1, 2, 1))
   
   resultados_fase1[[nome]] <- data.frame(
-    Loja  = nome,
+    Loja   = nome,
     Metodo = c("Seasonal_Naive", "mlpe"),
-    MAE    = c(mae_naive,  mae_mlpe),
     NMAE   = c(nmae_naive, nmae_mlpe),
-    RMSE   = c(rmse_naive, rmse_mlpe),
-    RRSE   = c(rrse_naive, rrse_mlpe)
+    RRSE   = c(rrse_naive, rrse_mlpe),
+    R2     = c(r2_naive, r2_mlpe)
   )
 }
 
-# Tabela resumo Fase I
+dev.off()
+
 df_fase1 <- do.call(rbind, resultados_fase1)
 cat("\n\n====== TABELA FASE I ======\n")
-print(df_fase1, row.names = FALSE, digits = 3)
+print(df_fase1, row.names = FALSE, digits = 4)
+write.csv(df_fase1, "resultados_mlpe_fase1.csv", row.names = FALSE)
 
 # =============================================================================
-# FASE II — Backtesting (rolling window, 12 iterações)
+# FASE II — Backtesting (growing window, 12 iterações)
 # =============================================================================
-cat("\n\n")
-cat("=============================================================\n")
-cat("  FASE II - Backtesting rolling window (12 iterações)       \n")
+cat("\n\n=============================================================\n")
+cat("  FASE II - Backtesting growing window (12 iteracoes)       \n")
 cat("=============================================================\n")
 
 resultados_fase2 <- list()
+resultados_media <- data.frame()
+idx_cor <- 1
 
 for (nome in names(stores)) {
   cat("\n--- Loja:", nome, "---\n")
   
   d  <- stores[[nome]]
+  d$Date <- as.Date(d$Date)
+  d <- d[order(d$Date), ]
   TS <- d$Num_Customers
+  datas <- d$Date
   L  <- length(TS)
   YR <- diff(range(TS))
   
   # Dataset com lags para mlpe
+  max_lag <- max(LAGS)
   D  <- CasesSeries(TS, LAGS)
   LD <- nrow(D)
   
+  # Datas correspondentes às linhas de D
+  datas_D <- datas[(max_lag + 1):L]
+  
   # Tamanho da janela inicial de treino
-  W2 <- LD - H - (RUNS - 1) * S
+  W2 <- (LD - H) - (RUNS - 1) * S
   cat(sprintf("  Tamanho D: %d | Janela inicial treino: %d\n", LD, W2))
   
   nmae_mlpe_v  <- numeric(RUNS)
-  rmse_mlpe_v  <- numeric(RUNS)
   rrse_mlpe_v  <- numeric(RUNS)
+  r2_mlpe_v    <- numeric(RUNS)
   mae_mlpe_v   <- numeric(RUNS)
   
   nmae_naive_v <- numeric(RUNS)
-  rmse_naive_v <- numeric(RUNS)
   rrse_naive_v <- numeric(RUNS)
+  r2_naive_v   <- numeric(RUNS)
   mae_naive_v  <- numeric(RUNS)
   
   all_pred_mlpe  <- c()
   all_pred_naive <- c()
-  all_real        <- c()
+  all_real       <- c()
+  
+  res_loja <- data.frame()
   
   for (b in 1:RUNS) {
-    # Rolling window em D
-    H2 <- holdout(D$y, ratio = H, mode = "rolling",
+    # Growing window (incremental)
+    H2 <- holdout(D$y, ratio = H, mode = "incremental",
                   iter = b, window = W2, increment = S)
     
     real <- D[H2$ts, ]$y
+    datas_teste <- datas_D[H2$ts]
     
     # ---- mlpe ----
     model <- fit(y ~ ., D[H2$tr, ], model = "mlpe")
-    pred_mlpe <- lforecast(model, D, start = (length(H2$tr) + 1), horizon = H)
+    pred_mlpe <- lforecast(model, D, start = H2$ts[1], horizon = H)
     
-    # ---- Seasonal Naive: últimos H valores do treino (em D) ----
-    train_y      <- D[H2$tr, ]$y
-    pred_naive   <- seasonal_naive(train_y, h = H)
+    # ---- Seasonal Naive ----
+    train_y    <- D[H2$tr, ]$y
+    pred_naive <- seasonal_naive(train_y, h = H)
     
-    mae_mlpe_v[b]   <- mmetric(real, pred_mlpe,  metric = "MAE")
-    nmae_mlpe_v[b]  <- mmetric(real, pred_mlpe,  metric = "NMAE", val = YR)
-    rmse_mlpe_v[b]  <- mmetric(real, pred_mlpe,  metric = "RMSE")
-    rrse_mlpe_v[b]  <- mmetric(real, pred_mlpe,  metric = "RRSE")
+    # --- Pos-processamento mlpe ---
+    pred_mlpe[pred_mlpe < 0] <- 0
+    pred_mlpe[datas_teste %in% datas_fecho] <- 0
     
-    mae_naive_v[b]  <- mmetric(real, pred_naive,  metric = "MAE")
-    nmae_naive_v[b] <- mmetric(real, pred_naive,  metric = "NMAE", val = YR)
-    rmse_naive_v[b] <- mmetric(real, pred_naive,  metric = "RMSE")
-    rrse_naive_v[b] <- mmetric(real, pred_naive,  metric = "RRSE")
+    # --- Pos-processamento naive ---
+    pred_naive[pred_naive < 0] <- 0
+    pred_naive[datas_teste %in% datas_fecho] <- 0
+    
+    # --- Metricas mlpe ---
+    mae_mlpe_v[b]  <- mmetric(real, pred_mlpe, metric = "MAE")
+    nmae_mlpe_v[b] <- mmetric(real, pred_mlpe, metric = "NMAE", val = YR)
+    rrse_mlpe_v[b] <- mmetric(real, pred_mlpe, metric = "RRSE")
+    r2_mlpe_v[b]   <- 1 - (sum((real - pred_mlpe)^2) / sum((real - mean(real))^2))
+    
+    # --- Metricas naive ---
+    mae_naive_v[b]  <- mmetric(real, pred_naive, metric = "MAE")
+    nmae_naive_v[b] <- mmetric(real, pred_naive, metric = "NMAE", val = YR)
+    rrse_naive_v[b] <- mmetric(real, pred_naive, metric = "RRSE")
+    r2_naive_v[b]   <- 1 - (sum((real - pred_naive)^2) / sum((real - mean(real))^2))
     
     all_pred_mlpe  <- c(all_pred_mlpe,  pred_mlpe)
     all_pred_naive <- c(all_pred_naive, pred_naive)
     all_real       <- c(all_real, real)
     
-    cat(sprintf("  iter %2d | mlpe NMAE=%.2f%% | Naive NMAE=%.2f%%\n",
-                b, nmae_mlpe_v[b], nmae_naive_v[b]))
+    cat(sprintf("  iter %2d | mlpe NMAE=%.4f RRSE=%.4f R2=%.4f | Naive NMAE=%.4f\n",
+                b, nmae_mlpe_v[b], rrse_mlpe_v[b], r2_mlpe_v[b], nmae_naive_v[b]))
+    
+    # --- Guardar linha ---
+    linha <- data.frame(
+      Loja = nome,
+      Iteracao = b,
+      Train_Start = as.character(datas_D[H2$tr[1]]),
+      Train_End = as.character(datas_D[H2$tr[length(H2$tr)]]),
+      Train_Size = length(H2$tr),
+      Test_Start = as.character(datas_teste[1]),
+      Test_End = as.character(datas_teste[length(datas_teste)]),
+      Test_Size = length(H2$ts),
+      NMAE_mlpe = round(nmae_mlpe_v[b], 4),
+      RRSE_mlpe = round(rrse_mlpe_v[b], 4),
+      R2_mlpe = round(r2_mlpe_v[b], 4),
+      NMAE_naive = round(nmae_naive_v[b], 4),
+      RRSE_naive = round(rrse_naive_v[b], 4),
+      R2_naive = round(r2_naive_v[b], 4)
+    )
+    res_loja <- rbind(res_loja, linha)
   }
   
-  # ---- Resultados por loja ----
-  cat(sprintf("\n  [mlpe]  Med.MAE=%.1f | Med.NMAE=%.2f%% | Med.RMSE=%.1f | Med.RRSE=%.3f\n",
-              median(mae_mlpe_v), median(nmae_mlpe_v),
-              median(rmse_mlpe_v), median(rrse_mlpe_v)))
-  cat(sprintf("  [Naive] Med.MAE=%.1f | Med.NMAE=%.2f%% | Med.RMSE=%.1f | Med.RRSE=%.3f\n",
-              median(mae_naive_v), median(nmae_naive_v),
-              median(rmse_naive_v), median(rrse_naive_v)))
-  
-  melhoria <- (median(nmae_naive_v) - median(nmae_mlpe_v)) / median(nmae_naive_v) * 100
-  cat(sprintf("  Melhoria mlpe vs Naive: %.1f%%\n", melhoria))
-  
-  # ---- Gráfico Fase II: predicted vs actual (todo o período de teste) ----
+  # ---- Gráfico predicted vs actual (todo o periodo de teste) ----
+  pdf(paste0("grafico_mlpe_fase2_", tolower(nome), ".pdf"), width = 10, height = 6)
   n_pts  <- length(all_real)
   yrange <- range(all_real, all_pred_mlpe, all_pred_naive)
   plot(1:n_pts, all_real, type = "l", col = "black", lwd = 1.5,
-       ylim = yrange, xlab = "Observação (teste acumulado)", ylab = "Num_Customers",
-       main = paste("Fase II -", nome, "| Predicted vs Actual (todas as iterações)"))
+       ylim = yrange, xlab = "Observacao (teste acumulado)", ylab = "Num_Customers",
+       main = paste("Fase II -", nome, "| Predicted vs Actual (todas as iteracoes)"))
   lines(1:n_pts, all_pred_naive, col = "gray50", lty = 2, lwd = 1.2)
   lines(1:n_pts, all_pred_mlpe,  col = "tomato",  lty = 1, lwd = 1.5)
-  # Linhas verticais a separar as iterações
-  for (i in 1:(RUNS - 1)) abline(v = i * H, col = "gray80", lty = 3)
+  for (j in 1:(RUNS - 1)) abline(v = j * H, col = "gray80", lty = 3)
   legend("topright", bty = "n",
          legend = c("Real", "Seasonal Naive", "mlpe"),
          col    = c("black", "gray50", "tomato"),
          lty    = c(1, 2, 1), lwd = c(1.5, 1.2, 1.5))
+  dev.off()
   
-  # Guardar métricas por iteração para CSV
-  resultados_fase2[[nome]] <- data.frame(
-    Loja      = nome,
-    Iteracao  = 1:RUNS,
-    MAE_mlpe  = mae_mlpe_v,
-    NMAE_mlpe = nmae_mlpe_v,
-    RMSE_mlpe = rmse_mlpe_v,
-    RRSE_mlpe = rrse_mlpe_v,
-    MAE_naive  = mae_naive_v,
-    NMAE_naive = nmae_naive_v,
-    RMSE_naive = rmse_naive_v,
-    RRSE_naive = rrse_naive_v
+  # ---- Boxplot das metricas (guardado em PDF) ----
+  pdf(paste0("boxplot_mlpe_", tolower(nome), ".pdf"), width = 7, height = 5)
+  boxplot(nmae_mlpe_v, rrse_mlpe_v, r2_mlpe_v,
+          names = c("NMAE", "RRSE", "R2"),
+          main = paste(nome, "- mlpe - Distribuicao das Metricas (12 iteracoes)"),
+          col = lojas_cores[idx_cor])
+  dev.off()
+  
+  # ---- Medias das metricas ----
+  cat(sprintf("\n  [mlpe]  Mean.NMAE=%.4f | Mean.RRSE=%.4f | Mean.R2=%.4f\n",
+              mean(nmae_mlpe_v), mean(rrse_mlpe_v), mean(r2_mlpe_v)))
+  cat(sprintf("  [Naive] Mean.NMAE=%.4f | Mean.RRSE=%.4f | Mean.R2=%.4f\n",
+              mean(nmae_naive_v), mean(rrse_naive_v), mean(r2_naive_v)))
+  
+  melhoria <- (mean(nmae_naive_v) - mean(nmae_mlpe_v)) / mean(nmae_naive_v) * 100
+  cat(sprintf("  Melhoria mlpe vs Naive: %.1f%%\n", melhoria))
+  
+  # --- Acumular resultados ---
+  resultados_fase2[[nome]] <- res_loja
+  
+  med_loja <- data.frame(
+    Loja = nome,
+    Target = "Num_Customers",
+    Metodo = "Growing Window",
+    Iteracoes = RUNS,
+    Media_NMAE_mlpe = round(mean(nmae_mlpe_v), 4),
+    Media_RRSE_mlpe = round(mean(rrse_mlpe_v), 4),
+    Media_R2_mlpe = round(mean(r2_mlpe_v), 4),
+    Media_NMAE_naive = round(mean(nmae_naive_v), 4),
+    Media_RRSE_naive = round(mean(rrse_naive_v), 4),
+    Media_R2_naive = round(mean(r2_naive_v), 4)
   )
+  resultados_media <- rbind(resultados_media, med_loja)
+  
+  idx_cor <- idx_cor + 1
 }
 
-# ---- Guardar CSV com resultados Fase II ----
+# ============================================================
+# Resultados finais
+# ============================================================
+cat("\n============================================================\n")
+cat("RESULTADOS FINAIS - MEDIA DAS METRICAS POR LOJA\n")
+cat("============================================================\n")
+print(resultados_media, row.names = FALSE)
+
+# ============================================================
+# Guardar CSV
+# ============================================================
 df_fase2 <- do.call(rbind, resultados_fase2)
-write.csv(df_fase2, "../MLPE_backtesting_results.csv", row.names = FALSE)
-cat("\n\nResultados Fase II guardados em: resultados_joao_fase2.csv\n")
+write.csv(df_fase2, "backtesting_mlpe_iteracoes.csv", row.names = FALSE)
+write.csv(resultados_media, "backtesting_mlpe_media_lojas.csv", row.names = FALSE)
 
-# ---- Tabela resumo Fase II (medianas) ----
-cat("\n====== TABELA FASE II - Medianas por loja ======\n")
-cat(sprintf("%-15s %6s %8s %8s %8s %8s\n",
-            "Loja", "Método", "Med.MAE", "Med.NMAE", "Med.RMSE", "Med.RRSE"))
-cat(strrep("-", 60), "\n")
-
-for (nome in names(stores)) {
-  df  <- resultados_fase2[[nome]]
-  cat(sprintf("%-15s %6s %8.1f %8.2f%% %8.1f %8.3f\n",
-              nome, "mlpe",
-              median(df$MAE_mlpe), median(df$NMAE_mlpe),
-              median(df$RMSE_mlpe), median(df$RRSE_mlpe)))
-  cat(sprintf("%-15s %6s %8.1f %8.2f%% %8.1f %8.3f\n",
-              "", "Naive",
-              median(df$MAE_naive), median(df$NMAE_naive),
-              median(df$RMSE_naive), median(df$RRSE_naive)))
-  cat(strrep("-", 60), "\n")
-}
-
-cat("\nCSV guardado pronto para partilhar com o grupo na reunião final.\n")
-
-dev.off()
+cat("\nCSVs e PDFs guardados na pasta MLPE.\n")

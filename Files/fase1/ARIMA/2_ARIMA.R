@@ -1,6 +1,5 @@
 # ============================================================
 # FASE II - BACKTESTING COM GROWING WINDOW
-# Estilo Stor
 # Modelo: ARIMA
 # Target: Num_Customers
 # ============================================================
@@ -11,15 +10,25 @@ library(rminer)
 # ------------------------------------------------------------
 # 0. PASTA DE TRABALHO
 # ------------------------------------------------------------
-setwd("~/TIAPOSE_projeto/tiapose2526/Files/fase1")
+# --- Criar e ir para a pasta ARIMA para guardar resultados ---
+dir.create("~/TIAPOSE2526/Files/fase1/ARIMA", showWarnings=FALSE)
+setwd("~/TIAPOSE2526/Files/fase1/ARIMA")
 
 # ------------------------------------------------------------
 # 1. CARREGAR DADOS TRATADOS
 # ------------------------------------------------------------
-source("~/TIAPOSE_projeto/tiapose2526/Files/tratamentoDeDados.R")
+source("~/TIAPOSE2526/Files/tratamentoDeDados.R")
+
+# --- Voltar para fase1 para guardar resultados ---
+setwd("~/TIAPOSE2526/Files/fase1")
 
 # ------------------------------------------------------------
-# 2. BALTIMORE
+# 2. DATAS EM QUE A LOJA ESTA FECHADA (Natal e Pascoa)
+# ------------------------------------------------------------
+datas_fecho <- as.Date(c("2012-12-25","2013-12-25","2013-03-31","2014-04-20"))
+
+# ------------------------------------------------------------
+# 3. BALTIMORE
 # ------------------------------------------------------------
 cat("\n============================================================\n")
 cat("BACKTESTING - BALTIMORE\n")
@@ -50,6 +59,7 @@ MAE_v=vector(length=Runs)
 NMAE_v=vector(length=Runs)
 RMSE_v=vector(length=Runs)
 RRSE_v=vector(length=Runs)
+R2_v=vector(length=Runs)
 
 res_baltimore=data.frame()
 
@@ -62,13 +72,19 @@ for(b in 1:Runs)
   
   print("model> auto.arima")
   AR=auto.arima(dtr)
-  F=forecast(AR,h=length(H$ts))
-  Pred=F$mean[1:Test]
+  fc=forecast(AR,h=length(H$ts))
+  Pred=as.numeric(fc$mean[1:Test])
+  
+  # --- Pos-processamento ---
+  Pred[Pred < 0] <- 0
+  datas_teste=datas[H$ts]
+  Pred[datas_teste %in% datas_fecho] <- 0
   
   MAE_v[b]=mmetric(y=Y,x=Pred,metric="MAE")
   NMAE_v[b]=mmetric(y=Y,x=Pred,metric="NMAE",val=YR)
   RMSE_v[b]=mmetric(y=Y,x=Pred,metric="RMSE")
   RRSE_v[b]=mmetric(y=Y,x=Pred,metric="RRSE")
+  R2_v[b]=1-(sum((Y-Pred)^2)/sum((Y-mean(Y))^2))
   
   ord=arimaorder(AR)
   
@@ -85,7 +101,8 @@ for(b in 1:Runs)
     MAE=round(MAE_v[b],4),
     NMAE=round(NMAE_v[b],4),
     RMSE=round(RMSE_v[b],4),
-    RRSE=round(RRSE_v[b],4)
+    RRSE=round(RRSE_v[b],4),
+    R2=round(R2_v[b],4)
   )
   
   res_baltimore=rbind(res_baltimore,linha)
@@ -95,12 +112,22 @@ for(b in 1:Runs)
       "MAE:",round(MAE_v[b],4),
       "NMAE:",round(NMAE_v[b],4),
       "RMSE:",round(RMSE_v[b],4),
-      "RRSE:",round(RRSE_v[b],4),"\n")
+      "RRSE:",round(RRSE_v[b],4),
+      "R2:",round(R2_v[b],4),"\n")
   
   mgraph(Y,Pred,graph="REG",Grid=10,col=c("black","blue"),
          leg=list(pos="topleft",leg=c("target","ARIMA pred.")))
   mpause()
 }
+
+# --- Boxplot das metricas ---
+
+pdf("boxplot_arima_baltimore.pdf", width=7, height=5)
+boxplot(NMAE_v,RRSE_v,R2_v,
+        names=c("NMAE","RRSE","R2"),
+        main="Baltimore - ARIMA - Distribuicao das Metricas (12 iteracoes)",
+        col="steelblue")
+dev.off()
 
 med_baltimore=data.frame(
   Loja="Baltimore",
@@ -109,20 +136,22 @@ med_baltimore=data.frame(
   Iteracoes=Runs,
   Horizonte=Test,
   Incremento=S,
-  Mediana_MAE=round(median(MAE_v),4),
-  Mediana_NMAE=round(median(NMAE_v),4),
-  Mediana_RMSE=round(median(RMSE_v),4),
-  Mediana_RRSE=round(median(RRSE_v),4)
+  Media_MAE=round(mean(MAE_v),4),
+  Media_NMAE=round(mean(NMAE_v),4),
+  Media_RMSE=round(mean(RMSE_v),4),
+  Media_RRSE=round(mean(RRSE_v),4),
+  Media_R2=round(mean(R2_v),4)
 )
 
-cat("median values for Baltimore:\n")
-cat("MAE median:",median(MAE_v),"\n")
-cat("NMAE median:",median(NMAE_v),"\n")
-cat("RMSE median:",median(RMSE_v),"\n")
-cat("RRSE median:",median(RRSE_v),"\n")
+cat("mean values for Baltimore:\n")
+cat("MAE mean:",mean(MAE_v),"\n")
+cat("NMAE mean:",mean(NMAE_v),"\n")
+cat("RMSE mean:",mean(RMSE_v),"\n")
+cat("RRSE mean:",mean(RRSE_v),"\n")
+cat("R2 mean:",mean(R2_v),"\n")
 
 # ------------------------------------------------------------
-# 3. LANCASTER
+# 4. LANCASTER
 # ------------------------------------------------------------
 cat("\n============================================================\n")
 cat("BACKTESTING - LANCASTER\n")
@@ -153,6 +182,7 @@ MAE_v=vector(length=Runs)
 NMAE_v=vector(length=Runs)
 RMSE_v=vector(length=Runs)
 RRSE_v=vector(length=Runs)
+R2_v=vector(length=Runs)
 
 res_lancaster=data.frame()
 
@@ -165,13 +195,19 @@ for(b in 1:Runs)
   
   print("model> auto.arima")
   AR=auto.arima(dtr)
-  F=forecast(AR,h=length(H$ts))
-  Pred=F$mean[1:Test]
+  fc=forecast(AR,h=length(H$ts))
+  Pred=as.numeric(fc$mean[1:Test])
+  
+  # --- Pos-processamento ---
+  Pred[Pred < 0] <- 0
+  datas_teste=datas[H$ts]
+  Pred[datas_teste %in% datas_fecho] <- 0
   
   MAE_v[b]=mmetric(y=Y,x=Pred,metric="MAE")
   NMAE_v[b]=mmetric(y=Y,x=Pred,metric="NMAE",val=YR)
   RMSE_v[b]=mmetric(y=Y,x=Pred,metric="RMSE")
   RRSE_v[b]=mmetric(y=Y,x=Pred,metric="RRSE")
+  R2_v[b]=1-(sum((Y-Pred)^2)/sum((Y-mean(Y))^2))
   
   ord=arimaorder(AR)
   
@@ -188,7 +224,8 @@ for(b in 1:Runs)
     MAE=round(MAE_v[b],4),
     NMAE=round(NMAE_v[b],4),
     RMSE=round(RMSE_v[b],4),
-    RRSE=round(RRSE_v[b],4)
+    RRSE=round(RRSE_v[b],4),
+    R2=round(R2_v[b],4)
   )
   
   res_lancaster=rbind(res_lancaster,linha)
@@ -198,12 +235,19 @@ for(b in 1:Runs)
       "MAE:",round(MAE_v[b],4),
       "NMAE:",round(NMAE_v[b],4),
       "RMSE:",round(RMSE_v[b],4),
-      "RRSE:",round(RRSE_v[b],4),"\n")
+      "RRSE:",round(RRSE_v[b],4),
+      "R2:",round(R2_v[b],4),"\n")
   
   mgraph(Y,Pred,graph="REG",Grid=10,col=c("black","blue"),
          leg=list(pos="topleft",leg=c("target","ARIMA pred.")))
   mpause()
 }
+
+# --- Boxplot das metricas ---
+boxplot(NMAE_v,RRSE_v,R2_v,
+        names=c("NMAE","RRSE","R2"),
+        main="Lancaster - ARIMA - Distribuicao das Metricas (12 iteracoes)",
+        col="tomato")
 
 med_lancaster=data.frame(
   Loja="Lancaster",
@@ -212,20 +256,22 @@ med_lancaster=data.frame(
   Iteracoes=Runs,
   Horizonte=Test,
   Incremento=S,
-  Mediana_MAE=round(median(MAE_v),4),
-  Mediana_NMAE=round(median(NMAE_v),4),
-  Mediana_RMSE=round(median(RMSE_v),4),
-  Mediana_RRSE=round(median(RRSE_v),4)
+  Media_MAE=round(mean(MAE_v),4),
+  Media_NMAE=round(mean(NMAE_v),4),
+  Media_RMSE=round(mean(RMSE_v),4),
+  Media_RRSE=round(mean(RRSE_v),4),
+  Media_R2=round(mean(R2_v),4)
 )
 
-cat("median values for Lancaster:\n")
-cat("MAE median:",median(MAE_v),"\n")
-cat("NMAE median:",median(NMAE_v),"\n")
-cat("RMSE median:",median(RMSE_v),"\n")
-cat("RRSE median:",median(RRSE_v),"\n")
+cat("mean values for Lancaster:\n")
+cat("MAE mean:",mean(MAE_v),"\n")
+cat("NMAE mean:",mean(NMAE_v),"\n")
+cat("RMSE mean:",mean(RMSE_v),"\n")
+cat("RRSE mean:",mean(RRSE_v),"\n")
+cat("R2 mean:",mean(R2_v),"\n")
 
 # ------------------------------------------------------------
-# 4. PHILADELPHIA
+# 5. PHILADELPHIA
 # ------------------------------------------------------------
 cat("\n============================================================\n")
 cat("BACKTESTING - PHILADELPHIA\n")
@@ -256,6 +302,7 @@ MAE_v=vector(length=Runs)
 NMAE_v=vector(length=Runs)
 RMSE_v=vector(length=Runs)
 RRSE_v=vector(length=Runs)
+R2_v=vector(length=Runs)
 
 res_philadelphia=data.frame()
 
@@ -268,13 +315,19 @@ for(b in 1:Runs)
   
   print("model> auto.arima")
   AR=auto.arima(dtr)
-  F=forecast(AR,h=length(H$ts))
-  Pred=F$mean[1:Test]
+  fc=forecast(AR,h=length(H$ts))
+  Pred=as.numeric(fc$mean[1:Test])
+  
+  # --- Pos-processamento ---
+  Pred[Pred < 0] <- 0
+  datas_teste=datas[H$ts]
+  Pred[datas_teste %in% datas_fecho] <- 0
   
   MAE_v[b]=mmetric(y=Y,x=Pred,metric="MAE")
   NMAE_v[b]=mmetric(y=Y,x=Pred,metric="NMAE",val=YR)
   RMSE_v[b]=mmetric(y=Y,x=Pred,metric="RMSE")
   RRSE_v[b]=mmetric(y=Y,x=Pred,metric="RRSE")
+  R2_v[b]=1-(sum((Y-Pred)^2)/sum((Y-mean(Y))^2))
   
   ord=arimaorder(AR)
   
@@ -291,7 +344,8 @@ for(b in 1:Runs)
     MAE=round(MAE_v[b],4),
     NMAE=round(NMAE_v[b],4),
     RMSE=round(RMSE_v[b],4),
-    RRSE=round(RRSE_v[b],4)
+    RRSE=round(RRSE_v[b],4),
+    R2=round(R2_v[b],4)
   )
   
   res_philadelphia=rbind(res_philadelphia,linha)
@@ -301,12 +355,19 @@ for(b in 1:Runs)
       "MAE:",round(MAE_v[b],4),
       "NMAE:",round(NMAE_v[b],4),
       "RMSE:",round(RMSE_v[b],4),
-      "RRSE:",round(RRSE_v[b],4),"\n")
+      "RRSE:",round(RRSE_v[b],4),
+      "R2:",round(R2_v[b],4),"\n")
   
   mgraph(Y,Pred,graph="REG",Grid=10,col=c("black","blue"),
          leg=list(pos="topleft",leg=c("target","ARIMA pred.")))
   mpause()
 }
+
+# --- Boxplot das metricas ---
+boxplot(NMAE_v,RRSE_v,R2_v,
+        names=c("NMAE","RRSE","R2"),
+        main="Philadelphia - ARIMA - Distribuicao das Metricas (12 iteracoes)",
+        col="seagreen")
 
 med_philadelphia=data.frame(
   Loja="Philadelphia",
@@ -315,20 +376,22 @@ med_philadelphia=data.frame(
   Iteracoes=Runs,
   Horizonte=Test,
   Incremento=S,
-  Mediana_MAE=round(median(MAE_v),4),
-  Mediana_NMAE=round(median(NMAE_v),4),
-  Mediana_RMSE=round(median(RMSE_v),4),
-  Mediana_RRSE=round(median(RRSE_v),4)
+  Media_MAE=round(mean(MAE_v),4),
+  Media_NMAE=round(mean(NMAE_v),4),
+  Media_RMSE=round(mean(RMSE_v),4),
+  Media_RRSE=round(mean(RRSE_v),4),
+  Media_R2=round(mean(R2_v),4)
 )
 
-cat("median values for Philadelphia:\n")
-cat("MAE median:",median(MAE_v),"\n")
-cat("NMAE median:",median(NMAE_v),"\n")
-cat("RMSE median:",median(RMSE_v),"\n")
-cat("RRSE median:",median(RRSE_v),"\n")
+cat("mean values for Philadelphia:\n")
+cat("MAE mean:",mean(MAE_v),"\n")
+cat("NMAE mean:",mean(NMAE_v),"\n")
+cat("RMSE mean:",mean(RMSE_v),"\n")
+cat("RRSE mean:",mean(RRSE_v),"\n")
+cat("R2 mean:",mean(R2_v),"\n")
 
 # ------------------------------------------------------------
-# 5. RICHMOND
+# 6. RICHMOND
 # ------------------------------------------------------------
 cat("\n============================================================\n")
 cat("BACKTESTING - RICHMOND\n")
@@ -359,6 +422,7 @@ MAE_v=vector(length=Runs)
 NMAE_v=vector(length=Runs)
 RMSE_v=vector(length=Runs)
 RRSE_v=vector(length=Runs)
+R2_v=vector(length=Runs)
 
 res_richmond=data.frame()
 
@@ -371,13 +435,19 @@ for(b in 1:Runs)
   
   print("model> auto.arima")
   AR=auto.arima(dtr)
-  F=forecast(AR,h=length(H$ts))
-  Pred=F$mean[1:Test]
+  fc=forecast(AR,h=length(H$ts))
+  Pred=as.numeric(fc$mean[1:Test])
+  
+  # --- Pos-processamento ---
+  Pred[Pred < 0] <- 0
+  datas_teste=datas[H$ts]
+  Pred[datas_teste %in% datas_fecho] <- 0
   
   MAE_v[b]=mmetric(y=Y,x=Pred,metric="MAE")
   NMAE_v[b]=mmetric(y=Y,x=Pred,metric="NMAE",val=YR)
   RMSE_v[b]=mmetric(y=Y,x=Pred,metric="RMSE")
   RRSE_v[b]=mmetric(y=Y,x=Pred,metric="RRSE")
+  R2_v[b]=1-(sum((Y-Pred)^2)/sum((Y-mean(Y))^2))
   
   ord=arimaorder(AR)
   
@@ -394,7 +464,8 @@ for(b in 1:Runs)
     MAE=round(MAE_v[b],4),
     NMAE=round(NMAE_v[b],4),
     RMSE=round(RMSE_v[b],4),
-    RRSE=round(RRSE_v[b],4)
+    RRSE=round(RRSE_v[b],4),
+    R2=round(R2_v[b],4)
   )
   
   res_richmond=rbind(res_richmond,linha)
@@ -404,12 +475,19 @@ for(b in 1:Runs)
       "MAE:",round(MAE_v[b],4),
       "NMAE:",round(NMAE_v[b],4),
       "RMSE:",round(RMSE_v[b],4),
-      "RRSE:",round(RRSE_v[b],4),"\n")
+      "RRSE:",round(RRSE_v[b],4),
+      "R2:",round(R2_v[b],4),"\n")
   
   mgraph(Y,Pred,graph="REG",Grid=10,col=c("black","blue"),
          leg=list(pos="topleft",leg=c("target","ARIMA pred.")))
   mpause()
 }
+
+# --- Boxplot das metricas ---
+boxplot(NMAE_v,RRSE_v,R2_v,
+        names=c("NMAE","RRSE","R2"),
+        main="Richmond - ARIMA - Distribuicao das Metricas (12 iteracoes)",
+        col="hotpink")
 
 med_richmond=data.frame(
   Loja="Richmond",
@@ -418,20 +496,22 @@ med_richmond=data.frame(
   Iteracoes=Runs,
   Horizonte=Test,
   Incremento=S,
-  Mediana_MAE=round(median(MAE_v),4),
-  Mediana_NMAE=round(median(NMAE_v),4),
-  Mediana_RMSE=round(median(RMSE_v),4),
-  Mediana_RRSE=round(median(RRSE_v),4)
+  Media_MAE=round(mean(MAE_v),4),
+  Media_NMAE=round(mean(NMAE_v),4),
+  Media_RMSE=round(mean(RMSE_v),4),
+  Media_RRSE=round(mean(RRSE_v),4),
+  Media_R2=round(mean(R2_v),4)
 )
 
-cat("median values for Richmond:\n")
-cat("MAE median:",median(MAE_v),"\n")
-cat("NMAE median:",median(NMAE_v),"\n")
-cat("RMSE median:",median(RMSE_v),"\n")
-cat("RRSE median:",median(RRSE_v),"\n")
+cat("mean values for Richmond:\n")
+cat("MAE mean:",mean(MAE_v),"\n")
+cat("NMAE mean:",mean(NMAE_v),"\n")
+cat("RMSE mean:",mean(RMSE_v),"\n")
+cat("RRSE mean:",mean(RRSE_v),"\n")
+cat("R2 mean:",mean(R2_v),"\n")
 
 # ------------------------------------------------------------
-# 6. JUNTAR RESULTADOS
+# 7. JUNTAR RESULTADOS
 # ------------------------------------------------------------
 resultados_iteracoes=rbind(
   res_baltimore,
@@ -440,7 +520,7 @@ resultados_iteracoes=rbind(
   res_richmond
 )
 
-resultados_mediana=rbind(
+resultados_media=rbind(
   med_baltimore,
   med_lancaster,
   med_philadelphia,
@@ -448,17 +528,17 @@ resultados_mediana=rbind(
 )
 
 cat("\n============================================================\n")
-cat("RESULTADOS FINAIS - MEDIANA DAS MÉTRICAS POR LOJA\n")
+cat("RESULTADOS FINAIS - MEDIA DAS METRICAS POR LOJA\n")
 cat("============================================================\n")
-print(resultados_mediana)
+print(resultados_media)
 
 # ------------------------------------------------------------
-# 7. GUARDAR CSV
+# 8. GUARDAR CSV
 # ------------------------------------------------------------
 write.csv(resultados_iteracoes,
           "backtesting_arima_iteracoes.csv",
           row.names=FALSE)
 
-write.csv(resultados_mediana,
-          "backtesting_arima_mediana_lojas.csv",
+write.csv(resultados_media,
+          "backtesting_arima_media_lojas.csv",
           row.names=FALSE)

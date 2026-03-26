@@ -1,9 +1,0 @@
-"Loja","Estrategia","Mediana_NMAE","Mediana_RMSE","Mediana_R2"
-"baltimore","Growing Window",5.13,64.09,0.819
-"baltimore","Rolling Window",5.8,69.8,0.8071
-"lancaster","Growing Window",4.41,95.94,0.7992
-"lancaster","Rolling Window",4.84,100.32,0.7977
-"philadelphia","Growing Window",6.49,123.47,0.8062
-"philadelphia","Rolling Window",7.2,135.1,0.8057
-"richmond","Growing Window",5.58,37.74,0.8102
-"richmond","Rolling Window",6.32,41.67,0.8042

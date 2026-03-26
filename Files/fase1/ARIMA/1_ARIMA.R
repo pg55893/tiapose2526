@@ -3,14 +3,13 @@
 # Target: Num_Customers
 # Treino: todos os dados exceto os últimos 7 dias
 # Teste : últimos 7 dias
-# Métricas: MAE, NMAE, RMSE, RRSE
+# Métricas: NMAE, RRSE, R²
 # ============================================================
 
 # ------------------------------------------------------------
 # 0. DEFINIR PASTA DE TRABALHO
 # ------------------------------------------------------------
-setwd("~/TIAPOSE_projeto/tiapose2526/Files/fase1")
-
+setwd("~/TIAPOSE2526/Files/csv")
 getwd()
 list.files()
 
@@ -23,7 +22,11 @@ library(rminer)
 # ------------------------------------------------------------
 # 2. CARREGAR DADOS TRATADOS
 # ------------------------------------------------------------
-source("~/TIAPOSE_projeto/tiapose2526/Files/tratamentoDeDados.R")
+source("~/TIAPOSE2526/Files/tratamentoDeDados.R")
+
+# --- Criar e ir para a pasta ARIMA para guardar resultados ---
+dir.create("~/TIAPOSE2526/Files/fase1/ARIMA", showWarnings=FALSE)
+setwd("~/TIAPOSE2526/Files/fase1/ARIMA")
 
 if(!exists("baltimore") || !exists("lancaster") ||
    !exists("philadelphia") || !exists("richmond")){
@@ -31,7 +34,12 @@ if(!exists("baltimore") || !exists("lancaster") ||
 }
 
 # ------------------------------------------------------------
-# 3. FUNCAO PARA AVALIAR ARIMA
+# 3. DATAS EM QUE A LOJA ESTA FECHADA (Natal e Pascoa)
+# ------------------------------------------------------------
+datas_fecho <- as.Date(c("2012-12-25","2013-12-25","2013-03-31","2014-04-20"))
+
+# ------------------------------------------------------------
+# 4. FUNCAO PARA AVALIAR ARIMA
 # ------------------------------------------------------------
 avaliar_arima=function(dados,nome,target="Num_Customers",H=7)
 {
@@ -69,9 +77,12 @@ avaliar_arima=function(dados,nome,target="Num_Customers",H=7)
   print(AR)
   
   # previsao
-  F2=forecast(AR,h=H)
-  Pred=F2$mean[1:H]
-  Pred=as.numeric(Pred)
+  fc=forecast(AR,h=H)
+  Pred=as.numeric(fc$mean[1:H])
+  
+  # --- Pos-processamento ---
+  Pred[Pred < 0] <- 0
+  Pred[D %in% datas_fecho] <- 0
   
   # metricas
   srange=diff(range(y,na.rm=TRUE))
@@ -81,12 +92,14 @@ avaliar_arima=function(dados,nome,target="Num_Customers",H=7)
   nmae=mmetric(Y,Pred,metric="NMAE",val=srange)
   rmse=mmetric(Y,Pred,metric="RMSE")
   rrse=mmetric(Y,Pred,metric="RRSE")
+  r2=1-(sum((Y-Pred)^2)/sum((Y-mean(Y))^2))
   
   cat("\nMetricas:\n")
   cat("MAE =",round(mae,4),"\n")
   cat("NMAE =",round(nmae,4),"\n")
   cat("RMSE =",round(rmse,4),"\n")
   cat("RRSE =",round(rrse,4),"\n")
+  cat("R2 =",round(r2,4),"\n")
   
   # tabela real vs previsto
   tabela=data.frame(
@@ -99,18 +112,20 @@ avaliar_arima=function(dados,nome,target="Num_Customers",H=7)
   cat("\nTabela previsoes:\n")
   print(tabela)
   
+  # No fim da função avaliar_arima, substitui o bloco do grafico por:
+  
   # grafico
+  pdf(paste0("arima_fase1_",tolower(nome),".pdf"), width=8, height=5)
   plot(D,Y,type="o",pch=16,lwd=2,
        xlab="Data",ylab=target,
        main=paste("ARIMA -",nome,"- Real vs Previsto"),
        ylim=range(c(Y,Pred)))
-  
   lines(D,Pred,type="o",pch=17,lwd=2,col="blue")
-  
   legend("topleft",
          legend=c("Real","Previsto"),
          col=c("black","blue"),
          lty=1,lwd=2,pch=c(16,17))
+  dev.off()
   
   # guardar metricas
   resultados=data.frame(
@@ -123,14 +138,15 @@ avaliar_arima=function(dados,nome,target="Num_Customers",H=7)
     MAE=round(mae,4),
     NMAE=round(nmae,4),
     RMSE=round(rmse,4),
-    RRSE=round(rrse,4)
+    RRSE=round(rrse,4),
+    R2=round(r2,4)
   )
   
   return(list(modelo=AR,previsoes=tabela,metricas=resultados))
 }
 
 # ------------------------------------------------------------
-# 4. CORRER O MODELO PARA CADA LOJA
+# 5. CORRER O MODELO PARA CADA LOJA
 # ------------------------------------------------------------
 res1=avaliar_arima(baltimore,"Baltimore")
 res2=avaliar_arima(lancaster,"Lancaster")
@@ -138,7 +154,7 @@ res3=avaliar_arima(philadelphia,"Philadelphia")
 res4=avaliar_arima(richmond,"Richmond")
 
 # ------------------------------------------------------------
-# 5. JUNTAR RESULTADOS FINAIS
+# 6. JUNTAR RESULTADOS FINAIS
 # ------------------------------------------------------------
 resultados=rbind(
   res1$metricas,
@@ -153,7 +169,7 @@ cat("============================================================\n")
 print(resultados)
 
 # ------------------------------------------------------------
-# 6. GUARDAR RESULTADOS EM CSV
+# 7. GUARDAR RESULTADOS EM CSV
 # ------------------------------------------------------------
 write.csv(resultados,"resultados_arima_lojas.csv",row.names=FALSE)
 write.csv(res1$previsoes,"arima_previsoes_baltimore.csv",row.names=FALSE)
