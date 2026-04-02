@@ -1,9 +1,0 @@
-"Loja","Estrategia","Mediana_MAE","Mediana_NMAE","Mediana_RMSE","Mediana_RRSE","Mediana_R2","Naive_MAE","Naive_NMAE","Naive_RMSE","Naive_RRSE"
-"baltimore","Growing Window",41.5,3.81,46.9,136.16,0.8938,14,1.29,17.2,60.46
-"baltimore","Rolling Window",39.7,3.65,46.1,122.9,0.8765,14,1.29,17.2,60.46
-"lancaster","Growing Window",65.7,3.53,78,183.44,0.8285,20.8,1.12,24.8,61.14
-"lancaster","Rolling Window",57.3,3.08,68.9,141.98,0.7964,20.8,1.12,24.8,61.14
-"philadelphia","Growing Window",73.7,4.35,81.4,100.32,0.8737,28.5,1.69,34.5,53.77
-"philadelphia","Rolling Window",65.9,3.89,75,93.97,0.89,28.5,1.69,34.5,53.77
-"richmond","Growing Window",23.5,3.95,26.3,121.37,0.905,8.2,1.38,10.3,57.1
-"richmond","Rolling Window",22.4,3.75,25.2,109.83,0.899,8.2,1.38,10.3,57.1
