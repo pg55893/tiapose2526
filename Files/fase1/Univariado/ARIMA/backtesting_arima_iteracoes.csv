@@ -1,4 +1,4 @@
-"Loja","Iteracao","Modelo","Train_Start","Train_End","Train_Size","Test_Start","Test_End","Test_Size","MAE_ARIMA","NMAE_ARIMA","RMSE_ARIMA","RRSE_ARIMA","R2_ARIMA","MAE_Naive","NMAE_Naive","RMSE_Naive","RRSE_Naive","R2_Naive"
+"Loja","Iteracao","Modelo_ARIMA","Train_Start","Train_End","Train_Size","Test_Start","Test_End","Test_Size","MAE_ARIMA","NMAE_ARIMA","RMSE_ARIMA","RRSE_ARIMA","R2_ARIMA","MAE_SNaive","NMAE_SNaive","RMSE_SNaive","RRSE_SNaive","R2_SNaive"
 "Baltimore",1,"ARIMA(0,1,2)","2012-07-01","2014-03-22",630,"2014-03-23","2014-03-29",7,26.628,2.4474,30.1985,102.1193,-0.0428,9.4286,0.8666,10.7571,36.3761,0.8677
 "Baltimore",2,"ARIMA(0,1,2)","2012-07-01","2014-03-29",637,"2014-03-30","2014-04-05",7,29.3311,2.6959,30.6513,110.3078,-0.2168,11.2857,1.0373,13.4748,48.4932,0.7648
 "Baltimore",3,"ARIMA(0,1,2)","2012-07-01","2014-04-05",644,"2014-04-06","2014-04-12",7,26.3889,2.4254,31.0941,95.706,0.084,8.7143,0.8009,10.0357,30.8891,0.9046
