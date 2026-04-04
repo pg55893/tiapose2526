@@ -87,7 +87,6 @@ calc_r2_safe <- function(y, pred) {
   1 - sum((y - pred)^2) / sst
 }
 
-# cria xreg de treino do modelo de customers
 make_xreg_train_customers <- function(df, train_idx, lags_sales) {
   valid_idx <- train_idx[train_idx > max(lags_sales)]
   
@@ -107,9 +106,6 @@ make_xreg_train_customers <- function(df, train_idx, lags_sales) {
   )
 }
 
-# previsão recursiva do cenário 2:
-# 1) prever Sales
-# 2) usar Sales observada + prevista para construir xreg de Customers
 predict_recursive_c2 <- function(df, train_idx, test_idx, h, lags_sales) {
   
   # ---------------------------------------------------------------------------
@@ -136,7 +132,6 @@ predict_recursive_c2 <- function(df, train_idx, test_idx, h, lags_sales) {
   
   fit_cust <- auto.arima(y_cust_train, xreg = xreg_cust_train)
   
-  # combinar Sales observada com Sales prevista
   sales_ext <- c(df$Sales, pred_sales)
   
   xreg_cust_test <- matrix(NA, nrow = h, ncol = 3 + length(lags_sales))
@@ -273,23 +268,26 @@ for (nome in names(stores)) {
     res_loja <- rbind(res_loja, linha)
   }
   
-  # --- Gráfico ---
+  # --- Gráfico de linhas ---
   pdf(paste0("grafico_arimax_c2_", tolower(nome), ".pdf"), width = 12, height = 5)
+  
   n_pts <- length(all_real)
   yrange <- range(all_real, all_pred_c2, all_pred_naive, na.rm = TRUE)
   
   plot(1:n_pts, all_real, type = "l", col = "black", lwd = 1.5,
        ylim = yrange, xlab = "Observacao (teste acumulado)", ylab = "Num_Customers",
        main = paste("C2 -", nome, "| Real vs ARIMAX C2 vs Naive"))
+  
   lines(1:n_pts, all_pred_naive, col = "gray50", lty = 2, lwd = 1.2)
-  lines(1:n_pts, all_pred_c2, col = "steelblue", lty = 1, lwd = 1.5)
+  lines(1:n_pts, all_pred_c2, col = "purple", lty = 1, lwd = 1.5)
   
   for (j in 1:(RUNS - 1)) abline(v = j * H, col = "gray80", lty = 3)
   
   legend("topright", bty = "n",
          legend = c("Real", "Seasonal Naive", "ARIMAX C2"),
-         col = c("black", "gray50", "steelblue"),
+         col = c("black", "gray50", "purple"),
          lty = c(1, 2, 1), lwd = c(1.5, 1.2, 1.5))
+  
   dev.off()
   
   # --- Boxplot ---
