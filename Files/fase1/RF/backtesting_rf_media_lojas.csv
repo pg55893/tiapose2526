@@ -1,5 +1,0 @@
-"Loja","Target","Metodo","Iteracoes","Media_NMAE_rf","Media_RRSE_rf","Media_R2_rf","Media_NMAE_naive","Media_RRSE_naive","Media_R2_naive"
-"Baltimore","Num_Customers","Growing Window",12,2.5139,84.764,-0.0245,3.6962,157.448,-10.0021
-"Lancaster","Num_Customers","Growing Window",12,2.071,100.9078,-0.241,2.6763,160.9928,-10.1625
-"Philadelphia","Num_Customers","Growing Window",12,3.5516,84.5512,-0.0141,5.4355,154.3622,-9.847
-"Richmond","Num_Customers","Growing Window",12,2.7448,88.1981,-0.0045,4.3504,156.6148,-9.9338
