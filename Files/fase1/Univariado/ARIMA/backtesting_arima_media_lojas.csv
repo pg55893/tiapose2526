@@ -1,5 +1,5 @@
-"Loja","Target","Metodo","Iteracoes","Horizonte","Incremento","Media_MAE","Media_NMAE","Media_RMSE","Media_RRSE","Media_R2"
-"Baltimore","Num_Customers","Growing Window",12,7,7,40.5026,3.7227,57.0419,128.2915,-0.9404
-"Lancaster","Num_Customers","Growing Window",12,7,7,56.3602,3.0269,71.3141,146.1874,-1.4543
-"Philadelphia","Num_Customers","Growing Window",12,7,7,88.9246,5.2525,120.1191,127.4254,-0.8356
-"Richmond","Num_Customers","Growing Window",12,7,7,31.0318,5.2067,38.5361,157.4176,-1.8713
+"Loja","Target","Metodo","Iteracoes","Media_MAE_ARIMA","Media_NMAE_ARIMA","Media_RMSE_ARIMA","Media_RRSE_ARIMA","Media_R2_ARIMA","Media_MAE_Naive","Media_NMAE_Naive","Media_RMSE_Naive","Media_RRSE_Naive","Media_R2_Naive"
+"Baltimore","Num_Customers","Growing Window",12,40.5026,3.7227,57.0419,128.2915,-0.9404,40.2143,3.6962,65.2606,157.448,-10.0021
+"Lancaster","Num_Customers","Growing Window",12,56.3602,3.0269,71.3141,146.1874,-1.4543,49.8333,2.6763,81.1951,160.9928,-10.1625
+"Philadelphia","Num_Customers","Growing Window",12,88.9246,5.2525,120.1191,127.4254,-0.8356,92.0238,5.4355,149.6435,154.3622,-9.847
+"Richmond","Num_Customers","Growing Window",12,31.0318,5.2067,38.5361,157.4176,-1.8713,25.9286,4.3504,42.1076,156.6148,-9.9338

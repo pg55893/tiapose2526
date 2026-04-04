@@ -16,10 +16,10 @@ cat("========================================\n")
 cat("1. CARREGAR DADOS DAS 4 LOJAS\n")
 cat("========================================\n")
 
-baltimore    <- read.csv("Files/csv/baltimore.csv")
-lancaster    <- read.csv("Files/csv/lancaster.csv")
-philadelphia <- read.csv("Files/csv/philadelphia.csv")
-richmond     <- read.csv("Files/csv/richmond.csv")
+baltimore    <- read.csv("../CSV/baltimore.csv")
+lancaster    <- read.csv("../CSV/lancaster.csv")
+philadelphia <- read.csv("../CSV/philadelphia.csv")
+richmond     <- read.csv("../CSV/richmond.csv")
 
 # Converter datas
 baltimore$Date    <- as.Date(baltimore$Date)
