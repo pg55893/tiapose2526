@@ -1,0 +1,496 @@
+############################################################
+# FASE II — VAR MULTIVARIADO — GROWING WINDOW             #
+# Endógenas: Num_Customers + Sales                        #
+# Nota: sem exógenas (limitação do predict.varest)        #
+# 12 iterações, H=7, Target: Num_Customers                #
+############################################################
+
+
+============================================================
+BACKTESTING - BALTIMORE 
+============================================================
+  iter  1 | TR: 2012-07-01 a 2014-03-22 (n=630) | lag=5 | NMAE: 1.7003 | RRSE: 81.1486 | R2: 0.3415
+  iter  2 | TR: 2012-07-01 a 2014-03-29 (n=637) | lag=5 | NMAE: 2.1257 | RRSE: 116.0234 | R2: -0.3461
+  iter  3 | TR: 2012-07-01 a 2014-04-05 (n=644) | lag=5 | NMAE: 1.7017 | RRSE: 76.1195 | R2: 0.4206
+  iter  4 | TR: 2012-07-01 a 2014-04-12 (n=651) | lag=5 | NMAE: 2.2935 | RRSE: 76.5479 | R2: 0.4140
+  iter  5 | TR: 2012-07-01 a 2014-04-19 (n=658) | lag=5 | NMAE: 3.0727 | RRSE: 183.9301 | R2: -2.3830
+  iter  6 | TR: 2012-07-01 a 2014-04-26 (n=665) | lag=5 | NMAE: 2.2483 | RRSE: 121.1710 | R2: -0.4682
+  iter  7 | TR: 2012-07-01 a 2014-05-03 (n=672) | lag=5 | NMAE: 2.0928 | RRSE: 101.3351 | R2: -0.0269
+  iter  8 | TR: 2012-07-01 a 2014-05-10 (n=679) | lag=5 | NMAE: 1.6907 | RRSE: 103.6600 | R2: -0.0745
+  iter  9 | TR: 2012-07-01 a 2014-05-17 (n=686) | lag=5 | NMAE: 6.0918 | RRSE: 82.9188 | R2: 0.3124
+  iter 10 | TR: 2012-07-01 a 2014-05-24 (n=693) | lag=5 | NMAE: 5.3236 | RRSE: 51.0142 | R2: 0.7398
+  iter 11 | TR: 2012-07-01 a 2014-05-31 (n=700) | lag=5 | NMAE: 2.4227 | RRSE: 200.8228 | R2: -3.0330
+  iter 12 | TR: 2012-07-01 a 2014-06-07 (n=707) | lag=5 | NMAE: 1.5961 | RRSE: 131.9603 | R2: -0.7414
+
+  Médias Baltimore: MAE=29.3396 | NMAE=2.6967 | RRSE=110.5543 | R2=-0.4037
+
+
+============================================================
+BACKTESTING - LANCASTER 
+============================================================
+  iter  1 | TR: 2012-07-01 a 2014-03-22 (n=630) | lag=6 | NMAE: 1.6792 | RRSE: 117.2352 | R2: -0.3744
+  iter  2 | TR: 2012-07-01 a 2014-03-29 (n=637) | lag=6 | NMAE: 2.0800 | RRSE: 159.4676 | R2: -1.5430
+  iter  3 | TR: 2012-07-01 a 2014-04-05 (n=644) | lag=6 | NMAE: 1.3568 | RRSE: 99.5844 | R2: 0.0083
+  iter  4 | TR: 2012-07-01 a 2014-04-12 (n=651) | lag=6 | NMAE: 1.8714 | RRSE: 87.7184 | R2: 0.2305
+  iter  5 | TR: 2012-07-01 a 2014-04-19 (n=658) | lag=6 | NMAE: 3.3219 | RRSE: 202.8427 | R2: -3.1145
+  iter  6 | TR: 2012-07-01 a 2014-04-26 (n=665) | lag=6 | NMAE: 1.7101 | RRSE: 146.7280 | R2: -1.1529
+  iter  7 | TR: 2012-07-01 a 2014-05-03 (n=672) | lag=6 | NMAE: 1.2090 | RRSE: 106.9194 | R2: -0.1432
+  iter  8 | TR: 2012-07-01 a 2014-05-10 (n=679) | lag=6 | NMAE: 1.3710 | RRSE: 129.3502 | R2: -0.6731
+  iter  9 | TR: 2012-07-01 a 2014-05-17 (n=686) | lag=6 | NMAE: 4.2626 | RRSE: 78.2328 | R2: 0.3880
+  iter 10 | TR: 2012-07-01 a 2014-05-24 (n=693) | lag=6 | NMAE: 4.0153 | RRSE: 57.5782 | R2: 0.6685
+  iter 11 | TR: 2012-07-01 a 2014-05-31 (n=700) | lag=6 | NMAE: 2.2408 | RRSE: 273.0425 | R2: -6.4552
+  iter 12 | TR: 2012-07-01 a 2014-06-07 (n=707) | lag=6 | NMAE: 1.8618 | RRSE: 197.5729 | R2: -2.9035
+
+  Médias Lancaster: MAE=41.8639 | NMAE=2.2483 | RRSE=138.0227 | R2=-1.2554
+
+
+============================================================
+BACKTESTING - PHILADELPHIA 
+============================================================
+  iter  1 | TR: 2012-07-01 a 2014-03-22 (n=630) | lag=6 | NMAE: 1.8133 | RRSE: 58.7091 | R2: 0.6553
+  iter  2 | TR: 2012-07-01 a 2014-03-29 (n=637) | lag=6 | NMAE: 3.1268 | RRSE: 105.1239 | R2: -0.1051
+  iter  3 | TR: 2012-07-01 a 2014-04-05 (n=644) | lag=6 | NMAE: 2.2860 | RRSE: 61.7061 | R2: 0.6192
+  iter  4 | TR: 2012-07-01 a 2014-04-12 (n=651) | lag=6 | NMAE: 3.0642 | RRSE: 79.4862 | R2: 0.3682
+  iter  5 | TR: 2012-07-01 a 2014-04-19 (n=658) | lag=6 | NMAE: 3.7168 | RRSE: 152.7182 | R2: -1.3323
+  iter  6 | TR: 2012-07-01 a 2014-04-26 (n=665) | lag=6 | NMAE: 2.8028 | RRSE: 89.4398 | R2: 0.2001
+  iter  7 | TR: 2012-07-01 a 2014-05-03 (n=672) | lag=6 | NMAE: 3.1987 | RRSE: 84.3789 | R2: 0.2880
+  iter  8 | TR: 2012-07-01 a 2014-05-10 (n=679) | lag=6 | NMAE: 2.4362 | RRSE: 79.6984 | R2: 0.3648
+  iter  9 | TR: 2012-07-01 a 2014-05-17 (n=686) | lag=6 | NMAE: 9.6149 | RRSE: 89.8477 | R2: 0.1927
+  iter 10 | TR: 2012-07-01 a 2014-05-24 (n=693) | lag=6 | NMAE: 6.5588 | RRSE: 45.3273 | R2: 0.7945
+  iter 11 | TR: 2012-07-01 a 2014-05-31 (n=700) | lag=6 | NMAE: 2.8180 | RRSE: 151.8983 | R2: -1.3073
+  iter 12 | TR: 2012-07-01 a 2014-06-07 (n=707) | lag=6 | NMAE: 2.3921 | RRSE: 107.9244 | R2: -0.1648
+
+  Médias Philadelphia: MAE=61.8349 | NMAE=3.6524 | RRSE=92.1882 | R2=0.0478
+
+
+============================================================
+BACKTESTING - RICHMOND 
+============================================================
+  iter  1 | TR: 2012-07-01 a 2014-03-22 (n=630) | lag=4 | NMAE: 1.7486 | RRSE: 79.7888 | R2: 0.3634
+  iter  2 | TR: 2012-07-01 a 2014-03-29 (n=637) | lag=4 | NMAE: 1.8669 | RRSE: 93.8018 | R2: 0.1201
+  iter  3 | TR: 2012-07-01 a 2014-04-05 (n=644) | lag=4 | NMAE: 1.3600 | RRSE: 52.0789 | R2: 0.7288
+  iter  4 | TR: 2012-07-01 a 2014-04-12 (n=651) | lag=4 | NMAE: 2.3458 | RRSE: 65.1097 | R2: 0.5761
+  iter  5 | TR: 2012-07-01 a 2014-04-19 (n=658) | lag=4 | NMAE: 3.2377 | RRSE: 172.5668 | R2: -1.9779
+  iter  6 | TR: 2012-07-01 a 2014-04-26 (n=665) | lag=4 | NMAE: 2.3356 | RRSE: 97.4209 | R2: 0.0509
+  iter  7 | TR: 2012-07-01 a 2014-05-03 (n=672) | lag=4 | NMAE: 1.8491 | RRSE: 73.4882 | R2: 0.4599
+  iter  8 | TR: 2012-07-01 a 2014-05-10 (n=679) | lag=4 | NMAE: 1.6279 | RRSE: 78.1061 | R2: 0.3899
+  iter  9 | TR: 2012-07-01 a 2014-05-17 (n=686) | lag=4 | NMAE: 6.8017 | RRSE: 85.1215 | R2: 0.2754
+  iter 10 | TR: 2012-07-01 a 2014-05-24 (n=693) | lag=4 | NMAE: 6.6959 | RRSE: 51.2775 | R2: 0.7371
+  iter 11 | TR: 2012-07-01 a 2014-05-31 (n=700) | lag=4 | NMAE: 2.8663 | RRSE: 198.3331 | R2: -2.9336
+  iter 12 | TR: 2012-07-01 a 2014-06-07 (n=707) | lag=4 | NMAE: 2.1564 | RRSE: 132.2527 | R2: -0.7491
+
+  Médias Richmond: MAE=17.3296 | NMAE=2.9077 | RRSE=98.2788 | R2=-0.1632
+
+
+============================================================
+RESULTADOS FINAIS - VAR MULTIVARIADO
+============================================================
+          Loja        Target Modelo         Metodo Iteracoes Horizonte Incremento
+1    Baltimore Num_Customers    VAR Growing Window        12         7          7
+2    Lancaster Num_Customers    VAR Growing Window        12         7          7
+3 Philadelphia Num_Customers    VAR Growing Window        12         7          7
+4     Richmond Num_Customers    VAR Growing Window        12         7          7
+  Media_MAE Media_NMAE Media_RRSE Media_R2
+1   29.3396     2.6967   110.5543  -0.4037
+2   41.8639     2.2483   138.0227  -1.2554
+3   61.8349     3.6524    92.1882   0.0478
+4   17.3296     2.9077    98.2788  -0.1632
+4362 | RRSE: 79.6984 | R2: 0.3648
+  iter  9 | TR: 2012-07-01 a 2014-05-17 (n=686) | lag=6 | NMAE: 9.6149 | RRSE: 89.8477 | R2: 0.1927
+  iter 10 | TR: 2012-07-01 a 2014-05-24 (n=693) | lag=6 | NMAE: 6.5588 | RRSE: 45.3273 | R2: 0.7945
+  iter 11 | TR: 2012-07-01 a 2014-05-31 (n=700) | lag=6 | NMAE: 2.8180 | RRSE: 151.8983 | R2: -1.3073
+  iter 12 | TR: 2012-07-01 a 2014-06-07 (n=707) | lag=6 | NMAE: 2.3921 | RRSE: 107.9244 | R2: -0.1648
+
+  Médias Philadelphia: MAE=61.8349 | NMAE=3.6524 | RRSE=92.1882 | R2=0.0478
+
+
+============================================================
+BACKTESTING - RICHMOND 
+============================================================
+  iter  1 | TR: 2012-07-01 a 2014-03-22 (n=630) | lag=4 | NMAE: 1.7486 | RRSE: 79.7888 | R2: 0.3634
+  iter  2 | TR: 2012-07-01 a 2014-03-29 (n=637) | lag=4 | NMAE: 1.8669 | RRSE: 93.8018 | R2: 0.1201
+  iter  3 | TR: 2012-07-01 a 2014-04-05 (n=644) | lag=4 | NMAE: 1.3600 | RRSE: 52.0789 | R2: 0.7288
+  iter  4 | TR: 2012-07-01 a 2014-04-12 (n=651) | lag=4 | NMAE: 2.3458 | RRSE: 65.1097 | R2: 0.5761
+  iter  5 | TR: 2012-07-01 a 2014-04-19 (n=658) | lag=4 | NMAE: 3.2377 | RRSE: 172.5668 | R2: -1.9779
+  iter  6 | TR: 2012-07-01 a 2014-04-26 (n=665) | lag=4 | NMAE: 2.3356 | RRSE: 97.4209 | R2: 0.0509
+  iter  7 | TR: 2012-07-01 a 2014-05-03 (n=672) | lag=4 | NMAE: 1.8491 | RRSE: 73.4882 | R2: 0.4599
+  iter  8 | TR: 2012-07-01 a 2014-05-10 (n=679) | lag=4 | NMAE: 1.6279 | RRSE: 78.1061 | R2: 0.3899
+  iter  9 | TR: 2012-07-01 a 2014-05-17 (n=686) | lag=4 | NMAE: 6.8017 | RRSE: 85.1215 | R2: 0.2754
+  iter 10 | TR: 2012-07-01 a 2014-05-24 (n=693) | lag=4 | NMAE: 6.6959 | RRSE: 51.2775 | R2: 0.7371
+  iter 11 | TR: 2012-07-01 a 2014-05-31 (n=700) | lag=4 | NMAE: 2.8663 | RRSE: 198.3331 | R2: -2.9336
+  iter 12 | TR: 2012-07-01 a 2014-06-07 (n=707) | lag=4 | NMAE: 2.1564 | RRSE: 132.2527 | R2: -0.7491
+
+  Médias Richmond: MAE=17.3296 | NMAE=2.9077 | RRSE=98.2788 | R2=-0.1632
+
+
+============================================================
+RESULTADOS FINAIS - VAR MULTIVARIADO
+============================================================
+          Loja        Target Modelo         Metodo Iteracoes Horizonte Incremento
+1    Baltimore Num_Customers    VAR Growing Window        12         7          7
+2    Lancaster Num_Customers    VAR Growing Window        12         7          7
+3 Philadelphia Num_Customers    VAR Growing Window        12         7          7
+4     Richmond Num_Customers    VAR Growing Window        12         7          7
+  Media_MAE Media_NMAE Media_RRSE Media_R2
+1   29.3396     2.6967   110.5543  -0.4037
+2   41.8639     2.2483   138.0227  -1.2554
+3   61.8349     3.6524    92.1882   0.0478
+4   17.3296     2.9077    98.2788  -0.1632
+
+CSVs guardados em: /Users/martinho/Documents/MEGSI/2 Semestre/TIAPOSE/TIAPOSE_project/Files/fase1/Multivariado/HoltWinters 
+=== Baltimore ===
+          Date Num_Employees Num_Customers Pct_On_Sale TouristEvent  Sales
+146 2012-11-23            83          1088      15.880          Yes 171345
+178 2012-12-25            14           113       8.310           No  38894
+517 2013-11-29            62           818      21.720          Yes 105102
+543 2013-12-25            13            89      10.250           No  36227
+659 2014-04-20             6           133      10.875           No  21268
+=== Lancaster ===
+          Date Num_Employees Num_Customers Pct_On_Sale TouristEvent  Sales
+146 2012-11-23           120          1862      15.320          Yes 298630
+178 2012-12-25            26           204       8.020           No  73508
+517 2013-11-29            85          1105      20.970          Yes 153255
+543 2013-12-25            22           137       9.890           No  58796
+659 2014-04-20             7           208      10.495           No  30812
+=== Richmond ===
+          Date Num_Employees Num_Customers Pct_On_Sale TouristEvent Sales
+146 2012-11-23            35           596      16.580          Yes 83973
+178 2012-12-25             9            60       8.680           No 21801
+517 2013-11-29            51           504      22.690          Yes 70131
+543 2013-12-25             8            50      10.710           No 20288
+659 2014-04-20             5            77      11.365           No 15178
+=== Philadelphia ===
+          Date Num_Employees Num_Customers Pct_On_Sale TouristEvent  Sales
+146 2012-11-23           119        1693.0      16.280          Yes 252073
+178 2012-12-25            22         164.0       8.520           No  56477
+517 2013-11-29           184        1681.0      22.280          Yes 241814
+543 2013-12-25            22         150.0      10.510           No  61069
+659 2014-04-20            15         235.5      11.155           No  51806
+baltimore - datas em falta: 0 
+lancaster - datas em falta: 0 
+richmond - datas em falta: 0 
+philadelphia - datas em falta: 0 
+baltimore - registos com Sales <= 0 fora do Natal: 0 
+lancaster - registos com Sales <= 0 fora do Natal: 0 
+richmond - registos com Sales <= 0 fora do Natal: 0 
+philadelphia - registos com Sales <= 0 fora do Natal: 0 
+############################################################
+# FASE I — HOLT-WINTERS — HOLDOUT SIMPLES (4 LOJAS)       #
+# Dados com tratamento aplicado                            #
+############################################################
+
+============================================================
+LOJA: BALTIMORE 
+============================================================
+
+1. CARREGAMENTO DOS DADOS (tratados)
+   Observacoes: 714 
+   Datas: 2012-07-01 a 2014-06-14 
+   Range Num_Customers: 0 a 1088 
+
+2. DIVISAO TREINO/TESTE
+   Treino: 707 obs | 2012-07-01 a 2014-06-07 
+   Teste: 7 obs | 2014-06-08 a 2014-06-14 
+
+3. MODELO HOLT-WINTERS
+   Variante: Aditiva 
+   alpha (nivel): 0.6844 
+   beta (tendencia): 0.0016 
+   gamma (sazonalidade): 0.0524 
+
+4. PREVISOES vs VALORES REAIS
+   Dia | Real | HW Prev | HW Erro | Naive Prev | Naive Erro
+   ----+------+---------+---------+------------+-----------
+    1  |   97 |    73.1 |    23.9 |       95.0 |       2.0
+    2  |   61 |    14.9 |    46.1 |       61.0 |       0.0
+    3  |   65 |     0.0 |    65.0 |       73.0 |      -8.0
+    4  |   71 |     0.0 |    71.0 |       71.0 |       0.0
+    5  |   65 |     2.3 |    62.7 |       69.0 |      -4.0
+    6  |   89 |    33.4 |    55.6 |       77.0 |      12.0
+    7  |  125 |   122.8 |     2.2 |      118.0 |       7.0
+
+5. METRICAS
+                HW        Naive
+   MAE:       46.6        4.7
+   NMAE:   4.2856    0.4333
+   RMSE:     52.08       6.29
+   RRSE:  241.2059   29.1367
+   R2:     -4.8180
+
+6. GRAFICO (ver PDF)
+
+============================================================
+LOJA: LANCASTER 
+============================================================
+
+1. CARREGAMENTO DOS DADOS (tratados)
+   Observacoes: 714 
+   Datas: 2012-07-01 a 2014-06-14 
+   Range Num_Customers: 0 a 1862 
+
+2. DIVISAO TREINO/TESTE
+   Treino: 707 obs | 2012-07-01 a 2014-06-07 
+   Teste: 7 obs | 2014-06-08 a 2014-06-14 
+
+3. MODELO HOLT-WINTERS
+   Variante: Aditiva 
+   alpha (nivel): 0.6549 
+   beta (tendencia): 0.0023 
+   gamma (sazonalidade): 0.0572 
+
+4. PREVISOES vs VALORES REAIS
+   Dia | Real | HW Prev | HW Erro | Naive Prev | Naive Erro
+   ----+------+---------+---------+------------+-----------
+    1  |  116 |   101.3 |    14.7 |      115.0 |       1.0
+    2  |   72 |    17.0 |    55.0 |       73.0 |      -1.0
+    3  |   77 |     0.0 |    77.0 |       88.0 |     -11.0
+    4  |   84 |     0.0 |    84.0 |       85.0 |      -1.0
+    5  |   77 |     0.0 |    77.0 |       83.0 |      -6.0
+    6  |  106 |    21.8 |    84.2 |       92.0 |      14.0
+    7  |  149 |   158.0 |    -9.0 |      141.0 |       8.0
+
+5. METRICAS
+                HW        Naive
+   MAE:       57.3        6.0
+   NMAE:   3.0766    0.3222
+   RMSE:     64.74       7.75
+   RRSE:  248.7885   29.7688
+   R2:     -5.1896
+
+6. GRAFICO (ver PDF)
+
+============================================================
+LOJA: PHILADELPHIA 
+============================================================
+
+1. CARREGAMENTO DOS DADOS (tratados)
+   Observacoes: 714 
+   Datas: 2012-07-01 a 2014-06-14 
+   Range Num_Customers: 0 a 1693 
+
+2. DIVISAO TREINO/TESTE
+   Treino: 707 obs | 2012-07-01 a 2014-06-07 
+   Teste: 7 obs | 2014-06-08 a 2014-06-14 
+
+3. MODELO HOLT-WINTERS
+   Variante: Aditiva 
+   alpha (nivel): 0.7121 
+   beta (tendencia): 6e-04 
+   gamma (sazonalidade): 0.0739 
+
+4. PREVISOES vs VALORES REAIS
+   Dia | Real | HW Prev | HW Erro | Naive Prev | Naive Erro
+   ----+------+---------+---------+------------+-----------
+    1  |  230 |   168.8 |    61.2 |      225.0 |       5.0
+    2  |  144 |    59.2 |    84.8 |      144.0 |       0.0
+    3  |  154 |     0.0 |   154.0 |      172.0 |     -18.0
+    4  |  168 |     7.2 |   160.8 |      168.0 |       0.0
+    5  |  154 |    39.9 |   114.1 |      164.0 |     -10.0
+    6  |  211 |   101.5 |   109.5 |      182.0 |      29.0
+    7  |  298 |   271.1 |    26.9 |      278.0 |      20.0
+
+5. METRICAS
+                HW        Naive
+   MAE:      101.6       11.7
+   NMAE:   6.0025    0.6919
+   RMSE:    111.00      15.54
+   RRSE:  214.3217   30.0007
+   R2:     -3.5934
+
+6. GRAFICO (ver PDF)
+
+============================================================
+LOJA: RICHMOND 
+============================================================
+
+1. CARREGAMENTO DOS DADOS (tratados)
+   Observacoes: 714 
+   Datas: 2012-07-01 a 2014-06-14 
+   Range Num_Customers: 0 a 596 
+
+2. DIVISAO TREINO/TESTE
+   Treino: 707 obs | 2012-07-01 a 2014-06-07 
+   Teste: 7 obs | 2014-06-08 a 2014-06-14 
+
+3. MODELO HOLT-WINTERS
+   Variante: Aditiva 
+   alpha (nivel): 0.6961 
+   beta (tendencia): 0.0013 
+   gamma (sazonalidade): 0.0585 
+
+4. PREVISOES vs VALORES REAIS
+   Dia | Real | HW Prev | HW Erro | Naive Prev | Naive Erro
+   ----+------+---------+---------+------------+-----------
+    1  |   64 |    47.1 |    16.9 |       62.0 |       2.0
+    2  |   40 |    13.1 |    26.9 |       40.0 |       0.0
+    3  |   42 |     0.0 |    42.0 |       48.0 |      -6.0
+    4  |   46 |     0.0 |    46.0 |       46.0 |       0.0
+    5  |   42 |     7.0 |    35.0 |       45.0 |      -3.0
+    6  |   58 |    25.7 |    32.3 |       50.0 |       8.0
+    7  |   82 |    78.0 |     4.0 |       77.0 |       5.0
+
+5. METRICAS
+                HW        Naive
+   MAE:       29.0        3.4
+   NMAE:   4.8692    0.5753
+   RMSE:     32.02       4.44
+   RRSE:  222.7911   30.8957
+   R2:     -3.9636
+
+6. GRAFICO (ver PDF)
+
+Graficos guardados em: /Users/martinho/Documents/MEGSI/2 Semestre/TIAPOSE/TIAPOSE_project/Files/fase1/Univariado/HoltWinters/graficos_hw_fase1.pdf 
+
+
+############################################################
+# RESUMO COMPARATIVO — FASE I — HOLT-WINTERS (4 LOJAS)   #
+############################################################
+
+               Loja   MAE   NMAE   RMSE     RRSE      R2  Alpha   Beta  Gamma Variante
+alpha     Baltimore  46.6 4.2856  52.08 241.2059 -4.8180 0.6844 0.0016 0.0524  Aditiva
+alpha1    Lancaster  57.3 3.0766  64.74 248.7885 -5.1896 0.6549 0.0023 0.0572  Aditiva
+alpha2 Philadelphia 101.6 6.0025 111.00 214.3217 -3.5934 0.7121 0.0006 0.0739  Aditiva
+alpha3     Richmond  29.0 4.8692  32.02 222.7911 -3.9636 0.6961 0.0013 0.0585  Aditiva
+       Naive_MAE Naive_NMAE Naive_RMSE Naive_RRSE
+alpha        4.7     0.4333       6.29    29.1367
+alpha1       6.0     0.3222       7.75    29.7688
+alpha2      11.7     0.6919      15.54    30.0007
+alpha3       3.4     0.5753       4.44    30.8957
+
+Melhor loja por NMAE: Lancaster ( 3.0766 )
+Melhor loja por R2:   Philadelphia ( -3.5934 )
+
+Resultados exportados.
+=== Baltimore ===
+          Date Num_Employees Num_Customers Pct_On_Sale TouristEvent  Sales
+146 2012-11-23            83          1088      15.880          Yes 171345
+178 2012-12-25            14           113       8.310           No  38894
+517 2013-11-29            62           818      21.720          Yes 105102
+543 2013-12-25            13            89      10.250           No  36227
+659 2014-04-20             6           133      10.875           No  21268
+=== Lancaster ===
+          Date Num_Employees Num_Customers Pct_On_Sale TouristEvent  Sales
+146 2012-11-23           120          1862      15.320          Yes 298630
+178 2012-12-25            26           204       8.020           No  73508
+517 2013-11-29            85          1105      20.970          Yes 153255
+543 2013-12-25            22           137       9.890           No  58796
+659 2014-04-20             7           208      10.495           No  30812
+=== Richmond ===
+          Date Num_Employees Num_Customers Pct_On_Sale TouristEvent Sales
+146 2012-11-23            35           596      16.580          Yes 83973
+178 2012-12-25             9            60       8.680           No 21801
+517 2013-11-29            51           504      22.690          Yes 70131
+543 2013-12-25             8            50      10.710           No 20288
+659 2014-04-20             5            77      11.365           No 15178
+=== Philadelphia ===
+          Date Num_Employees Num_Customers Pct_On_Sale TouristEvent  Sales
+146 2012-11-23           119        1693.0      16.280          Yes 252073
+178 2012-12-25            22         164.0       8.520           No  56477
+517 2013-11-29           184        1681.0      22.280          Yes 241814
+543 2013-12-25            22         150.0      10.510           No  61069
+659 2014-04-20            15         235.5      11.155           No  51806
+baltimore - datas em falta: 0 
+lancaster - datas em falta: 0 
+richmond - datas em falta: 0 
+philadelphia - datas em falta: 0 
+baltimore - registos com Sales <= 0 fora do Natal: 0 
+lancaster - registos com Sales <= 0 fora do Natal: 0 
+richmond - registos com Sales <= 0 fora do Natal: 0 
+philadelphia - registos com Sales <= 0 fora do Natal: 0 
+############################################################
+# FASE II — HOLT-WINTERS — BACKTESTING GROWING WINDOW     #
+# 12 iterações, H=7, Target: Num_Customers                #
+############################################################
+
+
+============================================================
+BACKTESTING - BALTIMORE 
+============================================================
+  iter  1 | TR: 2012-07-01 a 2014-03-22 (n=630) | NMAE: 3.8611 | RRSE: 162.0182 | R2: -1.6250 | Naive NMAE: 0.8666
+  iter  2 | TR: 2012-07-01 a 2014-03-29 (n=637) | NMAE: 2.6677 | RRSE: 123.5583 | R2: -0.5267 | Naive NMAE: 1.0373
+  iter  3 | TR: 2012-07-01 a 2014-04-05 (n=644) | NMAE: 3.5777 | RRSE: 131.2383 | R2: -0.7223 | Naive NMAE: 0.8009
+  iter  4 | TR: 2012-07-01 a 2014-04-12 (n=651) | NMAE: 4.7589 | RRSE: 161.5555 | R2: -1.6100 | Naive NMAE: 2.1140
+  iter  5 | TR: 2012-07-01 a 2014-04-19 (n=658) | NMAE: 3.3601 | RRSE: 181.3605 | R2: -2.2892 | Naive NMAE: 2.9937
+  iter  6 | TR: 2012-07-01 a 2014-04-26 (n=665) | NMAE: 2.0939 | RRSE: 89.3073 | R2: 0.2024 | Naive NMAE: 1.7332
+  iter  7 | TR: 2012-07-01 a 2014-05-03 (n=672) | NMAE: 2.7625 | RRSE: 114.4936 | R2: -0.3109 | Naive NMAE: 0.4858
+  iter  8 | TR: 2012-07-01 a 2014-05-10 (n=679) | NMAE: 3.4015 | RRSE: 147.7725 | R2: -1.1837 | Naive NMAE: 0.8009
+  iter  9 | TR: 2012-07-01 a 2014-05-17 (n=686) | NMAE: 9.5793 | RRSE: 99.7951 | R2: 0.0041 | Naive NMAE: 6.4601
+  iter 10 | TR: 2012-07-01 a 2014-05-24 (n=693) | NMAE: 20.0119 | RRSE: 136.7310 | R2: -0.8695 | Naive NMAE: 16.2421
+  iter 11 | TR: 2012-07-01 a 2014-05-31 (n=700) | NMAE: 4.0119 | RRSE: 273.0644 | R2: -6.4564 | Naive NMAE: 10.3860
+  iter 12 | TR: 2012-07-01 a 2014-06-07 (n=707) | NMAE: 4.2856 | RRSE: 241.2059 | R2: -4.8180 | Naive NMAE: 0.4333
+
+  Médias Baltimore | HW: NMAE=5.3643 RRSE=155.1750 R2=-1.6838 | Naive: NMAE=3.6962 RRSE=157.4480
+
+
+============================================================
+BACKTESTING - LANCASTER 
+============================================================
+  iter  1 | TR: 2012-07-01 a 2014-03-22 (n=630) | NMAE: 3.2518 | RRSE: 194.9837 | R2: -2.8019 | Naive NMAE: 0.6138
+  iter  2 | TR: 2012-07-01 a 2014-03-29 (n=637) | NMAE: 2.7007 | RRSE: 169.4557 | R2: -1.8715 | Naive NMAE: 0.7596
+  iter  3 | TR: 2012-07-01 a 2014-04-05 (n=644) | NMAE: 3.0404 | RRSE: 159.1149 | R2: -1.5318 | Naive NMAE: 0.5677
+  iter  4 | TR: 2012-07-01 a 2014-04-12 (n=651) | NMAE: 3.9425 | RRSE: 192.3128 | R2: -2.6984 | Naive NMAE: 1.5038
+  iter  5 | TR: 2012-07-01 a 2014-04-19 (n=658) | NMAE: 3.6519 | RRSE: 198.8751 | R2: -2.9551 | Naive NMAE: 2.5242
+  iter  6 | TR: 2012-07-01 a 2014-04-26 (n=665) | NMAE: 2.4391 | RRSE: 144.2488 | R2: -1.0808 | Naive NMAE: 1.6035
+  iter  7 | TR: 2012-07-01 a 2014-05-03 (n=672) | NMAE: 2.4609 | RRSE: 147.1602 | R2: -1.1656 | Naive NMAE: 0.3453
+  iter  8 | TR: 2012-07-01 a 2014-05-10 (n=679) | NMAE: 2.9272 | RRSE: 183.0072 | R2: -2.3492 | Naive NMAE: 0.5677
+  iter  9 | TR: 2012-07-01 a 2014-05-17 (n=686) | NMAE: 7.0773 | RRSE: 99.7889 | R2: 0.0042 | Naive NMAE: 4.5573
+  iter 10 | TR: 2012-07-01 a 2014-05-24 (n=693) | NMAE: 13.0949 | RRSE: 126.8200 | R2: -0.6083 | Naive NMAE: 11.4393
+  iter 11 | TR: 2012-07-01 a 2014-05-31 (n=700) | NMAE: 3.0582 | RRSE: 295.8359 | R2: -7.7519 | Naive NMAE: 7.3116
+  iter 12 | TR: 2012-07-01 a 2014-06-07 (n=707) | NMAE: 3.0766 | RRSE: 248.7885 | R2: -5.1896 | Naive NMAE: 0.3222
+
+  Médias Lancaster | HW: NMAE=4.2268 RRSE=180.0326 R2=-2.5000 | Naive: NMAE=2.6763 RRSE=160.9928
+
+
+============================================================
+BACKTESTING - PHILADELPHIA 
+============================================================
+  iter  1 | TR: 2012-07-01 a 2014-03-22 (n=630) | NMAE: 4.6668 | RRSE: 134.0857 | R2: -0.7979 | Naive NMAE: 1.2742
+  iter  2 | TR: 2012-07-01 a 2014-03-29 (n=637) | NMAE: 2.4524 | RRSE: 82.6453 | R2: 0.3170 | Naive NMAE: 1.4598
+  iter  3 | TR: 2012-07-01 a 2014-04-05 (n=644) | NMAE: 4.0347 | RRSE: 100.4506 | R2: -0.0090 | Naive NMAE: 1.1898
+  iter  4 | TR: 2012-07-01 a 2014-04-12 (n=651) | NMAE: 5.6365 | RRSE: 129.1681 | R2: -0.6684 | Naive NMAE: 3.1305
+  iter  5 | TR: 2012-07-01 a 2014-04-19 (n=658) | NMAE: 3.3196 | RRSE: 146.1390 | R2: -1.1357 | Naive NMAE: 3.7929
+  iter  6 | TR: 2012-07-01 a 2014-04-26 (n=665) | NMAE: 1.4646 | RRSE: 44.7251 | R2: 0.8000 | Naive NMAE: 1.9112
+  iter  7 | TR: 2012-07-01 a 2014-05-03 (n=672) | NMAE: 2.7368 | RRSE: 73.7798 | R2: 0.4557 | Naive NMAE: 0.7088
+  iter  8 | TR: 2012-07-01 a 2014-05-10 (n=679) | NMAE: 3.4416 | RRSE: 100.1884 | R2: -0.0038 | Naive NMAE: 1.2488
+  iter  9 | TR: 2012-07-01 a 2014-05-17 (n=686) | NMAE: 12.8709 | RRSE: 99.2100 | R2: 0.0157 | Naive NMAE: 9.7460
+  iter 10 | TR: 2012-07-01 a 2014-05-24 (n=693) | NMAE: 31.6101 | RRSE: 145.7379 | R2: -1.1240 | Naive NMAE: 24.4452
+  iter 11 | TR: 2012-07-01 a 2014-05-31 (n=700) | NMAE: 5.1260 | RRSE: 239.6192 | R2: -4.7417 | Naive NMAE: 15.6274
+  iter 12 | TR: 2012-07-01 a 2014-06-07 (n=707) | NMAE: 6.0025 | RRSE: 214.3217 | R2: -3.5934 | Naive NMAE: 0.6919
+
+  Médias Philadelphia | HW: NMAE=6.9469 RRSE=125.8392 R2=-0.8738 | Naive: NMAE=5.4355 RRSE=154.3622
+
+
+============================================================
+BACKTESTING - RICHMOND 
+============================================================
+  iter  1 | TR: 2012-07-01 a 2014-03-22 (n=630) | NMAE: 4.1622 | RRSE: 149.9150 | R2: -1.2475 | Naive NMAE: 1.0307
+  iter  2 | TR: 2012-07-01 a 2014-03-29 (n=637) | NMAE: 2.5161 | RRSE: 103.1734 | R2: -0.0645 | Naive NMAE: 1.1745
+  iter  3 | TR: 2012-07-01 a 2014-04-05 (n=644) | NMAE: 3.7353 | RRSE: 117.3802 | R2: -0.3778 | Naive NMAE: 0.9588
+  iter  4 | TR: 2012-07-01 a 2014-04-12 (n=651) | NMAE: 5.0504 | RRSE: 144.2408 | R2: -1.0805 | Naive NMAE: 2.4928
+  iter  5 | TR: 2012-07-01 a 2014-04-19 (n=658) | NMAE: 3.1487 | RRSE: 168.0506 | R2: -1.8241 | Naive NMAE: 3.2838
+  iter  6 | TR: 2012-07-01 a 2014-04-26 (n=665) | NMAE: 1.8020 | RRSE: 65.5060 | R2: 0.5709 | Naive NMAE: 1.7977
+  iter  7 | TR: 2012-07-01 a 2014-05-03 (n=672) | NMAE: 2.7261 | RRSE: 93.5496 | R2: 0.1248 | Naive NMAE: 0.5513
+  iter  8 | TR: 2012-07-01 a 2014-05-10 (n=679) | NMAE: 3.3890 | RRSE: 125.3586 | R2: -0.5715 | Naive NMAE: 1.0067
+  iter  9 | TR: 2012-07-01 a 2014-05-17 (n=686) | NMAE: 10.8171 | RRSE: 99.5712 | R2: 0.0086 | Naive NMAE: 7.6942
+  iter 10 | TR: 2012-07-01 a 2014-05-24 (n=693) | NMAE: 24.3345 | RRSE: 140.7794 | R2: -0.9819 | Naive NMAE: 19.2953
+  iter 11 | TR: 2012-07-01 a 2014-05-31 (n=700) | NMAE: 4.4067 | RRSE: 256.1425 | R2: -5.5609 | Naive NMAE: 12.3442
+  iter 12 | TR: 2012-07-01 a 2014-06-07 (n=707) | NMAE: 4.8692 | RRSE: 222.7911 | R2: -3.9636 | Naive NMAE: 0.5753
+
+  Médias Richmond | HW: NMAE=5.9131 RRSE=140.5382 R2=-1.2473 | Naive: NMAE=4.3504 RRSE=156.6148
+
+
+============================================================
+RESULTADOS FINAIS - MÉDIA DAS MÉTRICAS POR LOJA
+============================================================
+          Loja        Target      Modelo         Metodo Iteracoes Horizonte Incremento
+1    Baltimore Num_Customers HoltWinters Growing Window        12         7          7
+2    Lancaster Num_Customers HoltWinters Growing Window        12         7          7
+3 Philadelphia Num_Customers HoltWinters Growing Window        12         7          7
+4     Richmond Num_Customers HoltWinters Growing Window        12         7          7
+  Media_MAE Media_NMAE Media_RRSE Media_R2 Naive_NMAE Naive_RRSE
+1   58.3641     5.3643   155.1750  -1.6838     3.6962   157.4480
+2   78.7028     4.2268   180.0326  -2.5000     2.6763   160.9928
+3  117.6106     6.9469   125.8392  -0.8738     5.4355   154.3622
+4   35.2422     5.9131   140.5382  -1.2473     4.3504   156.6148
+
+CSVs guardados em: /Users/martinho/Documents/MEGSI/2 Semestre/TIAPOSE/TIAPOSE_project/Files/fase1/Univariado/HoltWinters 

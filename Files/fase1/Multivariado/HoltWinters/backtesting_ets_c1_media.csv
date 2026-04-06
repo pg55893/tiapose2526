@@ -1,0 +1,5 @@
+"Loja","Target","Modelo","Metodo","Iteracoes","Horizonte","Incremento","Media_MAE","Media_NMAE","Media_RRSE","Media_R2"
+"Baltimore","Num_Customers","ETS_Multivariado_C1","Growing Window",12,7,7,15.7519,1.4478,59.9209,0.4384
+"Lancaster","Num_Customers","ETS_Multivariado_C1","Growing Window",12,7,7,28.6828,1.5404,80.4981,0.1251
+"Philadelphia","Num_Customers","ETS_Multivariado_C1","Growing Window",12,7,7,43.9988,2.5989,74.1351,0.1111
+"Richmond","Num_Customers","ETS_Multivariado_C1","Growing Window",12,7,7,11.3613,1.9063,68.1171,0.3572
