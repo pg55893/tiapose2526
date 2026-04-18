@@ -4,12 +4,6 @@
 
 source("/Users/edias/TIAPOSE2526/Files/otimizacao/config_otimizacao.R")
 
-# PREV, lower, upper, profit, eval, eval_O2, total_units, S1
-# já estão todos carregados pelo config
-
-# -------------------------------------------------------------
-# ÍNDICES DE J E X (para arredondar a solução final)
-# -------------------------------------------------------------
 idx_JX <- as.vector(outer(0:27, c(2, 3), function(b, o) b * 3 + o))
 
 # -------------------------------------------------------------
@@ -26,8 +20,8 @@ eval_trace_O1 <- function(S) {
 }
 
 set.seed(42)
-Runs  <- 5
-best_O1  <- -Inf
+Runs      <- 5
+best_O1   <- -Inf
 BEST_S_O1 <- NULL
 
 for (i in 1:Runs) {
@@ -38,33 +32,40 @@ for (i in 1:Runs) {
     method  = "SANN",
     control = list(maxit = 10000, temp = 2000, trace = FALSE)
   )
-  S_tmp <- sa$par
+  S_tmp <- pmin(pmax(sa$par, lower), upper)
   S_tmp[idx_JX] <- round(S_tmp[idx_JX])
   L <- profit(S_tmp)
   cat("Run", i, "| Lucro:", round(L, 2), "\n")
   if (L > best_O1) { best_O1 <- L; BEST_S_O1 <- S_tmp }
 }
 
+BEST_S_O1 <- pmin(pmax(BEST_S_O1, lower), upper)
+BEST_S_O1[idx_JX] <- round(BEST_S_O1[idx_JX])
+
 cat("\n>> Melhor lucro O1:", round(best_O1, 2), "\n")
 cat(">> Unidades:", total_units(BEST_S_O1), "\n")
 
-pdf("/Users/edias/TIAPOSE2526/Files/otimizacao/convergencia_O1_SANN.pdf")
-plot(profit_history_O1, type = "l", col = "blue", lwd = 2,
-     xlab = "Avaliações", ylab = "Lucro", main = "Convergência SANN — O1")
-dev.off()
+if (length(profit_history_O1) > 0) {
+  pdf("/Users/edias/TIAPOSE2526/Files/otimizacao/RF/convergencia_O1_SANN.pdf")
+  plot(profit_history_O1, type = "l", col = "blue", lwd = 2,
+       xlab = "Avaliacoes", ylab = "Lucro", main = "Convergencia SANN - O1")
+  dev.off()
+  cat("Grafico O1 guardado.\n")
+}
 
 # -------------------------------------------------------------
-# O2 — death penalty (≤ 10.000 unidades)
+# O2 — death penalty (≤ 10.000 unidades TOTAL 4 lojas)
 # -------------------------------------------------------------
 cat("\n=== O2: Simulated Annealing + death penalty ===\n")
+cat(">> Restricao: total unidades vendidas (4 lojas x 7 dias) <= 10.000\n\n")
 
 profit_history_O2 <- c()
 
 eval_trace_O2 <- function(S) {
-  if (total_units(S) > 10000) {
-    profit_history_O2 <<- c(profit_history_O2, NA)
-    return(Inf)
-  }
+  idx_PR <- seq(1, 84, by = 3)
+  if (any(S[idx_PR] >= 1, na.rm = TRUE)) return(Inf)
+  u <- total_units(S)
+  if (is.na(u) || u > 10000) return(Inf)
   p <- profit(S)
   profit_history_O2 <<- c(profit_history_O2, p)
   return(-p)
@@ -74,32 +75,48 @@ best_O2   <- -Inf
 BEST_S_O2 <- NULL
 
 for (i in 1:Runs) {
-  s0 <- runif(84) * (upper - lower) + lower
+  # solução inicial com poucos funcionários → poucas unidades → solução válida
+  s0 <- lower
+  s0[seq(1, 84, by = 3)] <- 0.10  # PR pequeno
+  s0[seq(2, 84, by = 3)] <- 1     # J=1
+  s0[seq(3, 84, by = 3)] <- 1     # X=1
+  s0 <- s0 + runif(84) * 0.5      # ruído pequeno para diversidade
+  s0 <- pmin(pmax(s0, lower), upper)
+  
   sa <- optim(
     par     = s0,
     fn      = eval_trace_O2,
     method  = "SANN",
-    control = list(maxit = 10000, temp = 2000, trace = FALSE)
+    control = list(maxit = 20000, temp = 500, trace = FALSE)
   )
-  S_tmp <- sa$par
+  S_tmp <- pmin(pmax(sa$par, lower), upper)
   S_tmp[idx_JX] <- round(S_tmp[idx_JX])
-  if (total_units(S_tmp) <= 10000) {
+  u <- total_units(S_tmp)
+  if (!is.na(u) && u <= 10000) {
     L <- profit(S_tmp)
-    cat("Run", i, "| Lucro:", round(L, 2), "| Unidades:", total_units(S_tmp), "\n")
+    cat("Run", i, "| Lucro:", round(L, 2), "| Unidades:", u, "\n")
     if (L > best_O2) { best_O2 <- L; BEST_S_O2 <- S_tmp }
   } else {
-    cat("Run", i, "| inválida (>10000 unidades)\n")
+    cat("Run", i, "| invalida | unidades:", ifelse(is.na(u), "NA", u), "\n")
   }
 }
 
-cat("\n>> Melhor lucro O2:", round(best_O2, 2), "\n")
-cat(">> Unidades:", total_units(BEST_S_O2), "\n")
-
-pdf("/Users/edias/TIAPOSE2526/Files/otimizacao/convergencia_O2_SANN.pdf")
-plot(profit_history_O2, type = "l", col = "red", lwd = 2,
-     xlab = "Avaliações", ylab = "Lucro", main = "Convergência SANN — O2",
-     na.action = na.omit)
-dev.off()
+if (!is.null(BEST_S_O2)) {
+  BEST_S_O2 <- pmin(pmax(BEST_S_O2, lower), upper)
+  BEST_S_O2[idx_JX] <- round(BEST_S_O2[idx_JX])
+  cat("\n>> Melhor lucro O2:", round(best_O2, 2), "\n")
+  cat(">> Unidades:", total_units(BEST_S_O2), "\n")
+  if (length(profit_history_O2) > 0) {
+    pdf("/Users/edias/TIAPOSE2526/Files/otimizacao/RF/convergencia_O2_SANN.pdf")
+    plot(profit_history_O2, type = "l", col = "red", lwd = 2,
+         xlab = "Avaliacoes validas", ylab = "Lucro", main = "Convergencia SANN - O2")
+    dev.off()
+    cat("Grafico O2 guardado.\n")
+  }
+} else {
+  cat("\n>> O2: nenhuma solucao valida encontrada (<= 10.000 unidades).\n")
+  cat(">> Documentar no relatorio como restricao infeasible com estes PREV.\n")
+}
 
 # -------------------------------------------------------------
 # EXPORTAR RESULTADOS
@@ -108,18 +125,21 @@ resultado <- data.frame(
   membro    = "Eduardo",
   algoritmo = "SANN",
   objetivo  = c("O1", "O2"),
-  lucro     = c(round(best_O1, 2), round(best_O2, 2)),
-  unidades  = c(total_units(BEST_S_O1), total_units(BEST_S_O2)),
-  total_HR  = c(sum(BEST_S_O1[idx_JX]), sum(BEST_S_O2[idx_JX]))
+  lucro     = c(round(best_O1, 2),
+                ifelse(is.null(BEST_S_O2), NA, round(best_O2, 2))),
+  unidades  = c(total_units(BEST_S_O1),
+                ifelse(is.null(BEST_S_O2), NA, total_units(BEST_S_O2))),
+  total_HR  = c(sum(BEST_S_O1[idx_JX]),
+                ifelse(is.null(BEST_S_O2), NA, sum(BEST_S_O2[idx_JX])))
 )
+rownames(resultado) <- NULL
 write.csv(resultado,
-          "/Users/edias/TIAPOSE2526/Files/otimizacao/resultado_Eduardo_SANN.csv",
+          "/Users/edias/TIAPOSE2526/Files/otimizacao/RF/resultado_SANN.csv",
           row.names = FALSE)
-
 saveRDS(profit_history_O1,
-        "/Users/edias/TIAPOSE2526/Files/otimizacao/convergencia_O1_SANN.rds")
+        "/Users/edias/TIAPOSE2526/Files/otimizacao/RF/convergencia_O1_SANN.rds")
 saveRDS(profit_history_O2,
-        "/Users/edias/TIAPOSE2526/Files/otimizacao/convergencia_O2_SANN.rds")
+        "/Users/edias/TIAPOSE2526/Files/otimizacao/RF/convergencia_O2_SANN.rds")
 
 cat("\n=== Resultados ===\n")
 print(resultado)
@@ -141,5 +161,22 @@ for (s in 1:4) {
                 BEST_S_O1[idx],
                 round(BEST_S_O1[idx + 1]),
                 round(BEST_S_O1[idx + 2])))
+  }
+}
+
+# Plano O2 (se existir)
+if (!is.null(BEST_S_O2)) {
+  cat("\n=== PLANO SEMANAL RECOMENDADO (O2) ===\n")
+  for (s in 1:4) {
+    cat("\n--", nomes_lojas[s], "--\n")
+    cat(sprintf("%-5s | %5s | %5s | %5s\n", "Dia", "PR", "J", "X"))
+    for (d in 1:7) {
+      idx <- (s - 1) * 21 + (d - 1) * 3 + 1
+      cat(sprintf("%-5s | %5.2f | %5d | %5d\n",
+                  nomes_dias[d],
+                  BEST_S_O2[idx],
+                  round(BEST_S_O2[idx + 1]),
+                  round(BEST_S_O2[idx + 2])))
+    }
   }
 }

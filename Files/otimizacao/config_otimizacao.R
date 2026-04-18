@@ -99,6 +99,8 @@ S1 <- rep(c(0.10, 5, 3), times = 28)
 # 7. FUNÇÃO AUXILIAR — total de unidades vendidas
 # -------------------------------------------------------------
 total_units <- function(S) {
+  idx_PR <- seq(1, 84, by = 3)
+  if (any(is.na(S)) || any(S[idx_PR] >= 1) || any(S[idx_PR] < 0)) return(NA)
   units <- 0
   for (s in 1:4) {
     loja <- lojas[[s]]
@@ -118,11 +120,11 @@ total_units <- function(S) {
   return(units)
 }
 
-# -------------------------------------------------------------
-# 8. EVAL COM DEATH PENALTY — O2
-# -------------------------------------------------------------
 eval_O2 <- function(S) {
-  if (total_units(S) > 10000) return(Inf)
+  idx_PR <- seq(1, 84, by = 3)
+  if (any(is.na(S)) || any(S[idx_PR] >= 1) || any(S[idx_PR] < 0)) return(Inf)
+  u <- total_units(S)
+  if (is.na(u) || u > 10000) return(Inf)
   return(-profit(S))
 }
 
