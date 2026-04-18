@@ -1,0 +1,63 @@
+=== O3: NSGA-II (bi-objetivo) ===
+>> Obj1: maximizar lucro | Obj2: minimizar total HR
+>> Restricao: unidades <= 10.000
+
+>> Solucoes na fronteira de Pareto: 52 
+>> Lucro max: 1241 
+>> Lucro min: -2691 
+>> HR min: 6 
+>> HR max: 80 
+Grafico Pareto guardado.
+
+>> Solucao de compromisso selecionada:
+   Lucro   : 1241 
+   HR      : 80 
+   Unidades: 9911 
+
+Ficheiros exportados.
+
+=== Resultado O3 ===
+   membro algoritmo objetivo lucro unidades total_HR
+1 Eduardo     NSGA2       O3  1241     9911       80
+
+=== PLANO SEMANAL RECOMENDADO (O3 - compromisso) ===
+
+-- Baltimore --
+Dia   |    PR |     J |     X
+Seg   |  0.14 |     0 |     0
+Ter   |  0.24 |     0 |     0
+Qua   |  0.07 |     0 |     0
+Qui   |  0.01 |     0 |     1
+Sex   |  0.11 |     0 |     0
+Sab   |  0.02 |     0 |     1
+Dom   |  0.07 |     0 |     0
+
+-- Lancaster --
+Dia   |    PR |     J |     X
+Seg   |  0.06 |     0 |     0
+Ter   |  0.03 |     0 |    13
+Qua   |  0.03 |     0 |    15
+Qui   |  0.00 |     0 |     1
+Sex   |  0.04 |     0 |     1
+Sab   |  0.02 |     0 |    15
+Dom   |  0.12 |     0 |     0
+
+-- Philadelphia --
+Dia   |    PR |     J |     X
+Seg   |  0.00 |     0 |     0
+Ter   |  0.09 |     0 |     0
+Qua   |  0.02 |     6 |     0
+Qui   |  0.00 |     0 |     0
+Sex   |  0.00 |     5 |     0
+Sab   |  0.14 |     0 |     0
+Dom   |  0.24 |     0 |     0
+
+-- Richmond --
+Dia   |    PR |     J |     X
+Seg   |  0.18 |     0 |     0
+Ter   |  0.28 |     0 |     1
+Qua   |  0.04 |     0 |     6
+Qui   |  0.04 |     0 |     7
+Sex   |  0.30 |     0 |     0
+Sab   |  0.04 |     0 |     8
+Dom   |  0.16 |     0 |     0
