@@ -21,23 +21,22 @@ hr_cost <- list(
 
 # -------------------------------------------------------------
 # 2. PREV — clientes previstos (4 lojas × 7 dias = 28 valores)
-# Ordem: Baltimore d1..d7, Lancaster d1..d7, Philadelphia d1..d7, Richmond d1..d7
-# Substituir pelos valores reais dos modelos (HW → Baltimore, RF → restantes)
+# Baltimore: ETS/HW (Nuno) | Lancaster, Philadelphia, Richmond: RF (Eduardo)
 # -------------------------------------------------------------
 PREV <- c(
-  # Baltimore (HW/ETS — Nuno)
-  NA, NA, NA, NA, NA, NA, NA,
+  # Baltimore (ETS/HW — Nuno)
+  114, 114, 108, 110, 85, 97, 164,
   # Lancaster (RF — Eduardo)
-  NA, NA, NA, NA, NA, NA, NA,
+  133, 115, 112, 111, 109, 112, 142,
   # Philadelphia (RF — Eduardo)
-  NA, NA, NA, NA, NA, NA, NA,
+  232, 167, 180, 190, 196, 209, 302,
   # Richmond (RF — Eduardo)
-  NA, NA, NA, NA, NA, NA, NA
+  64, 45, 47, 49, 52, 59, 82
 )
 
-# Dias da semana para a semana a otimizar (TRUE = weekday, FALSE = weekend)
-# Ajustar conforme a semana real (última semana dos dados = 2014-10-24 a 2014-10-30)
-IS_WEEKDAY <- c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE)
+# Dias da semana para a semana a otimizar
+# Última semana dos dados: 2014-06-15 (Dom) a 2014-06-21 (Sab)
+IS_WEEKDAY <- c(FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE)
 
 # -------------------------------------------------------------
 # 3. BOUNDS
@@ -46,18 +45,18 @@ calc_upper <- function(PREV) {
   upper <- c()
   for (i in 1:4) {
     for (d in 1:7) {
-      C <- max(PREV[(i - 1) * 7 + d], 1)  # evitar divisão por 0
+      C <- max(PREV[(i - 1) * 7 + d], 1)
       upper <- c(upper,
-                 0.30,             # PR_max
-                 ceiling(C / 6),   # J_max (cada J assiste 6 clientes)
-                 ceiling(C / 7))   # X_max (cada X assiste 7 clientes)
+                 0.30,
+                 ceiling(C / 6),
+                 ceiling(C / 7))
     }
   }
   return(upper)
 }
 
 lower <- rep(0, 84)
-# upper <- calc_upper(PREV)  # descomentar quando PREV estiver preenchido
+upper <- calc_upper(PREV)
 
 # -------------------------------------------------------------
 # 4. FUNÇÃO PROFIT
@@ -72,13 +71,12 @@ profit <- function(S) {
     for (d in 1:7) {
       idx <- (s - 1) * 21 + (d - 1) * 3 + 1
       PR  <- S[idx]
-      J   <- round(S[idx + 1])   # round() APENAS em J e X
+      J   <- round(S[idx + 1])
       X   <- round(S[idx + 2])
       
       C   <- PREV[(s - 1) * 7 + d]
       As  <- min(7 * X + 6 * J, C)
       
-      # Primeiro usam-se todos os X, depois os J restantes
       n_X <- min(7 * X, As)
       n_J <- As - n_X
       
@@ -118,13 +116,15 @@ eval <- function(S) {
 # -------------------------------------------------------------
 # 6. SOLUÇÃO DE TESTE
 # S1: PR=0.10, J=5, X=3 para todos os dias/lojas
-# PR válido (0.10 ≤ 0.30), J e X inteiros positivos
 # -------------------------------------------------------------
 S1 <- rep(c(0.10, 5, 3), times = 28)
 
-# Para validar: descomentar depois de preencher PREV
-# cat("profit(S1) =", profit(S1), "\n")
-# cat("eval(S1)   =", eval(S1), "\n")   # deve ser -profit(S1)
+cat("=== VALIDAÇÃO CONFIG ===\n")
+cat("profit(S1) =", profit(S1), "\n")
+cat("eval(S1)   =", eval(S1),   "\n")
+cat("unidades   =", total_units(S1), "\n")
+cat("lower[1:6] =", lower[1:6], "\n")
+cat("upper[1:6] =", upper[1:6], "\n")
 
 # -------------------------------------------------------------
 # 7. FUNÇÃO AUXILIAR — total de unidades vendidas (para O2/O3)
@@ -153,15 +153,13 @@ total_units <- function(S) {
 # 8. EVAL COM DEATH PENALTY — para O2 (≤ 10.000 unidades)
 # -------------------------------------------------------------
 eval_O2 <- function(S) {
-  if (total_units(S) > 10000) return(Inf)  # death penalty
+  if (total_units(S) > 10000) return(Inf)
   return(-profit(S))
 }
 
 # -------------------------------------------------------------
 # 9. TEMPLATE CURVA DE CONVERGÊNCIA
 # -------------------------------------------------------------
-# Usar dentro de cada script individual:
-#
 # profit_history <- c()
 # eval_trace <- function(S) {
 #   p <- profit(S)

@@ -9,30 +9,26 @@ library(forecast)
 options(rgl.useNULL = TRUE)
 library(rminer)
 
-
-# --- Carregar dados (wd tem de ser a pasta csv para o source funcionar) ---
-setwd("Files/csv")
-source("../tratamentoDeDados.R")   # cria: baltimore, lancaster, philadelphia, richmond
+# --- Carregar dados ---
+setwd("/Users/edias/TIAPOSE2526/Files/csv")
+source("../tratamentoDeDados.R")
 
 # --- Mudar para pasta de output ---
-setwd("../../")                     # volta à raiz do projeto
-output_dir <- file.path(getwd(), "Files/fase1/Multivariado/HoltWinters")
+setwd("/Users/edias/TIAPOSE2526")
+output_dir <- "/Users/edias/TIAPOSE2526/Files/fase1/Multivariado/HoltWinters"
 dir.create(output_dir, showWarnings = FALSE)
 
 # --- Redirecionar output para ficheiro txt ---
-sink(file.path(output_dir, "output_ets_c1.txt"), split = TRUE)  # split=TRUE mostra no terminal E guarda
-
-
-# (pasta já criada manualmente)
+sink(file.path(output_dir, "output_ets_c1.txt"), split = TRUE)
 
 # --- Datas de fecho ---
 datas_fecho <- as.Date(c("2012-12-25", "2013-12-25", "2013-03-31", "2014-04-20"))
 
 # --- Configuração ---
-K    <- 7    # sazonalidade semanal
-Test <- 7    # horizonte H=7
-S    <- 7    # salto entre iterações
-Runs <- 12   # número de iterações
+K    <- 7
+Test <- 7
+S    <- 7
+Runs <- 12
 
 # --- Lojas ---
 lojas_nomes <- c("Baltimore", "Lancaster", "Philadelphia", "Richmond")
@@ -49,9 +45,6 @@ cat("# Exógenas: TouristEvent + Num_Employees                  #\n")
 cat("# 12 iterações, H=7, Target: Num_Customers                #\n")
 cat("############################################################\n\n")
 
-# ============================================================
-# Ciclo principal por loja
-# ============================================================
 for (i in seq_along(lojas_nomes)) {
   
   loja     <- lojas_nomes[i]
@@ -62,23 +55,19 @@ for (i in seq_along(lojas_nomes)) {
   cat("BACKTESTING -", toupper(loja), "\n")
   cat("============================================================\n")
   
-  # ----------------------------------------------------------
-  # 1. Preparar dados
-  # ----------------------------------------------------------
   dados$Date <- as.Date(dados$Date)
   dados      <- dados[order(dados$Date), ]
   
-  d1        <- dados$Num_Customers                              # target
-  tour      <- as.numeric(dados$TouristEvent == "Yes")         # exógena 1 → numérica
-  emp       <- dados$Num_Employees                             # exógena 2
-  datas     <- dados$Date
-  L         <- length(d1)
+  d1    <- dados$Num_Customers
+  tour  <- as.numeric(dados$TouristEvent == "Yes")
+  emp   <- dados$Num_Employees
+  datas <- dados$Date
+  L     <- length(d1)
   
-  W  <- (L - Test) - (Runs - 1) * S                           # janela inicial de treino
-  YR <- diff(range(d1))                                        # range para NMAE
+  W  <- (L - Test) - (Runs - 1) * S
+  YR <- diff(range(d1))
   if (YR == 0) YR <- 1
   
-  # --- Vetores de métricas ---
   MAE_v  <- numeric(Runs)
   NMAE_v <- numeric(Runs)
   RRSE_v <- numeric(Runs)
@@ -86,67 +75,40 @@ for (i in seq_along(lojas_nomes)) {
   
   res_loja <- data.frame()
   
-  # ----------------------------------------------------------
-  # 2. Loop de backtesting (Growing Window)
-  # ----------------------------------------------------------
   for (b in 1:Runs) {
     
     H_idx <- holdout(d1, ratio = Test, mode = "incremental",
                      iter = b, window = W, increment = S)
     
-    # Treino
-    Y_tr   <- d1[H_idx$tr]
+    Y_tr    <- d1[H_idx$tr]
     tour_tr <- tour[H_idx$tr]
     emp_tr  <- emp[H_idx$tr]
     
-    # Teste
     Y           <- d1[H_idx$ts]
     tour_ts     <- tour[H_idx$ts]
     emp_ts      <- emp[H_idx$ts]
     datas_teste <- datas[H_idx$ts]
     
-    # ----------------------------------------------------------
-    # Dois estágios: tslm remove efeito das exógenas → ets nos resíduos
-    # ----------------------------------------------------------
-    
-    # Série de treino como ts semanal
-    ts_tr <- ts(Y_tr, frequency = K)
-    
-    # Estágio 1: regressão nas exógenas
+    ts_tr   <- ts(Y_tr, frequency = K)
     xreg_tr <- data.frame(TouristEvent  = tour_tr,
                           Num_Employees = emp_tr)
-    fit_lm  <- tslm(ts_tr ~ TouristEvent + Num_Employees,
-                    data = xreg_tr)
-    
-    # Estágio 2: ETS nos resíduos
+    fit_lm  <- tslm(ts_tr ~ TouristEvent + Num_Employees, data = xreg_tr)
     fit_ets <- suppressWarnings(ets(residuals(fit_lm)))
     
-    # ----------------------------------------------------------
-    # Previsão: componente regressiva + componente ETS
-    # ----------------------------------------------------------
     xreg_ts  <- data.frame(TouristEvent  = tour_ts,
                            Num_Employees = emp_ts)
+    pred_lm  <- as.numeric(predict(fit_lm,  newdata = xreg_ts))
+    pred_ets <- as.numeric(forecast(fit_ets, h = Test)$mean)
+    Pred     <- pred_lm + pred_ets
     
-    pred_lm  <- as.numeric(predict(fit_lm, newdata = xreg_ts))  # componente exógena
-    pred_ets <- as.numeric(forecast(fit_ets, h = Test)$mean)     # componente ETS
+    Pred[Pred < 0]                     <- 0
+    Pred[datas_teste %in% datas_fecho] <- 0
     
-    Pred <- pred_lm + pred_ets                                    # previsão final
-    
-    # ----------------------------------------------------------
-    # Pós-processamento
-    # ----------------------------------------------------------
-    Pred[Pred < 0]                     <- 0   # sem negativos
-    Pred[datas_teste %in% datas_fecho] <- 0   # Natal/Páscoa → 0
-    
-    # ----------------------------------------------------------
-    # Métricas
-    # ----------------------------------------------------------
     MAE_v[b]  <- mmetric(y = Y, x = Pred, metric = "MAE")
     NMAE_v[b] <- mmetric(y = Y, x = Pred, metric = "NMAE", val = YR)
     RRSE_v[b] <- mmetric(y = Y, x = Pred, metric = "RRSE")
-    R2_v[b]   <- 1 - (sum((Y - Pred)^2) / sum((Y - mean(Y))^2))   # fórmula manual
+    R2_v[b]   <- 1 - (sum((Y - Pred)^2) / sum((Y - mean(Y))^2))
     
-    # --- Guardar linha ---
     linha <- data.frame(
       Loja        = loja,
       Iteracao    = b,
@@ -157,7 +119,7 @@ for (i in seq_along(lojas_nomes)) {
       Test_End    = datas_teste[length(datas_teste)],
       Test_Size   = length(H_idx$ts),
       Modelo      = "ETS_Multivariado_C1",
-      ETS_Model   = as.character(fit_ets$method),   # ex: ETS(A,N,A)
+      ETS_Model   = as.character(fit_ets$method),
       MAE         = round(MAE_v[b],  4),
       NMAE        = round(NMAE_v[b], 4),
       RRSE        = round(RRSE_v[b], 4),
@@ -173,9 +135,6 @@ for (i in seq_along(lojas_nomes)) {
                 NMAE_v[b], RRSE_v[b], R2_v[b]))
   }
   
-  # ----------------------------------------------------------
-  # 3. Boxplot das métricas
-  # ----------------------------------------------------------
   pdf(file.path(output_dir, paste0("boxplot_ets_c1_", tolower(loja), ".pdf")),
       width = 7, height = 5)
   boxplot(NMAE_v, RRSE_v, R2_v,
@@ -184,9 +143,6 @@ for (i in seq_along(lojas_nomes)) {
           col   = cor_loja)
   dev.off()
   
-  # ----------------------------------------------------------
-  # 4. Médias das métricas
-  # ----------------------------------------------------------
   med_loja <- data.frame(
     Loja       = loja,
     Target     = "Num_Customers",
@@ -208,17 +164,13 @@ for (i in seq_along(lojas_nomes)) {
   resultados_media     <- rbind(resultados_media,     med_loja)
 }
 
-# ============================================================
-# Resultados finais
-# ============================================================
 cat("\n============================================================\n")
 cat("RESULTADOS FINAIS - ETS MULTIVARIADO C1\n")
 cat("============================================================\n")
 print(resultados_media)
 
-sink()  # fechar o sink
+sink()
 
-# --- Guardar CSVs ---
 write.csv(resultados_iteracoes,
           file.path(output_dir, "backtesting_ets_c1_iteracoes.csv"),
           row.names = FALSE)
@@ -226,4 +178,34 @@ write.csv(resultados_media,
           file.path(output_dir, "backtesting_ets_c1_media.csv"),
           row.names = FALSE)
 
+# ============================================================
+# PREVISÃO FINAL — Baltimore — próximos 7 dias (para PREV)
+# ============================================================
+cat("\n=== PREV Baltimore — ETS C1 ===\n")
+
+dados_bal       <- baltimore
+dados_bal$Date  <- as.Date(dados_bal$Date)
+dados_bal       <- dados_bal[order(dados_bal$Date), ]
+
+d1_bal   <- dados_bal$Num_Customers
+tour_bal <- as.numeric(dados_bal$TouristEvent == "Yes")
+emp_bal  <- dados_bal$Num_Employees
+
+ts_all   <- ts(d1_bal, frequency = 7)
+xreg_all <- data.frame(TouristEvent  = tour_bal,
+                       Num_Employees = emp_bal)
+
+fit_lm_final  <- tslm(ts_all ~ TouristEvent + Num_Employees, data = xreg_all)
+fit_ets_final <- suppressWarnings(ets(residuals(fit_lm_final)))
+
+xreg_fut <- data.frame(
+  TouristEvent  = c(0, 0, 0, 0, 0, 0, 0),
+  Num_Employees = rep(round(mean(emp_bal)), 7)
+)
+
+pred_lm_fut    <- as.numeric(predict(fit_lm_final,  newdata = xreg_fut))
+pred_ets_fut   <- as.numeric(forecast(fit_ets_final, h = 7)$mean)
+prev_baltimore <- round(pmax(pred_lm_fut + pred_ets_fut, 0))
+
+cat("prev_baltimore <-", paste0("c(", paste(prev_baltimore, collapse = ", "), ")"), "\n")
 cat("\nCSVs guardados em:", output_dir, "\n")

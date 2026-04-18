@@ -223,3 +223,46 @@ print(resultados_media, row.names = FALSE)
 write.csv(resultados_iter, "backtesting_rf_c2_iteracoes.csv", row.names = FALSE)
 write.csv(resultados_media, "backtesting_rf_c2_media.csv", row.names = FALSE)
 cat("\nCSVs guardados.\n")
+
+# ============================================================
+# PREVISÃO FINAL — próximos 7 dias (para PREV da otimização)
+# ============================================================
+cat("\n=== PREV — RF Multivariado C2 ===\n")
+
+prev_final <- list()
+
+for (nome in names(stores)) {
+  d <- stores[[nome]]
+  d$Date <- as.Date(d$Date)
+  d <- d[order(d$Date), ]
+  
+  nc <- d$Num_Customers
+  sa <- d$Sales
+  L  <- length(nc)
+  
+  exogen_full <- cbind(
+    TouristEvent  = as.numeric(d$TouristEvent == "Yes"),
+    Num_Employees = d$Num_Employees,
+    Pct_On_Sale   = d$Pct_On_Sale
+  )
+  
+  # Treinar com TODOS os dados
+  mtr_all <- cbind(nc, sa)
+  MRF_final <- mfit(mtr_all, "randomForest", VINP, exogen = exogen_full)
+  
+  # Próximos 7 dias — sem evento turístico, médias das exógenas
+  exo_fut <- matrix(
+    c(rep(0, 7),                        # TouristEvent
+      rep(round(mean(d$Num_Employees)), 7), # Num_Employees
+      rep(round(mean(d$Pct_On_Sale), 2), 7) # Pct_On_Sale
+    ),
+    nrow = 7, ncol = 3,
+    dimnames = list(NULL, c("TouristEvent", "Num_Employees", "Pct_On_Sale"))
+  )
+  
+  Pred_all  <- lforecastm(MRF_final, h = 7, exogen = exo_fut)
+  Pred_7    <- round(pmax(Pred_all[[1]], 0))
+  
+  prev_final[[nome]] <- Pred_7
+  cat(paste0("prev_", tolower(nome), " <- c(", paste(Pred_7, collapse = ", "), ")\n"))
+}
