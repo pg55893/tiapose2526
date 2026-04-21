@@ -1,5 +1,0 @@
-"Loja","Target","Modelo","Metodo","Iteracoes","Horizonte","Incremento","Media_MAE","Media_NMAE","Media_RRSE","Media_R2","Naive_NMAE","Naive_RRSE"
-"Baltimore","Num_Customers","HoltWinters","Growing Window",12,7,7,58.3641,5.3643,155.175,-1.6838,3.6962,157.448
-"Lancaster","Num_Customers","HoltWinters","Growing Window",12,7,7,78.7028,4.2268,180.0326,-2.5,2.6763,160.9928
-"Philadelphia","Num_Customers","HoltWinters","Growing Window",12,7,7,117.6106,6.9469,125.8392,-0.8738,5.4355,154.3622
-"Richmond","Num_Customers","HoltWinters","Growing Window",12,7,7,35.2422,5.9131,140.5382,-1.2473,4.3504,156.6148

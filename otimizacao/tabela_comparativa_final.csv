@@ -1,0 +1,9 @@
+"membro","algoritmo","objetivo","lucro","unidades","total_HR"
+"Eduardo","SANN","O1",14718,56092,503
+"Eduardo","SANN","O2",1145,9999,101
+"Eduardo","NSGA2","O3",1241,9911,80
+"Joao","GA (rbga)","O1",17330,58582,529
+"Carolina","PSO","O1",14973,55671,496
+"Nuno","Monte Carlo","O1",10869,54617,501
+"Nuno","Monte Carlo","O2",230,9700,87
+"Nuno","Monte Carlo","O3",181,9825,86
