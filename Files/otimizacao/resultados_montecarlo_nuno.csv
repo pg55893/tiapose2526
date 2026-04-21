@@ -1,0 +1,4 @@
+"Algoritmo","Membro","Objetivo","Lucro","Unidades","Total_HR","Iteracoes","Tempo_s"
+"Monte Carlo","Nuno","O1",10869,54617,501,10000,1.33
+"Monte Carlo","Nuno","O2",230,9700,87,10000,0.54
+"Monte Carlo","Nuno","O3",181,9825,86,10000,0.5
