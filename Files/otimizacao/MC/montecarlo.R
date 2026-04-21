@@ -84,3 +84,68 @@ if (is.null(best_S_O2)) {
        main = "Monte Carlo — Melhor Lucro Acumulado O2 (Nuno)",
        xlab = "Iteração", ylab = "Melhor Lucro ($)", col = "tomato")
 }
+
+# ============================================================
+# Monte Carlo — O3 (maximizar lucro + minimizar HR)
+# Abordagem: função escalar ponderada (w=0.7 lucro, 0.3 HR)
+# ============================================================
+
+# Função total de HR (soma J+X de toda a solução)
+total_HR <- function(S) {
+  sum(round(S[seq(2, 84, by = 3)]) + round(S[seq(3, 84, by = 3)]))
+}
+
+# Normalização aproximada (escalas diferentes: lucro ~10000, HR ~500)
+# Usamos os resultados de O1 como referência
+profit_ref <- 10869  # melhor lucro O1
+hr_ref     <- 501    # HR correspondente ao O1
+
+# Função eval O3 — escalar ponderada (minimização)
+w <- 0.7
+eval_O3 <- function(S) {
+  u <- total_units(S)
+  if (is.na(u) || u > 10000) return(Inf)   # death penalty O2
+  p  <- profit(S)
+  hr <- total_HR(S)
+  # normalizar e ponderar
+  return(-w * (p / profit_ref) + (1 - w) * (hr / hr_ref))
+}
+
+set.seed(42)
+best_S_O3      <- NULL
+best_eval_O3   <- Inf
+pareto_profits <- c()
+pareto_hrs     <- c()
+
+cat("\n=== Monte Carlo O3 ===\n")
+for (i in 1:N_iter) {
+  S_rand <- runif(84, min = lower, max = upper_O2)  # bounds apertados como O2
+  val    <- eval_O3(S_rand)
+  if (is.finite(val) && val < best_eval_O3) {
+    best_eval_O3 <- val
+    best_S_O3    <- S_rand
+  }
+  # Guardar soluções válidas para fronteira de Pareto aproximada
+  if (is.finite(val)) {
+    pareto_profits <- c(pareto_profits, profit(S_rand))
+    pareto_hrs     <- c(pareto_hrs,     total_HR(S_rand))
+  }
+}
+
+if (is.null(best_S_O3)) {
+  cat("Nenhuma solução válida encontrada para O3.\n")
+} else {
+  S_O3 <- best_S_O3
+  S_O3[seq(2, 84, by = 3)] <- round(S_O3[seq(2, 84, by = 3)])
+  S_O3[seq(3, 84, by = 3)] <- round(S_O3[seq(3, 84, by = 3)])
+  
+  cat(sprintf("Melhor O3: Lucro=%.2f | Unidades=%d | HR=%d\n",
+              profit(S_O3), total_units(S_O3), total_HR(S_O3)))
+  
+  # Gráfico — dispersão lucro vs HR (aproximação à fronteira de Pareto)
+  plot(pareto_hrs, pareto_profits,
+       pch  = 16, cex = 0.4, col = "seagreen",
+       main = "Monte Carlo — Trade-off Lucro vs HR (O3, Nuno)",
+       xlab = "Total HR",
+       ylab = "Lucro ($)")
+}
