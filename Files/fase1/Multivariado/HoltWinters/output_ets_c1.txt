@@ -84,13 +84,13 @@ BACKTESTING - RICHMOND
 ============================================================
 RESULTADOS FINAIS - ETS MULTIVARIADO C1
 ============================================================
-          Loja        Target              Modelo         Metodo Iteracoes Horizonte Incremento Media_MAE
-1    Baltimore Num_Customers ETS_Multivariado_C1 Growing Window        12         7          7   15.7519
-2    Lancaster Num_Customers ETS_Multivariado_C1 Growing Window        12         7          7   28.6828
-3 Philadelphia Num_Customers ETS_Multivariado_C1 Growing Window        12         7          7   43.9988
-4     Richmond Num_Customers ETS_Multivariado_C1 Growing Window        12         7          7   11.3613
-  Media_NMAE Media_RRSE Media_R2
-1     1.4478    59.9209   0.4384
-2     1.5404    80.4981   0.1251
-3     2.5989    74.1351   0.1111
-4     1.9063    68.1171   0.3572
+          Loja        Target              Modelo         Metodo Iteracoes Horizonte Incremento
+1    Baltimore Num_Customers ETS_Multivariado_C1 Growing Window        12         7          7
+2    Lancaster Num_Customers ETS_Multivariado_C1 Growing Window        12         7          7
+3 Philadelphia Num_Customers ETS_Multivariado_C1 Growing Window        12         7          7
+4     Richmond Num_Customers ETS_Multivariado_C1 Growing Window        12         7          7
+  Media_MAE Media_NMAE Media_RRSE Media_R2
+1   15.7519     1.4478    59.9209   0.4384
+2   28.6828     1.5404    80.4981   0.1251
+3   43.9988     2.5989    74.1351   0.1111
+4   11.3613     1.9063    68.1171   0.3572

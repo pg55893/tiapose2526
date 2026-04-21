@@ -10,12 +10,10 @@ options(rgl.useNULL = TRUE)
 library(rminer)
 
 # --- Carregar dados ---
-setwd("/Users/edias/TIAPOSE2526/Files/csv")
+setwd("~/Documents/MEGSI/2 Semestre/TIAPOSE/TIAPOSE_project/Files/csv")
 source("../tratamentoDeDados.R")
-
-# --- Mudar para pasta de output ---
-setwd("/Users/edias/TIAPOSE2526")
-output_dir <- "/Users/edias/TIAPOSE2526/Files/fase1/Multivariado/HoltWinters"
+setwd("~/Documents/MEGSI/2 Semestre/TIAPOSE/TIAPOSE_project")
+output_dir <- "Files/fase1/Multivariado/HoltWinters"
 dir.create(output_dir, showWarnings = FALSE)
 
 # --- Redirecionar output para ficheiro txt ---
