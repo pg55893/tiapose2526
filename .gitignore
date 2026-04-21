@@ -1,4 +1,7 @@
-.Rproj.user
-.Rhistory
 .RData
+.RDataTmp*
+.Rhistory
+.Rproj.user
 .Ruserdata
+.DS_Store
+github_token.rtf
