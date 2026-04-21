@@ -103,7 +103,7 @@ cat("Richmond    :",PREV[22:28],"\n\n")
 # -----------------------------------------------------------------------------
 D=length(lower)         # dimensao = 84
 popSize=max(20,10+round(2*sqrt(D))) # tamanho do enxame
-maxit=500               # numero maximo de iteracoes
+maxit=1000             # numero maximo de iteracoes
 report=50               # reportar progresso a cada N iteracoes
 
 idx_J=seq(2,D,by=3)
@@ -181,11 +181,11 @@ cat("Avaliacoes       :",ps$counts["function"],"\n")
 pdf(file.path(output_dir,"convergencia_PSO_O1.pdf"),width=10,height=6)
 F_clean=F[!is.na(F)]
 plot(F_clean,col="blue",type="l",lwd=2,
-     main=paste("convergence of PSO O1 (D=",D,")"),
-     xlab="evaluations",ylab="profit ($)")
+     main=paste("Convergência do PSO O1 (D=",D,")"),
+     xlab="Avaliações",ylab="Lucro ($)")
 abline(h=lucro,col="red",lty=2)
 legend("bottomright",bty="n",
-       legend=c("best profit","final best"),
+       legend=c("Melhor lucro","Lucro final"),
        col=c("blue","red"),lty=c(1,2),lwd=2)
 dev.off()
 cat("\nPDF guardado:",file.path(output_dir,"convergencia_PSO_O1.pdf"),"\n")
