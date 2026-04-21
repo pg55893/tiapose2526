@@ -1,0 +1,10 @@
+=== Monte Carlo O1 ===
+Lucro O1: 10869.00 | Unidades: 54617 | HR: 501 | Tempo: 1.33s
+
+=== Monte Carlo O2 ===
+Lucro O2: 230.00 | Unidades: 9700 | HR: 87 | Tempo: 0.54s
+
+=== Monte Carlo O3 ===
+Melhor O3: Lucro=181.00 | Unidades=9825 | HR=86 | Tempo=0.50s
+
+CSV guardado em: Files/otimizacao/resultados_montecarlo_nuno.csv 
