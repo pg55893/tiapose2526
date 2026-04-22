@@ -9,9 +9,9 @@ library(rminer)
 # -----------------------------------------------------------------------------
 # carregar dados e config
 # -----------------------------------------------------------------------------
-setwd("~/TIAPOSE_projeto/tiapose2526/Files/csv")
-source("~/TIAPOSE_projeto/tiapose2526/Files/tratamentoDeDados.R")
-source("~/TIAPOSE_projeto/tiapose2526/Files/otimizacao/config_otimizacao.R")
+setwd("~/TIAPOSE_projeto/tiapose2526/data")
+source("~/TIAPOSE_projeto/tiapose2526/utils/tratamentoDeDados.R")
+source("~/TIAPOSE_projeto/tiapose2526/utils/config_otimizacao.R")
 
 output_dir="~/TIAPOSE_projeto/tiapose2526/Files/otimizacao/PSO/resultados_O1"
 dir.create(output_dir,showWarnings=FALSE,recursive=TRUE)
