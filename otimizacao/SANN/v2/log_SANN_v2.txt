@@ -1,0 +1,102 @@
+Log iniciado: 2026-04-27 20:45:48 
+
+
+=== CALIBRACAO TEMPERATURA (O1) ===
+Temperaturas: 500, 1000, 2000
+
+T= 500 | mediana=16171.00 | min=14502.00 | max=16961.00
+T=1000 | mediana=14517.50 | min=13299.00 | max=15492.00
+T=2000 | mediana=12252.50 | min=10405.00 | max=13538.00
+
+>> Melhor T selecionado: 500 (mediana=16171.00)
+Grafico calibracao guardado.
+
+=== O1: SANN (20 runs, T= 500 ) ===
+Run  1 | Lucro: 15154.00
+Run  2 | Lucro: 15443.00
+Run  3 | Lucro: 15336.00
+Run  4 | Lucro: 16824.00
+Run  5 | Lucro: 16241.00
+Run  6 | Lucro: 15988.00
+Run  7 | Lucro: 15612.00
+Run  8 | Lucro: 15953.00
+Run  9 | Lucro: 17036.00
+Run 10 | Lucro: 15475.00
+Run 11 | Lucro: 15626.00
+Run 12 | Lucro: 16923.00
+Run 13 | Lucro: 16223.00
+Run 14 | Lucro: 16151.00
+Run 15 | Lucro: 16208.00
+Run 16 | Lucro: 15434.00
+Run 17 | Lucro: 16408.00
+Run 18 | Lucro: 16195.00
+Run 19 | Lucro: 15685.00
+Run 20 | Lucro: 15389.00
+
+>> Mediana lucro O1 : 15970.50
+>> Melhor lucro O1  : 17036.00
+>> Unidades         : 57251
+Grafico guardado: /Users/edias/TIAPOSE2526/otimizacao/SANN/v2/convergencia_O1_SANN_v2.pdf 
+
+=== O2: SANN + Death Penalty (20 runs) ===
+Run  1 | Lucro:   957.00 | Unidades: 10000
+Run  2 | Lucro:  1070.00 | Unidades: 9997
+Run  3 | Lucro:  1130.00 | Unidades: 9984
+Run  4 | Lucro:  1197.00 | Unidades: 9969
+Run  5 | Lucro:   990.00 | Unidades: 9997
+Run  6 | Lucro:  1184.00 | Unidades: 9993
+Run  7 | Lucro:  1157.00 | Unidades: 9992
+Run  8 | Lucro:   819.00 | Unidades: 9994
+Run  9 | Lucro:   995.00 | Unidades: 9993
+Run 10 | Lucro:   838.00 | Unidades: 9997
+Run 11 | Lucro:  1004.00 | Unidades: 9933
+Run 12 | Lucro:  1031.00 | Unidades: 9982
+Run 13 | Lucro:  1082.00 | Unidades: 9931
+Run 14 | Lucro:  1102.00 | Unidades: 9964
+Run 15 | Lucro:   927.00 | Unidades: 9984
+Run 16 | Lucro:  1050.00 | Unidades: 9998
+Run 17 | Lucro:   921.00 | Unidades: 9983
+Run 18 | Lucro:  1112.00 | Unidades: 9974
+Run 19 | Lucro:  1032.00 | Unidades: 9967
+Run 20 | Lucro:   985.00 | Unidades: 9978
+
+>> Mediana lucro O2 (DP) : 1031.50
+>> Melhor lucro O2 (DP)  : 1197.00
+>> Unidades              : 9969
+
+=== O2: SANN + Repair (20 runs) ===
+Run  1 | Lucro:  1156.00 | Unidades: 9983
+Run  2 | Lucro:   997.00 | Unidades: 10000
+Run  3 | Lucro:  1182.00 | Unidades: 10000
+Run  4 | Lucro:   981.00 | Unidades: 9996
+Run  5 | Lucro:  1051.00 | Unidades: 9984
+Run  6 | Lucro:  1165.00 | Unidades: 9997
+Run  7 | Lucro:  1213.00 | Unidades: 9993
+Run  8 | Lucro:  1141.00 | Unidades: 9993
+Run  9 | Lucro:  1054.00 | Unidades: 9994
+Run 10 | Lucro:  1132.00 | Unidades: 9983
+Run 11 | Lucro:  1122.00 | Unidades: 9998
+Run 12 | Lucro:  1216.00 | Unidades: 9995
+Run 13 | Lucro:  1157.00 | Unidades: 9947
+Run 14 | Lucro:  1104.00 | Unidades: 9984
+Run 15 | Lucro:  1245.00 | Unidades: 9985
+Run 16 | Lucro:  1159.00 | Unidades: 9990
+Run 17 | Lucro:   905.00 | Unidades: 9996
+Run 18 | Lucro:  1004.00 | Unidades: 9979
+Run 19 | Lucro:  1218.00 | Unidades: 9991
+Run 20 | Lucro:  1087.00 | Unidades: 9964
+
+>> Mediana lucro O2 (Repair) : 1136.50
+>> Melhor lucro O2 (Repair)  : 1245.00
+>> Unidades                  : 9985
+
+=== Convergencia O2: Death Penalty vs Repair ===
+Grafico DP vs Repair guardado.
+
+=== Resultado Final ===
+   membro algoritmo objetivo lucro mediana unidades total_HR
+1 Eduardo      SANN       O1 17036 15970.5    57251 536.0000
+2 Eduardo      SANN       O2  1245  1136.5     9985 101.7157
+
+=== FIM RF_SANN_v2.R ===
+Log guardado em: /Users/edias/TIAPOSE2526/otimizacao/SANN/v2/log_SANN_v2.txt 

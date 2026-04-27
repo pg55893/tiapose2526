@@ -1,7 +1,9 @@
 # =============================================================
-# comparativos.R  (v2 — todos os algoritmos)
-# GA (Joao) | MC (Nuno) | NSGA-II (Eduardo) | PSO (Carolina) | SANN (Eduardo)
-# Pacotes: base R apenas
+# comparativos.R  (v3 — todos os algoritmos)
+# GA (Joao) | MC (Nuno) | NSGA-II (Eduardo) | PSO (Carolina)
+# SANN (Eduardo) | HC (Eduardo)
+# Eixo X: numero de avaliacoes (FES) — igual para todos
+# Metrica: mediana do profit entre runs (nao o maximo)
 # =============================================================
 
 BASE_DIR <- "/Users/edias/TIAPOSE2526/otimizacao"
@@ -28,6 +30,8 @@ normalise_resultado <- function(df, membro_default = NA,
     objetivo  = as.character(get_col(c("objetivo",  "Objetivo"))),
     lucro     = suppressWarnings(as.numeric(get_col(c(
                   "lucro", "Lucro", "Lucro_Total", "lucro_total")))),
+    mediana   = suppressWarnings(as.numeric(get_col(c(
+                  "mediana", "Mediana", "median")))),
     unidades  = suppressWarnings(as.numeric(get_col(c(
                   "unidades", "Unidades", "Unidades_Vendidas", "unidades_vendidas")))),
     total_HR  = suppressWarnings(as.numeric(get_col(c(
@@ -117,8 +121,12 @@ cat("\n=== TAREFA 1: Tabela comparativa ===\n")
 
 sources <- list(
   list(
-    file      = file.path(BASE_DIR, "SANN",  "resultado_SANN.csv"),
+    file      = file.path(BASE_DIR, "SANN", "v2", "resultado_SANN.csv"),
     membro    = "Eduardo", algoritmo = "SANN",           objetivo = NA
+  ),
+  list(
+    file      = file.path(BASE_DIR, "HC",  "resultado_HC.csv"),
+    membro    = "Eduardo", algoritmo = "HC",             objetivo = NA
   ),
   list(
     file      = file.path(BASE_DIR, "NSGA2", "resultado_Eduardo_NSGA2.csv"),
@@ -162,13 +170,14 @@ print(tabela_final)
 # =============================================================
 # TAREFA 2 — Convergencia O1
 # =============================================================
-cat("\n=== TAREFA 2: Convergencia O1 ===\n")
+cat("\n=== TAREFA 2: Convergencia O1 (eixo X = FES) ===\n")
 
 conv_O1 <- list(
-  load_rds_conv(file.path(BASE_DIR, "SANN", "convergencia_O1_SANN.rds"),      "SANN"),
-  load_rds_conv(file.path(BASE_DIR, "GA",   "resultado_GA.rds"),              "GA"),
-  load_csv_conv(file.path(BASE_DIR, "PSO",  "convergencia_PSO_O1.csv"),        "PSO"),
-  load_rds_conv(file.path(BASE_DIR, "MC",   "convergencia_O1_MC_nuno.rds"),   "MC")
+  load_rds_conv(file.path(BASE_DIR, "SANN", "v2", "convergencia_O1_SANN.rds"),  "SANN"),  # v2
+  load_rds_conv(file.path(BASE_DIR, "HC",   "convergencia_O1_HC.rds"),       "HC"),
+  load_rds_conv(file.path(BASE_DIR, "GA",   "resultado_GA.rds"),             "GA"),
+  load_csv_conv(file.path(BASE_DIR, "PSO",  "convergencia_PSO_O1.csv"),       "PSO"),
+  load_rds_conv(file.path(BASE_DIR, "MC",   "convergencia_O1_MC_nuno.rds"),  "MC")
 )
 
 plot_convergence(conv_O1,
@@ -178,12 +187,13 @@ plot_convergence(conv_O1,
 # =============================================================
 # TAREFA 3 — Convergencia O2
 # =============================================================
-cat("\n=== TAREFA 3: Convergencia O2 ===\n")
+cat("\n=== TAREFA 3: Convergencia O2 (eixo X = FES) ===\n")
 
 conv_O2 <- list(
-  load_rds_conv(file.path(BASE_DIR, "SANN", "convergencia_O2_SANN.rds"), "SANN"),
+  load_rds_conv(file.path(BASE_DIR, "SANN", "v2", "convergencia_O2_SANN.rds"),  "SANN"),  # v2
+  load_rds_conv(file.path(BASE_DIR, "HC",   "convergencia_O1_HC.rds"),      "HC"),
   load_rds_conv(file.path(BASE_DIR, "MC",   "convergencia_O2_MC_nuno.rds"), "MC")
-  # GA/PSO nao produziram historico O2
+  # GA/PSO: adicionar quando disponivel
 )
 
 plot_convergence(conv_O2,
@@ -273,17 +283,22 @@ if (!file.exists(pareto_file)) {
 # TAREFA 5 — Resumo final: melhor algoritmo por objetivo
 # =============================================================
 cat("\n=== RESUMO FINAL: Melhor algoritmo por objetivo ===\n")
+cat("Metrica principal: MEDIANA do profit entre runs (nao o maximo)\n\n")
 
 for (obj in c("O1", "O2", "O3")) {
   sub_df <- tabela_final[!is.na(tabela_final$objetivo) &
                            toupper(tabela_final$objetivo) == obj, ]
   sub_df <- sub_df[!is.na(sub_df$lucro), ]
   if (nrow(sub_df) == 0) { cat(obj, ": sem dados\n"); next }
-  melhor <- sub_df[which.max(sub_df$lucro), ]
-  cat(sprintf("%-3s -> %-14s (%-8s) | Lucro: %7g | Unidades: %6g | HR: %g\n",
+  # Ordena por mediana se disponivel, senao por lucro
+  metric <- ifelse(!is.na(sub_df$mediana), sub_df$mediana, sub_df$lucro)
+  melhor <- sub_df[which.max(metric), ]
+  med_val <- ifelse(!is.na(melhor$mediana), melhor$mediana, melhor$lucro)
+  cat(sprintf("%-3s -> %-14s (%-8s) | Lucro: %7g | Mediana: %7g | Unidades: %6g | HR: %g\n",
               obj,
               melhor$algoritmo, melhor$membro,
-              melhor$lucro, melhor$unidades, melhor$total_HR))
+              melhor$lucro, med_val,
+              melhor$unidades, melhor$total_HR))
 }
 
 # =============================================================

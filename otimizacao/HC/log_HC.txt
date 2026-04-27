@@ -1,0 +1,88 @@
+Log iniciado: 2026-04-27 21:31:32 
+
+=== O1: Hill Climbing (vizinhanca multiplicativa, 20 runs) ===
+Run  1 | Lucro: 14003.00
+Run  2 | Lucro: 14013.00
+Run  3 | Lucro: 14014.00
+Run  4 | Lucro: 13678.00
+Run  5 | Lucro: 14078.00
+Run  6 | Lucro: 14098.00
+Run  7 | Lucro: 12212.00
+Run  8 | Lucro: 14665.00
+Run  9 | Lucro: 14755.00
+Run 10 | Lucro: 12980.00
+Run 11 | Lucro: 15311.00
+Run 12 | Lucro: 14044.00
+Run 13 | Lucro: 14814.00
+Run 14 | Lucro: 14086.00
+Run 15 | Lucro: 13742.00
+Run 16 | Lucro: 14534.00
+Run 17 | Lucro: 13359.00
+Run 18 | Lucro: 14455.00
+Run 19 | Lucro: 14395.00
+Run 20 | Lucro: 15374.00
+
+>> Mediana lucro O1 : 14082.00
+>> Melhor lucro O1  : 15374.00
+>> Unidades         : 55024
+Grafico guardado: /Users/edias/TIAPOSE2526/otimizacao/HC/HC_convergencia_O1.pdf 
+
+=== O2: Hill Climbing + Death Penalty (20 runs) ===
+Run  1 | Lucro:  -887.00 | Unidades: 6727
+Run  2 | Lucro:  -877.00 | Unidades: 6610
+Run  3 | Lucro:  -924.00 | Unidades: 6773
+Run  4 | Lucro:  -889.00 | Unidades: 6683
+Run  5 | Lucro:  -895.00 | Unidades: 6704
+Run  6 | Lucro:  -898.00 | Unidades: 6688
+Run  7 | Lucro:  -834.00 | Unidades: 6569
+Run  8 | Lucro:  -928.00 | Unidades: 6781
+Run  9 | Lucro:  -910.00 | Unidades: 6734
+Run 10 | Lucro:  -904.00 | Unidades: 6668
+Run 11 | Lucro:  -865.00 | Unidades: 6662
+Run 12 | Lucro:  -934.00 | Unidades: 6807
+Run 13 | Lucro:  -873.00 | Unidades: 6649
+Run 14 | Lucro:  -896.00 | Unidades: 6768
+Run 15 | Lucro:  -884.00 | Unidades: 6682
+Run 16 | Lucro:  -864.00 | Unidades: 6643
+Run 17 | Lucro:  -916.00 | Unidades: 6773
+Run 18 | Lucro:  -891.00 | Unidades: 6629
+Run 19 | Lucro:  -949.00 | Unidades: 6799
+Run 20 | Lucro:  -897.00 | Unidades: 6721
+
+>> Mediana O2 (DP) : -895.50
+>> Melhor O2  (DP) : -834.00
+
+=== O2: Hill Climbing + Repair (20 runs) ===
+Run  1 | Lucro:  -912.00 | Unidades: 6713
+Run  2 | Lucro:  -936.00 | Unidades: 6760
+Run  3 | Lucro:  -852.00 | Unidades: 6669
+Run  4 | Lucro:  -923.00 | Unidades: 6792
+Run  5 | Lucro:  -905.00 | Unidades: 6753
+Run  6 | Lucro:  -871.00 | Unidades: 6631
+Run  7 | Lucro:  -853.00 | Unidades: 6668
+Run  8 | Lucro:  -913.00 | Unidades: 6752
+Run  9 | Lucro:  -914.00 | Unidades: 6723
+Run 10 | Lucro:  -905.00 | Unidades: 6687
+Run 11 | Lucro:  -928.00 | Unidades: 6761
+Run 12 | Lucro:  -932.00 | Unidades: 6848
+Run 13 | Lucro:  -871.00 | Unidades: 6747
+Run 14 | Lucro:  -935.00 | Unidades: 6767
+Run 15 | Lucro:  -884.00 | Unidades: 6656
+Run 16 | Lucro:  -950.00 | Unidades: 6766
+Run 17 | Lucro:  -879.00 | Unidades: 6734
+Run 18 | Lucro:  -843.00 | Unidades: 6605
+Run 19 | Lucro:  -872.00 | Unidades: 6662
+Run 20 | Lucro:  -935.00 | Unidades: 6769
+
+>> Mediana O2 (Repair) : -908.50
+>> Melhor O2  (Repair) : -843.00
+>> Unidades            : 6605
+Grafico guardado: /Users/edias/TIAPOSE2526/otimizacao/HC/HC_convergencia_O2_dp_vs_repair.pdf 
+
+=== Resultado HC ===
+   membro algoritmo objetivo lucro mediana unidades total_HR
+1 Eduardo        HC       O1 15374 14082.0    55024      503
+2 Eduardo        HC       O2  -834  -895.5     6569       56
+
+=== FIM HC_O1_O2.R ===
+Log guardado em: /Users/edias/TIAPOSE2526/otimizacao/HC/log_HC.txt 

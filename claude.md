@@ -80,6 +80,23 @@ RF globalmente mais robusto. VAR incluído por projeto. ETS é a evolução natu
 
 ## Fase II — Otimização (Resultados Atuais)
 
+### Scripts Criados (Eduardo)
+
+| Script | Localização | O que faz |
+|---|---|---|
+| `RF_SANN.R`    | `otimizacao/SANN/v1/` | SANN original — 5 runs, eixo X em iteracoes |
+| `RF_SANN_v2.R` | `otimizacao/SANN/v2/` | SANN 20 runs, calibração T, O2 DP vs Repair, FES |
+| `HC_O1_O2.R` | `otimizacao/HC/` | HC vizinhança mult., O1+O2 DP+Repair, 20 runs, FES |
+| `O3_NSGA2_v2.R` | `otimizacao/NSGA2/` | 20 runs, mediana HV, escalarização W, comparação O2 |
+| `comparativos.R` | `otimizacao/Comparativos/` | v3: HC, mediana, FES no eixo X |
+
+### Convenções dos Novos Scripts
+- **FES (Function Evaluation Sequence):** eixo X de todas as curvas = número de avaliações da função objetivo. Implementado com `make_eval_fes()` no SANN e contador interno no HC.
+- **Mediana:** métrica principal reportada (não o máximo de um run). `resultado_SANN.csv` e `resultado_HC.csv` têm coluna `mediana`.
+- **Repair:** função `repair(S)` reduz PR iterativamente (×0.95) até `total_units(S) ≤ 10000`. Usada em SANN e HC para O2. Guarda melhor via `BEST_LOCAL <<- S_rep`.
+- **Calibração T:** `RF_SANN_v2.R` testa T ∈ {500, 1000, 2000} com 20 runs cada e selecciona o T com maior mediana antes de correr O1/O2.
+- **Hipervolumes NSGA-II:** calculados para cada run; métrica = mediana. Run representativa = a mais próxima da mediana.
+
 ### Melhores Resultados por Objetivo
 
 | Objetivo | Algoritmo | Autor | Profit ($) | Unidades | HR |
@@ -168,7 +185,12 @@ Implementar curvas de convergência com wrapper de função traced.
 ## O que Falta Fazer
 
 - [x] Implementação dos algoritmos (MC, HC, SANN, GA, NSGA-II)
-- [x] Scripts de comparação e figuras de convergência (`comparativos.R`)
+- [x] Scripts de comparação e figuras de convergência (`comparativos.R` v3)
+- [x] SANN v2: 20 runs, mediana profit, calibração T (500/1000/2000), FES no eixo X
+- [x] Hill Climbing com vizinhança multiplicativa O1 e O2 (DP + Repair)
+- [x] O2 com Repair implementado e comparado com Death Penalty (SANN e HC)
+- [x] O3 NSGA-II v2: 20 runs, mediana hipervolumes, escalarização W, comparação com O2
+- [x] Curvas de convergência corrigidas com FES no eixo X
 - [ ] Integração da solução NSGA-II na **App Shiny DSS** (Foco atual)
 - [ ] Relatório final (20–40 páginas)
 - [ ] Vídeo demo YouTube (máx. 5 min)
