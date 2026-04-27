@@ -4,7 +4,8 @@
 # Pacotes: base R apenas
 # =============================================================
 
-BASE_DIR <- "/Users/edias/TIAPOSE2526/Files/otimizacao"
+BASE_DIR <- "/Users/edias/TIAPOSE2526/otimizacao"
+OUT_DIR  <- "/Users/edias/TIAPOSE2526/otimizacao/Comparativos"
 
 # =============================================================
 # HELPERS
@@ -116,24 +117,24 @@ cat("\n=== TAREFA 1: Tabela comparativa ===\n")
 
 sources <- list(
   list(
-    file      = file.path(BASE_DIR, "RF",   "resultado_SANN.csv"),
-    membro    = "Eduardo", algoritmo = NA,           objetivo = NA
+    file      = file.path(BASE_DIR, "SANN",  "resultado_SANN.csv"),
+    membro    = "Eduardo", algoritmo = "SANN",           objetivo = NA
   ),
   list(
-    file      = file.path(BASE_DIR, "NSGA2","resultado_Eduardo_NSGA2.csv"),
-    membro    = "Eduardo", algoritmo = NA,           objetivo = NA
+    file      = file.path(BASE_DIR, "NSGA2", "resultado_Eduardo_NSGA2.csv"),
+    membro    = "Eduardo", algoritmo = "NSGA-II",        objetivo = "O3"
   ),
   list(
-    file      = file.path(BASE_DIR, "GA",   "OTIM_GA_resumo.csv"),
-    membro    = "Joao",    algoritmo = "GA",         objetivo = "O1"
+    file      = file.path(BASE_DIR, "GA",    "OTIM_GA_resumo.csv"),
+    membro    = "Joao",    algoritmo = "GA",             objetivo = "O1"
   ),
   list(
-    file      = file.path(BASE_DIR, "PSO",  "resultados_O1", "tabela_resumo_PSO_O1.csv"),
-    membro    = "Carolina",algoritmo = "PSO",        objetivo = NA
+    file      = file.path(BASE_DIR, "PSO",   "tabela_resumo_PSO_O1.csv"),
+    membro    = "Carolina",algoritmo = "PSO",            objetivo = "O1"
   ),
   list(
-    file      = file.path(BASE_DIR, "MC",   "resultados_montecarlo_nuno.csv"),
-    membro    = "Nuno",    algoritmo = "Monte Carlo",objetivo = NA
+    file      = file.path(BASE_DIR, "MC",    "resultados_montecarlo_nuno.csv"),
+    membro    = "Nuno",    algoritmo = "Monte Carlo",    objetivo = NA
   )
 )
 
@@ -153,7 +154,7 @@ tabelas <- lapply(sources, function(src) {
 tabela_final <- do.call(rbind, Filter(Negate(is.null), tabelas))
 rownames(tabela_final) <- NULL
 
-out_csv <- file.path(BASE_DIR, "tabela_comparativa_final.csv")
+out_csv <- file.path(OUT_DIR, "tabela_comparativa_final.csv")
 write.csv(tabela_final, out_csv, row.names = FALSE)
 cat("Guardado:", out_csv, "\n\n")
 print(tabela_final)
@@ -164,16 +165,15 @@ print(tabela_final)
 cat("\n=== TAREFA 2: Convergencia O1 ===\n")
 
 conv_O1 <- list(
-  load_rds_conv(file.path(BASE_DIR, "RF",  "convergencia_O1_SANN.rds"),      "SANN"),
-  load_rds_conv(file.path(BASE_DIR, "GA",  "resultado_GA.rds"),              "GA"),
-  load_csv_conv(file.path(BASE_DIR, "PSO", "resultados_O1",
-                           "convergencia_PSO_O1.csv"),                        "PSO"),
-  load_rds_conv(file.path(BASE_DIR, "MC",  "convergencia_O1_MC_nuno.rds"),   "MC")
+  load_rds_conv(file.path(BASE_DIR, "SANN", "convergencia_O1_SANN.rds"),      "SANN"),
+  load_rds_conv(file.path(BASE_DIR, "GA",   "resultado_GA.rds"),              "GA"),
+  load_csv_conv(file.path(BASE_DIR, "PSO",  "convergencia_PSO_O1.csv"),        "PSO"),
+  load_rds_conv(file.path(BASE_DIR, "MC",   "convergencia_O1_MC_nuno.rds"),   "MC")
 )
 
 plot_convergence(conv_O1,
                  "Convergencia O1 - Comparacao de Algoritmos",
-                 file.path(BASE_DIR, "convergencia_O1_comparacao.pdf"))
+                 file.path(OUT_DIR, "convergencia_O1_comparacao.pdf"))
 
 # =============================================================
 # TAREFA 3 — Convergencia O2
@@ -181,14 +181,14 @@ plot_convergence(conv_O1,
 cat("\n=== TAREFA 3: Convergencia O2 ===\n")
 
 conv_O2 <- list(
-  load_rds_conv(file.path(BASE_DIR, "RF", "convergencia_O2_SANN.rds"), "SANN"),
-  load_rds_conv(file.path(BASE_DIR, "MC", "convergencia_O2_MC_nuno.rds"), "MC")
+  load_rds_conv(file.path(BASE_DIR, "SANN", "convergencia_O2_SANN.rds"), "SANN"),
+  load_rds_conv(file.path(BASE_DIR, "MC",   "convergencia_O2_MC_nuno.rds"), "MC")
   # GA/PSO nao produziram historico O2
 )
 
 plot_convergence(conv_O2,
                  "Convergencia O2 - Comparacao de Algoritmos",
-                 file.path(BASE_DIR, "convergencia_O2_comparacao.pdf"))
+                 file.path(OUT_DIR, "convergencia_O2_comparacao.pdf"))
 
 # =============================================================
 # TAREFA 4 — Fronteira de Pareto O3
@@ -234,7 +234,7 @@ if (!file.exists(pareto_file)) {
   xr[2] <- xr[2] + diff(xr) * 0.20
   yr[1] <- yr[1] - diff(yr) * 0.05
 
-  pdf_pareto <- file.path(BASE_DIR, "pareto_O3_final.pdf")
+  pdf_pareto <- file.path(OUT_DIR, "pareto_O3_final.pdf")
   pdf(pdf_pareto, width = 9, height = 6)
 
   plot(pareto$total_hr, pareto$lucro,
@@ -412,10 +412,10 @@ plot_maturidade <- function(series_list, title, pdf_out) {
 
 plot_maturidade(conv_O1,
                 "Maturidade de Convergencia O1 (% do melhor vs % aval)",
-                file.path(BASE_DIR, "maturidade_O1_comparacao.pdf"))
+                file.path(OUT_DIR, "maturidade_O1_comparacao.pdf"))
 
 plot_maturidade(conv_O2,
                 "Maturidade de Convergencia O2 (% do melhor vs % aval)",
-                file.path(BASE_DIR, "maturidade_O2_comparacao.pdf"))
+                file.path(OUT_DIR, "maturidade_O2_comparacao.pdf"))
 
 cat("\n=== FIM comparativos.R ===\n")
