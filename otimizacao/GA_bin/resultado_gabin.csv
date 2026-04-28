@@ -1,0 +1,3 @@
+"membro","algoritmo","objetivo","lucro","mediana","unidades","N_bits","N_runs","popSize","iters"
+"Nuno","GA-bin (rbga.bin)","O1",18569,17965,58819,476,20,50,200
+"Nuno","GA-bin (rbga.bin)","O2",1260,1064.5,9994,476,20,50,200

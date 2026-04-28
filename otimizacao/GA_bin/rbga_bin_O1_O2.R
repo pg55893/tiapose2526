@@ -54,6 +54,7 @@ set.seed(0)
 bits_test <- sample(0:1, N_BITS, replace = TRUE)
 S_test    <- decode_S(bits_test)
 cat("length(S)      =", length(S_test), "\n")
+idx_PR <- seq(1, 84, by = 3)
 cat("PR em [0,0.30]:", all(S_test[idx_PR] >= 0 & S_test[idx_PR] <= 0.30), "\n")
 cat("profit(S_test) =", profit(S_test), "\n\n")
 
