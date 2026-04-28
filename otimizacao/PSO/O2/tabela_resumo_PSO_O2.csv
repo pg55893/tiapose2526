@@ -1,0 +1,3 @@
+"Objetivo","Metodo","Previsao","Runs","Lucro_Mediana","Lucro_Max","Lucro_Min","Unidades_Best","Tempo_Total_s"
+"O2","PSO_DeathPenalty","ARIMAX",20,1095.5,1360,-361,9995,874.51
+"O2","PSO_Repair","ARIMAX",20,1268.5,1410,1095,9996,874.51
