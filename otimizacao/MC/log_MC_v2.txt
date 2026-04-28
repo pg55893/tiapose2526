@@ -1,0 +1,87 @@
+Log iniciado: 2026-04-28 14:37:24 
+
+NRUNS  = 20 
+N_ITER = 10000 (avaliacoes por run)
+D      = 84 (dim do vetor S)
+
+=== VALIDACAO CONFIG ===
+profit(S1)      = 4446 
+eval(S1)        = -4446 
+eval_O2(S1)     = Inf 
+total_units(S1) = 24732 
+lower[1:6]      = 0 0 0 0 0 0 
+upper[1:6]      = 0.3 19 17 0.3 19 17 
+Bounds OK (S_rand in [lower,upper]): TRUE 
+
+=== O1: Monte Carlo (20 runs, 10000 aval/run) ===
+Run  1 | Lucro: 10869.00 | FES: 10000
+Run  2 | Lucro: 10551.00 | FES: 10000
+Run  3 | Lucro: 11726.00 | FES: 10000
+Run  4 | Lucro: 11294.00 | FES: 10000
+Run  5 | Lucro: 11155.00 | FES: 10000
+Run  6 | Lucro: 11135.00 | FES: 10000
+Run  7 | Lucro: 11497.00 | FES: 10000
+Run  8 | Lucro: 10578.00 | FES: 10000
+Run  9 | Lucro: 11396.00 | FES: 10000
+Run 10 | Lucro: 11050.00 | FES: 10000
+Run 11 | Lucro: 10703.00 | FES: 10000
+Run 12 | Lucro: 10728.00 | FES: 10000
+Run 13 | Lucro: 10685.00 | FES: 10000
+Run 14 | Lucro: 10533.00 | FES: 10000
+Run 15 | Lucro: 11089.00 | FES: 10000
+Run 16 | Lucro: 11144.00 | FES: 10000
+Run 17 | Lucro: 11354.00 | FES: 10000
+Run 18 | Lucro: 11583.00 | FES: 10000
+Run 19 | Lucro: 10568.00 | FES: 10000
+Run 20 | Lucro: 10994.00 | FES: 10000
+
+>> Mediana lucro O1 : 11069.50
+>> Melhor lucro O1  : 11726.00
+>> Unidades         : 57375
+Grafico guardado: /Users/martinho/Documents/MEGSI/2Semestre/TIAPOSE/TIAPOSE_project/otimizacao/MC/convergencia_O1_MC_v2.pdf 
+RDS convergencia O1 guardado.
+
+=== O2: Monte Carlo + Death Penalty (20 runs, 10000 aval/run) ===
+Bounds O2 reduzidos: upper_J max=9 | upper_X max=8
+Run  1 | Lucro:   116.00 | Unidades: 9930 | FES: 10000
+Run  2 | Lucro:    87.00 | Unidades: 9592 | FES: 10000
+Run  3 | Lucro:   147.00 | Unidades: 9907 | FES: 10000
+Run  4 | Lucro:   236.00 | Unidades: 9945 | FES: 10000
+Run  5 | Lucro:   229.00 | Unidades: 9916 | FES: 10000
+Run  6 | Lucro:   205.00 | Unidades: 9741 | FES: 10000
+Run  7 | Lucro:   118.00 | Unidades: 9819 | FES: 10000
+Run  8 | Lucro:   160.00 | Unidades: 9970 | FES: 10000
+Run  9 | Lucro:   154.00 | Unidades: 9836 | FES: 10000
+Run 10 | Lucro:   178.00 | Unidades: 9547 | FES: 10000
+Run 11 | Lucro:   122.00 | Unidades: 9586 | FES: 10000
+Run 12 | Lucro:   214.00 | Unidades: 9979 | FES: 10000
+Run 13 | Lucro:   216.00 | Unidades: 9958 | FES: 10000
+Run 14 | Lucro:   146.00 | Unidades: 9990 | FES: 10000
+Run 15 | Lucro:   228.00 | Unidades: 9994 | FES: 10000
+Run 16 | Lucro:   158.00 | Unidades: 9992 | FES: 10000
+Run 17 | Lucro:   120.00 | Unidades: 9981 | FES: 10000
+Run 18 | Lucro:   228.00 | Unidades: 9947 | FES: 10000
+Run 19 | Lucro:   224.00 | Unidades: 9921 | FES: 10000
+Run 20 | Lucro:   146.00 | Unidades: 9933 | FES: 10000
+
+>> Mediana lucro O2 : 159.00
+>> Melhor lucro O2  : 236.00
+>> Unidades         : 9945
+Grafico guardado: /Users/martinho/Documents/MEGSI/2Semestre/TIAPOSE/TIAPOSE_project/otimizacao/MC/convergencia_O2_MC_v2.pdf 
+RDS convergencia O2 guardado.
+
+=== Resultado Final MC ===
+  membro   algoritmo objetivo lucro mediana unidades total_HR N_runs N_iter
+1   Nuno Monte Carlo       O1 11726 11069.5    57375      504     20  10000
+2   Nuno Monte Carlo       O2   236   159.0     9945       87     20  10000
+
+CSV guardado em: /Users/martinho/Documents/MEGSI/2Semestre/TIAPOSE/TIAPOSE_project/otimizacao/MC/resultado_MC.csv 
+
+=== VALIDACOES FINAIS ===
+1. FES por run: esperado=10000 | O1 run1=10000 | O2 run1=10000
+2. Mediana O1=11069.50 | Max O1=11726.00 | Mean O1=11031.60
+3. Bounds respeitados (100 amostras): TRUE 
+4. Melhor O2: 9945 unidades (restricao <= 10000): OK
+
+=== FIM MC_v2.R ===
+Log guardado em: /Users/martinho/Documents/MEGSI/2Semestre/TIAPOSE/TIAPOSE_project/otimizacao/MC/log_MC_v2.txt 

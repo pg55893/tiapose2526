@@ -1,0 +1,81 @@
+Log iniciado: 2026-04-28 15:01:14 
+
+=== VALIDACAO CODIFICACAO ===
+N_BITS = 476 
+length(S)      = 84 
+PR em [0,0.30]: TRUE 
+J  <= upper_J : TRUE 
+X  <= upper_X : TRUE 
+
+NRUNS=20 | TS_ITERS=1000 | TS_NEIGH=10 | FES/run~10000
+
+
+=== Tabu Search O1 (20 runs) ===
+Run  1 | Lucro: 17937.00 | FES: 19982
+Run  2 | Lucro: 17850.00 | FES: 19982
+Run  3 | Lucro: -1885.00 | FES: 19982
+Run  4 | Lucro: -3384.00 | FES: 19982
+Run  5 | Lucro: 18338.00 | FES: 19982
+Run  6 | Lucro: 18184.00 | FES: 19982
+Run  7 | Lucro: -1452.00 | FES: 19982
+Run  8 | Lucro: -3864.00 | FES: 19982
+Run  9 | Lucro: -5089.00 | FES: 19982
+Run 10 | Lucro: -4320.00 | FES: 19982
+Run 11 | Lucro: -2650.00 | FES: 19982
+Run 12 | Lucro: 18183.00 | FES: 19982
+Run 13 | Lucro: 18558.00 | FES: 19982
+Run 14 | Lucro: 18467.00 | FES: 19982
+Run 15 | Lucro: 18128.00 | FES: 19982
+Run 16 | Lucro: 18068.00 | FES: 19982
+Run 17 | Lucro: 18207.00 | FES: 19982
+Run 18 | Lucro: -5230.00 | FES: 19982
+Run 19 | Lucro: -3223.00 | FES: 19982
+Run 20 | Lucro: -4327.00 | FES: 19982
+
+>> Mediana O1 : 8199.00
+>> Melhor  O1 : 18558.00
+>> Unidades   : 59118
+Grafico guardado: /Users/martinho/Documents/MEGSI/2Semestre/TIAPOSE/TIAPOSE_project/otimizacao/Tabu/convergencia_O1_tabu.pdf 
+
+=== Tabu Search O2 (20 runs) ===
+Run  1 | Lucro:     -Inf | FES: 19982
+Run  2 | Lucro:   551.00 | FES: 19982
+Run  3 | Lucro:     -Inf | FES: 19982
+Run  4 | Lucro:     -Inf | FES: 19982
+Run  5 | Lucro:     -Inf | FES: 19982
+Run  6 | Lucro:     -Inf | FES: 19982
+Run  7 | Lucro:     -Inf | FES: 19982
+Run  8 | Lucro:     -Inf | FES: 19982
+Run  9 | Lucro:     -Inf | FES: 19982
+Run 10 | Lucro:   334.00 | FES: 19982
+Run 11 | Lucro:     -Inf | FES: 19982
+Run 12 | Lucro:     -Inf | FES: 19982
+Run 13 | Lucro:     -Inf | FES: 19982
+Run 14 | Lucro:     -Inf | FES: 19982
+Run 15 | Lucro:     -Inf | FES: 19982
+Run 16 | Lucro:     -Inf | FES: 19982
+Run 17 | Lucro:     -Inf | FES: 19982
+Run 18 | Lucro:     -Inf | FES: 19982
+Run 19 | Lucro:     -Inf | FES: 19982
+Run 20 | Lucro:     -Inf | FES: 19982
+
+>> Mediana O2 : 442.50
+>> Melhor  O2 : 551.00
+>> Unidades   : 9999
+Grafico guardado: /Users/martinho/Documents/MEGSI/2Semestre/TIAPOSE/TIAPOSE_project/otimizacao/Tabu/convergencia_O2_tabu.pdf 
+
+=== Resultado Final Tabu Search ===
+  membro   algoritmo objetivo lucro mediana unidades N_bits N_runs TS_iters
+1   Nuno Tabu Search       O1 18558  8199.0    59118    476     20     1000
+2   Nuno Tabu Search       O2   551   442.5     9999    476     20     1000
+  TS_neigh
+1       10
+2       10
+
+=== VALIDACOES FINAIS ===
+1. N_BITS = 476 (esperado 476): TRUE 
+2. Mediana O1 calculada (nao max): 8199 vs max 18558 
+3. Codificacao PR em [0,0.30]: TRUE 
+4. Melhor O2: 9999 unidades (<= 10000): OK
+
+=== FIM tabu_O1_O2.R ===

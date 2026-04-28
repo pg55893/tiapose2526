@@ -1,0 +1,3 @@
+"membro","algoritmo","objetivo","lucro","mediana","unidades","N_bits","N_runs","TS_iters","TS_neigh"
+"Nuno","Tabu Search","O1",18558,8199,59118,476,20,1000,10
+"Nuno","Tabu Search","O2",551,442.5,9999,476,20,1000,10
