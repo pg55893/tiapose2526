@@ -1,4 +1,4 @@
-Log iniciado: 2026-04-28 14:37:24 
+Log iniciado: 2026-04-29 11:21:09 
 
 NRUNS  = 20 
 N_ITER = 10000 (avaliacoes por run)
@@ -11,7 +11,7 @@ eval_O2(S1)     = Inf
 total_units(S1) = 24732 
 lower[1:6]      = 0 0 0 0 0 0 
 upper[1:6]      = 0.3 19 17 0.3 19 17 
-Bounds OK (S_rand in [lower,upper]): TRUE 
+Bounds OK: TRUE 
 
 === O1: Monte Carlo (20 runs, 10000 aval/run) ===
 Run  1 | Lucro: 10869.00 | FES: 10000
@@ -35,14 +35,14 @@ Run 18 | Lucro: 11583.00 | FES: 10000
 Run 19 | Lucro: 10568.00 | FES: 10000
 Run 20 | Lucro: 10994.00 | FES: 10000
 
->> Mediana lucro O1 : 11069.50
->> Melhor lucro O1  : 11726.00
->> Unidades         : 57375
+>> Mediana O1 : 11069.50
+>> Melhor O1  : 11726.00
+>> Unidades   : 57375
 Grafico guardado: /Users/martinho/Documents/MEGSI/2Semestre/TIAPOSE/TIAPOSE_project/otimizacao/MC/convergencia_O1_MC_v2.pdf 
-RDS convergencia O1 guardado.
+RDS O1 guardado.
 
 === O2: Monte Carlo + Death Penalty (20 runs, 10000 aval/run) ===
-Bounds O2 reduzidos: upper_J max=9 | upper_X max=8
+Bounds reduzidos: upper_J max=9 | upper_X max=8
 Run  1 | Lucro:   116.00 | Unidades: 9930 | FES: 10000
 Run  2 | Lucro:    87.00 | Unidades: 9592 | FES: 10000
 Run  3 | Lucro:   147.00 | Unidades: 9907 | FES: 10000
@@ -64,24 +64,63 @@ Run 18 | Lucro:   228.00 | Unidades: 9947 | FES: 10000
 Run 19 | Lucro:   224.00 | Unidades: 9921 | FES: 10000
 Run 20 | Lucro:   146.00 | Unidades: 9933 | FES: 10000
 
->> Mediana lucro O2 : 159.00
->> Melhor lucro O2  : 236.00
->> Unidades         : 9945
-Grafico guardado: /Users/martinho/Documents/MEGSI/2Semestre/TIAPOSE/TIAPOSE_project/otimizacao/MC/convergencia_O2_MC_v2.pdf 
-RDS convergencia O2 guardado.
+>> Mediana O2 (DP) : 159.00
+>> Melhor O2 (DP)  : 236.00
+>> Unidades        : 9945
+Grafico guardado: /Users/martinho/Documents/MEGSI/2Semestre/TIAPOSE/TIAPOSE_project/otimizacao/MC/convergencia_O2_dp_MC.pdf 
+RDS O2 DP guardado.
+
+=== O2: Monte Carlo + Repair (20 runs, 10000 aval/run) ===
+Run  1 | Lucro:   889.00 | Unidades: 9997 | FES: 10000
+Run  2 | Lucro:   927.00 | Unidades: 9996 | FES: 10000
+Run  3 | Lucro:   869.00 | Unidades: 9991 | FES: 10000
+Run  4 | Lucro:   893.00 | Unidades: 9992 | FES: 10000
+Run  5 | Lucro:   898.00 | Unidades: 9997 | FES: 10000
+Run  6 | Lucro:   908.00 | Unidades: 9996 | FES: 10000
+Run  7 | Lucro:   863.00 | Unidades: 9995 | FES: 10000
+Run  8 | Lucro:   888.00 | Unidades: 9997 | FES: 10000
+Run  9 | Lucro:   907.00 | Unidades: 9996 | FES: 10000
+Run 10 | Lucro:   857.00 | Unidades: 9986 | FES: 10000
+Run 11 | Lucro:   867.00 | Unidades: 9986 | FES: 10000
+Run 12 | Lucro:   844.00 | Unidades: 10000 | FES: 10000
+Run 13 | Lucro:   876.00 | Unidades: 9996 | FES: 10000
+Run 14 | Lucro:   885.00 | Unidades: 9994 | FES: 10000
+Run 15 | Lucro:   898.00 | Unidades: 10000 | FES: 10000
+Run 16 | Lucro:   887.00 | Unidades: 9996 | FES: 10000
+Run 17 | Lucro:   854.00 | Unidades: 9998 | FES: 10000
+Run 18 | Lucro:   855.00 | Unidades: 9984 | FES: 10000
+Run 19 | Lucro:   871.00 | Unidades: 9997 | FES: 10000
+Run 20 | Lucro:   870.00 | Unidades: 9997 | FES: 10000
+
+>> Mediana O2 (Repair) : 880.50
+>> Melhor O2 (Repair)  : 927.00
+>> Unidades            : 9996
+Grafico guardado: /Users/martinho/Documents/MEGSI/2Semestre/TIAPOSE/TIAPOSE_project/otimizacao/MC/convergencia_O2_rep_MC.pdf 
+RDS O2 Repair guardado.
+
+=== Convergencia O2: Death Penalty vs Repair ===
+null device 
+          1 
+Grafico comparativo O2 guardado.
 
 === Resultado Final MC ===
-  membro   algoritmo objetivo lucro mediana unidades total_HR N_runs N_iter
-1   Nuno Monte Carlo       O1 11726 11069.5    57375      504     20  10000
-2   Nuno Monte Carlo       O2   236   159.0     9945       87     20  10000
+  membro   algoritmo  objetivo     metodo_O2 lucro mediana unidades N_runs
+1   Nuno Monte Carlo        O1             — 11726 11069.5    57375     20
+2   Nuno Monte Carlo     O2_DP Death Penalty   236   159.0     9945     20
+3   Nuno Monte Carlo O2_Repair        Repair   927   880.5     9996     20
+  N_iter
+1  10000
+2  10000
+3  10000
 
 CSV guardado em: /Users/martinho/Documents/MEGSI/2Semestre/TIAPOSE/TIAPOSE_project/otimizacao/MC/resultado_MC.csv 
 
 === VALIDACOES FINAIS ===
-1. FES por run: esperado=10000 | O1 run1=10000 | O2 run1=10000
-2. Mediana O1=11069.50 | Max O1=11726.00 | Mean O1=11031.60
-3. Bounds respeitados (100 amostras): TRUE 
-4. Melhor O2: 9945 unidades (restricao <= 10000): OK
+1. FES/run: esperado=10000 | O1=10000 | O2_DP=10000 | O2_Rep=10000
+2. Mediana O1=11069.50 | Max=11726.00 | Mean=11031.60
+3. Bounds respeitados: TRUE 
+4. Melhor O2 DP: 9945 unidades (<= 10000): OK
+5. Melhor O2 Repair: 9996 unidades (<= 10000): OK
 
 === FIM MC_v2.R ===
 Log guardado em: /Users/martinho/Documents/MEGSI/2Semestre/TIAPOSE/TIAPOSE_project/otimizacao/MC/log_MC_v2.txt 

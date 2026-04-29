@@ -1,0 +1,80 @@
+Log iniciado: 2026-04-28 22:47:30 
+
+=== VALIDACAO CODIFICACAO ===
+N_BITS = 476 
+length(S)      = 84 
+PR em [0,0.30]: TRUE 
+profit(S_test) = -9913 
+
+NRUNS=20 | POPSIZE=50 | ITERS=200 | MUTCH=0.010 | FES/run~9005
+
+
+=== rbga.bin O1 (20 runs) ===
+Run  1 | Lucro: 17911.00 | FES: 8975
+Run  2 | Lucro: 17681.00 | FES: 8968
+Run  3 | Lucro: 17736.00 | FES: 8971
+Run  4 | Lucro: 18414.00 | FES: 8974
+Run  5 | Lucro: 18304.00 | FES: 8973
+Run  6 | Lucro: 17755.00 | FES: 8964
+Run  7 | Lucro: 18360.00 | FES: 8979
+Run  8 | Lucro: 17898.00 | FES: 8960
+Run  9 | Lucro: 17849.00 | FES: 8967
+Run 10 | Lucro: 18542.00 | FES: 8955
+Run 11 | Lucro: 17963.00 | FES: 8953
+Run 12 | Lucro: 18491.00 | FES: 8978
+Run 13 | Lucro: 17967.00 | FES: 8974
+Run 14 | Lucro: 17677.00 | FES: 8960
+Run 15 | Lucro: 18220.00 | FES: 8962
+Run 16 | Lucro: 18194.00 | FES: 8955
+Run 17 | Lucro: 18422.00 | FES: 8971
+Run 18 | Lucro: 17597.00 | FES: 8975
+Run 19 | Lucro: 18569.00 | FES: 8979
+Run 20 | Lucro: 17774.00 | FES: 8975
+
+>> Mediana O1 : 17965.00
+>> Melhor  O1 : 18569.00
+>> Unidades   : 58819
+Grafico guardado: /Users/martinho/Documents/MEGSI/2Semestre/TIAPOSE/TIAPOSE_project/otimizacao/GA_bin/convergencia_O1_gabin.pdf 
+
+=== rbga.bin O2 (20 runs) ===
+Run  1 | Lucro:   771.00 | FES: 8972
+Run  2 | Lucro:  1072.00 | FES: 8965
+Run  3 | Lucro:   822.00 | FES: 8972
+Run  4 | Lucro:     -Inf | FES: 8964
+Run  5 | Lucro:  1069.00 | FES: 8971
+Run  6 | Lucro:  1062.00 | FES: 8966
+Run  7 | Lucro:   982.00 | FES: 8957
+Run  8 | Lucro:   752.00 | FES: 8957
+Run  9 | Lucro:     -Inf | FES: 8970
+Run 10 | Lucro:  1147.00 | FES: 8962
+Run 11 | Lucro:  1135.00 | FES: 8974
+Run 12 | Lucro:  1144.00 | FES: 8959
+Run 13 | Lucro:     -Inf | FES: 8961
+Run 14 | Lucro:   945.00 | FES: 8958
+Run 15 | Lucro:  1050.00 | FES: 8963
+Run 16 | Lucro:  1096.00 | FES: 8966
+Run 17 | Lucro:     -Inf | FES: 8965
+Run 18 | Lucro:  1260.00 | FES: 8967
+Run 19 | Lucro:  1047.00 | FES: 8955
+Run 20 | Lucro:  1067.00 | FES: 8966
+
+>> Mediana O2 : 1064.50
+>> Melhor  O2 : 1260.00
+>> Unidades   : 9994
+Grafico guardado: /Users/martinho/Documents/MEGSI/2Semestre/TIAPOSE/TIAPOSE_project/otimizacao/GA_bin/convergencia_O2_gabin.pdf 
+
+=== Resultado Final rbga.bin ===
+  membro         algoritmo objetivo lucro mediana unidades N_bits N_runs
+1   Nuno GA-bin (rbga.bin)       O1 18569 17965.0    58819    476     20
+2   Nuno GA-bin (rbga.bin)       O2  1260  1064.5     9994    476     20
+  popSize iters
+1      50   200
+2      50   200
+
+=== VALIDACOES FINAIS ===
+1. N_BITS = 476 (esperado 476): TRUE 
+2. Mediana O1: 17965 vs Melhor: 18569 
+3. Codificacao OK: TRUE 
+4. Melhor O2: 9994 unidades (<= 10000): OK
+
+=== FIM rbga_bin_O1_O2.R ===
