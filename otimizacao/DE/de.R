@@ -107,7 +107,6 @@ cat("Richmond    :",PREV[22:28],"\n\n")
 D=length(lower)
 popSize=max(20,10+round(2*sqrt(D)))  # mesmo criterio do PSO
 maxit=500                             # igual ao PSO para comparacao justa
-report=50
 RUNS=20
 LIMIT_UNITS=10000
 
@@ -156,6 +155,8 @@ return(S_out)
 # -----------------------------------------------------------------------------
 # funcoes auxiliares de grafico — mesmo estilo do PSO O2
 # adaptado de: opt-4-convergence-2demos.R (P. Cortez)
+# CORRECAO: guardar so valores finitos no historico
+# CORRECAO: y_rng com percentil 5% para evitar distorcao da escala
 # -----------------------------------------------------------------------------
 build_mat=function(hists)
 { valid=Filter(function(h) !is.null(h)&&length(h)>0,hists)
@@ -164,93 +165,68 @@ max_len=max(sapply(valid,length))
 sapply(valid,function(h) c(h,rep(h[length(h)],max_len-length(h))))
 }
 
-plot_runs=function(F_mat,titulo,pdf_out,csv_out,cor_med="steelblue")
-{ 
-  mat=build_mat(F_mat)
-  if(is.null(mat)){ cat("Sem dados para grafico:",titulo,"\n"); return(NULL) }
-  
-  med_curve=apply(mat,1,median,na.rm=TRUE)
-  x_fes=seq_len(nrow(mat))
-  
-  vals=mat[is.finite(mat)]
-  
-  if(grepl("O2 - Death Penalty",titulo))
-    y_rng=c(-5000,max(vals,na.rm=TRUE))
-  else
-    y_rng=range(vals,na.rm=TRUE)
-  
-  pdf(pdf_out,width=9,height=6)
-  
-  for(j in seq_len(ncol(mat)))
-  { 
-    if(j==1) plot(x_fes,mat[,j],type="l",col="grey80",lwd=1,ylim=y_rng,
-                  xlab="Numero de Avaliacoes (FES)",ylab="Melhor Lucro",main=titulo)
-    else lines(x_fes,mat[,j],col="grey80",lwd=1)
-  }
-  
-  lines(x_fes,med_curve,col=cor_med,lwd=2.5)
-  
-  legend("bottomright",bty="n",
-         legend=c("Runs individuais","Mediana"),
-         col=c("grey70",cor_med),lwd=c(1,2.5))
-  
-  dev.off()
-  
-  write.csv(data.frame(Avaliacao=x_fes,Lucro_Mediana=round(med_curve,2)),
-            file=csv_out,row.names=FALSE)
-  
-  cat("PDF guardado:",pdf_out,"\n")
-  invisible(med_curve)
+plot_runs=function(hists,titulo,pdf_out,csv_out,cor_med="steelblue")
+{ mat=build_mat(hists)
+if(is.null(mat)){ cat("Sem dados para grafico:",titulo,"\n"); return(NULL) }
+med_curve=apply(mat,1,median,na.rm=TRUE)
+x_fes=seq_len(nrow(mat))
+vals=mat[is.finite(mat)]
+# CORRECAO: para Death Penalty usa percentil 5% para nao distorcer escala
+if(grepl("Death Penalty",titulo))
+{ q_low=quantile(vals[is.finite(vals)],0.05,na.rm=TRUE)
+y_rng=c(max(q_low,-5000),max(vals,na.rm=TRUE)*1.05)
+} else {
+  y_rng=range(vals,na.rm=TRUE)
+}
+pdf(pdf_out,width=9,height=6)
+for(j in seq_len(ncol(mat)))
+{ if(j==1) plot(x_fes,mat[,j],type="l",col="grey80",lwd=1,ylim=y_rng,
+                xlab="Numero de Avaliacoes (FES)",ylab="Melhor Lucro",main=titulo)
+  else lines(x_fes,mat[,j],col="grey80",lwd=1)
+}
+lines(x_fes,med_curve,col=cor_med,lwd=2.5)
+legend("bottomright",bty="n",
+       legend=c("Runs individuais","Mediana"),
+       col=c("grey70",cor_med),lwd=c(1,2.5))
+dev.off()
+write.csv(data.frame(Avaliacao=x_fes,Lucro_Mediana=round(med_curve,2)),
+          file=csv_out,row.names=FALSE)
+cat("PDF guardado:",pdf_out,"\n")
+invisible(med_curve)
 }
 
-plot_dp_rep=function(F_death,F_repair,med_death,med_repair,pdf_out)
-{ 
-  mat_dp=build_mat(F_death)
-  mat_rep=build_mat(F_repair)
-  
-  y_all=c(if(!is.null(mat_dp)) mat_dp[is.finite(mat_dp)],
-          if(!is.null(mat_rep)) mat_rep[is.finite(mat_rep)])
-  
-  if(length(y_all)==0){ cat("Sem dados comparativo.\n"); return() }
-  
-  y_rng=c(-5000,max(y_all,na.rm=TRUE))
-  
-  pdf(pdf_out,width=10,height=6)
-  
-  if(!is.null(mat_dp))
-  { 
-    curve_dp=apply(mat_dp,1,median,na.rm=TRUE)
-    
-    for(j in seq_len(ncol(mat_dp)))
-    { 
-      if(j==1) plot(seq_len(nrow(mat_dp)),mat_dp[,j],type="l",col="#FFAAAA",lwd=1,
-                    xlab="Numero de Avaliacoes (FES)",ylab="Melhor Lucro",
-                    main="DE O2: Death Penalty vs Repair (runs + mediana)",ylim=y_rng)
-      else lines(seq_len(nrow(mat_dp)),mat_dp[,j],col="#FFAAAA",lwd=1)
-    }
-    
-    lines(seq_along(curve_dp),curve_dp,col="firebrick",lwd=2.5)
-  } else plot.new()
-  
-  if(!is.null(mat_rep))
-  { 
-    curve_rep=apply(mat_rep,1,median,na.rm=TRUE)
-    
-    for(j in seq_len(ncol(mat_rep)))
-      lines(seq_len(nrow(mat_rep)),mat_rep[,j],col="#AADDAA",lwd=1)
-    
-    lines(seq_along(curve_rep),curve_rep,col="forestgreen",lwd=2.5)
-  }
-  
-  legend("bottomright",bty="n",
-         legend=c(sprintf("DP runs (med=%.0f)",med_death),
-                  sprintf("Repair runs (med=%.0f)",med_repair),
-                  "Mediana DP","Mediana Repair"),
-         col=c("#FFAAAA","#AADDAA","firebrick","forestgreen"),
-         lwd=c(1,1,2.5,2.5))
-  
-  dev.off()
-  cat("PDF guardado:",pdf_out,"\n")
+plot_dp_rep=function(hists_dp,hists_rep,med_death,med_repair,pdf_out)
+{ mat_dp=build_mat(hists_dp); mat_rep=build_mat(hists_rep)
+y_all=c(if(!is.null(mat_dp)) mat_dp[is.finite(mat_dp)],
+        if(!is.null(mat_rep)) mat_rep[is.finite(mat_rep)])
+if(length(y_all)==0){ cat("Sem dados comparativo.\n"); return() }
+# CORRECAO: percentil 5% para nao distorcer escala
+q_low=quantile(y_all[is.finite(y_all)],0.05,na.rm=TRUE)
+y_rng=c(max(q_low,-5000),max(y_all,na.rm=TRUE)*1.05)
+pdf(pdf_out,width=10,height=6)
+if(!is.null(mat_dp))
+{ curve_dp=apply(mat_dp,1,median,na.rm=TRUE)
+for(j in seq_len(ncol(mat_dp)))
+{ if(j==1) plot(seq_len(nrow(mat_dp)),mat_dp[,j],type="l",col="#FFAAAA",lwd=1,
+                xlab="Numero de Avaliacoes (FES)",ylab="Melhor Lucro",
+                main="DE O2: Death Penalty vs Repair (runs + mediana)",ylim=y_rng)
+  else lines(seq_len(nrow(mat_dp)),mat_dp[,j],col="#FFAAAA",lwd=1)
+}
+lines(seq_along(curve_dp),curve_dp,col="firebrick",lwd=2.5)
+} else plot.new()
+if(!is.null(mat_rep))
+{ curve_rep=apply(mat_rep,1,median,na.rm=TRUE)
+for(j in seq_len(ncol(mat_rep)))
+  lines(seq_len(nrow(mat_rep)),mat_rep[,j],col="#AADDAA",lwd=1)
+lines(seq_along(curve_rep),curve_rep,col="forestgreen",lwd=2.5)
+}
+legend("bottomright",bty="n",
+       legend=c(sprintf("DP runs (med=%.0f)",med_death),
+                sprintf("Repair runs (med=%.0f)",med_repair),
+                "Mediana DP","Mediana Repair"),
+       col=c("#FFAAAA","#AADDAA","firebrick","forestgreen"),lwd=c(1,1,2.5,2.5))
+dev.off()
+cat("PDF guardado:",pdf_out,"\n")
 }
 
 # =============================================================================
@@ -264,7 +240,7 @@ cat("D=",D,"| popSize=",popSize,"| maxit=",maxit,"| runs=",RUNS,"\n\n")
 
 MAXIT_O1=maxit*popSize
 lucros_O1=numeric(RUNS)
-F_mat_O1=vector("list",RUNS)
+hists_O1=vector("list",RUNS)
 S_best_O1=NULL; lucro_best_O1=-Inf
 
 t0_O1=proc.time()
@@ -294,7 +270,10 @@ for(run in 1:RUNS)
   S_run=normalize(de$optim$bestmem)
   lucro_run=profit(S_run)
   lucros_O1[run]=lucro_run
-  F_mat_O1[[run]]=FHIST
+  
+  # CORRECAO: guardar so valores finitos no historico
+  h=FHIST[is.finite(FHIST)]
+  hists_O1[[run]]=if(length(h)>0) h else NULL
   
   if(lucro_run>lucro_best_O1){ lucro_best_O1=lucro_run; S_best_O1=S_run }
   cat("  lucro run",run,":",round(lucro_run),"$\n")
@@ -311,7 +290,7 @@ cat("Total HR (melhor):",sum(S_best_O1[idx_J])+sum(S_best_O1[idx_X]),"\n")
 cat("Tempo total      :",round(tempo_O1,1),"s\n")
 
 # graficos e CSV O1
-plot_runs(F_mat_O1,
+plot_runs(hists_O1,
           titulo=paste0("DE O1 - ",RUNS," runs"),
           pdf_out=file.path(output_dir_O1,"convergencia_DE_O1.pdf"),
           csv_out=file.path(output_dir_O1,"convergencia_DE_O1.csv"),
@@ -348,7 +327,7 @@ MAXIT_O2=maxit*popSize
 
 # --- Death Penalty ---
 cat("\n--- Death Penalty ---\n")
-lucros_dp=numeric(RUNS); F_mat_dp=vector("list",RUNS)
+lucros_dp=numeric(RUNS); hists_dp=vector("list",RUNS)
 S_best_dp=NULL; lucro_best_dp=-Inf
 
 t0_O2=proc.time()
@@ -381,14 +360,18 @@ for(run in 1:RUNS)
   if(total_units(S_run)>LIMIT_UNITS) S_run=repair(S_run)
   lucro_run=profit(S_run)
   lucros_dp[run]=lucro_run
-  F_mat_dp[[run]]=FHIST
+  
+  # CORRECAO: guardar so valores finitos no historico
+  h=FHIST[is.finite(FHIST)]
+  hists_dp[[run]]=if(length(h)>0) h else NULL
+  
   if(lucro_run>lucro_best_dp){ lucro_best_dp=lucro_run; S_best_dp=S_run }
   cat("  lucro:",round(lucro_run),"$ | unidades:",round(total_units(S_run)),"\n")
 }
 
 # --- Repair ---
 cat("\n--- Repair ---\n")
-lucros_rep=numeric(RUNS); F_mat_rep=vector("list",RUNS)
+lucros_rep=numeric(RUNS); hists_rep=vector("list",RUNS)
 S_best_rep=NULL; lucro_best_rep=-Inf
 
 for(run in 1:RUNS)
@@ -411,7 +394,11 @@ for(run in 1:RUNS)
   S_run=repair(de$optim$bestmem)
   lucro_run=profit(S_run)
   lucros_rep[run]=lucro_run
-  F_mat_rep[[run]]=FHIST
+  
+  # CORRECAO: guardar so valores finitos no historico
+  h=FHIST[is.finite(FHIST)]
+  hists_rep[[run]]=if(length(h)>0) h else NULL
+  
   if(lucro_run>lucro_best_rep){ lucro_best_rep=lucro_run; S_best_rep=S_run }
   cat("  lucro:",round(lucro_run),"$ | unidades:",round(total_units(S_run)),"\n")
 }
@@ -426,19 +413,19 @@ cat(sprintf("%-20s %10.0f %10.0f %10.0f\n","DE Repair",med_rep,max(lucros_rep),m
 cat("Tempo total O2:",round(tempo_O2,1),"s\n")
 
 # graficos O2
-plot_runs(F_mat_dp,
+plot_runs(hists_dp,
           titulo=paste0("DE O2 - Death Penalty - ",RUNS," runs"),
           pdf_out=file.path(output_dir_O2,"convergencia_DE_O2_DeathPenalty.pdf"),
           csv_out=file.path(output_dir_O2,"convergencia_DE_O2_DeathPenalty.csv"),
           cor_med="steelblue")
 
-plot_runs(F_mat_rep,
+plot_runs(hists_rep,
           titulo=paste0("DE O2 - Repair - ",RUNS," runs"),
           pdf_out=file.path(output_dir_O2,"convergencia_DE_O2_Repair.pdf"),
           csv_out=file.path(output_dir_O2,"convergencia_DE_O2_Repair.csv"),
           cor_med="darkgreen")
 
-plot_dp_rep(F_mat_dp,F_mat_rep,med_dp,med_rep,
+plot_dp_rep(hists_dp,hists_rep,med_dp,med_rep,
             pdf_out=file.path(output_dir_O2,"comparacao_DE_O2.pdf"))
 
 pdf(file.path(output_dir_O2,"boxplot_DE_O2.pdf"),width=8,height=6)

@@ -1,0 +1,8 @@
+"membro","algoritmo","objetivo","mediana","media","lucro_max","lucro_min","unidades","total_HR","tempo_s","posicao"
+"Carolina","PSO Repair","O2",1268.5,NA,1410,1095,9996,NA,910.83,"1º"
+"Eduardo","SANN","O2",1136.5,NA,NA,NA,9985,101.715698140474,NA,"2º"
+"Carolina","PSO DeathPenalty","O2",1109.5,NA,1360,-388,9995,NA,910.83,"3º"
+"Carolina","DE Repair","O2",943,NA,981,890,9987,NA,2306.67,"4º"
+"Carolina","DE DeathPenalty","O2",622,NA,694,505,9992,NA,2306.67,"5º"
+"Nuno","Monte Carlo","O2",159,NA,NA,NA,9945,87,NA,"6º"
+"Eduardo","HC","O2",-895.5,NA,NA,NA,6569,56,NA,"7º"

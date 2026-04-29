@@ -1,0 +1,6 @@
+"membro","algoritmo","objetivo","mediana","media","lucro_max","lucro_min","unidades","total_HR","tempo_s","posicao"
+"Carolina","DE","O1",17114.5,NA,17480,16833,56450,523,144.06,"1º"
+"Eduardo","SANN","O1",15970.5,NA,NA,NA,57251,536,NA,"2º"
+"Carolina","PSO","O1",15738,15673,16640,14526,59968,515,60.94,"3º"
+"Eduardo","HC","O1",14082,NA,NA,NA,55024,503,NA,"4º"
+"Nuno","Monte Carlo","O1",11069.5,NA,NA,NA,57375,504,NA,"5º"

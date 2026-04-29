@@ -1,3 +1,3 @@
 "Objetivo","Metodo","Previsao","Runs","Lucro_Mediana","Lucro_Max","Lucro_Min","Unidades_Best","Tempo_Total_s"
-"O2","DE_DeathPenalty","ARIMAX",20,622,694,505,9992,1089.14
-"O2","DE_Repair","ARIMAX",20,943,981,890,9987,1089.14
+"O2","DE_DeathPenalty","ARIMAX",20,622,694,505,9992,2306.67
+"O2","DE_Repair","ARIMAX",20,943,981,890,9987,2306.67
