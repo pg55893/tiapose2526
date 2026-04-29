@@ -217,8 +217,11 @@ cat("RDS O2 DP guardado.\n\n")
 
 # =============================================================
 # O2 — Repair
-# Bounds completos; cada candidato é reparado (PR x0.95) antes
-# de ser avaliado — mesmo padrão SANN v2 e HC (Eduardo)
+# Bounds reduzidos (1/6 de J e X, igual ao DP) para garantir que
+# o sampling parte de soluções próximas da zona viável; repair
+# (PR x0.95) corrige as violações residuais.
+# Com bounds completos o repair de PR sozinho é insuficiente:
+# mesmo com PR=0, J e X altos geram >10000 unidades.
 # =============================================================
 cat(sprintf("=== O2: Monte Carlo + Repair (%d runs, %d aval/run) ===\n", NRUNS, N_ITER))
 
@@ -233,7 +236,7 @@ for (i in 1:NRUNS) {
   best_run   <- -Inf
   best_S_run <- NULL
   for (k in 1:N_ITER) {
-    S_rand <- runif(84, min = lower, max = upper)
+    S_rand <- runif(84, min = lower, max = upper_O2)   # bounds reduzidos
     val    <- tracker$fn(S_rand)
     if (is.finite(val)) {
       p <- -val
