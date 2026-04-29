@@ -15,11 +15,11 @@ library(rminer)
 # -----------------------------------------------------------------------------
 # carregar dados e config
 # -----------------------------------------------------------------------------
-setwd("~/TIAPOSE2526/data")
-source("~/TIAPOSE2526/utils/tratamentoDeDados.R")
-source("~/TIAPOSE2526/utils/config_otimizacao.R")
+setwd("~/TIAPOSE_projeto/tiapose2526/data")
+source("~/TIAPOSE_projeto/tiapose2526/utils/tratamentoDeDados.R")
+source("~/TIAPOSE_projeto/tiapose2526/utils/config_otimizacao.R")
 
-output_dir <- "~/TIAPOSE2526/otimizacao/PSO/O1"
+output_dir <- "~/TIAPOSE_projeto/tiapose2526/otimizacao/PSO/O1"
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
 # -----------------------------------------------------------------------------
@@ -222,22 +222,72 @@ cat("Total HR         :", total_HR_best, "\n")
 # adaptado de: opt-4-convergence-2demos.R (P. Cortez)
 # eixo X = numero de avaliacoes da funcao profit()
 # -----------------------------------------------------------------------------
-F_mediana       <- apply(F_runs, 2, function(col) median(col, na.rm = TRUE))
-F_mediana_clean <- F_mediana[!is.na(F_mediana)]
-avaliacoes      <- 1:length(F_mediana_clean)
+build_mat <- function(F_mat) {
+  hists <- list()
+  
+  for (i in 1:nrow(F_mat)) {
+    h <- F_mat[i, ]
+    h <- h[is.finite(h)]
+    if (length(h) > 0) hists[[length(hists) + 1]] <- h
+  }
+  
+  if (length(hists) == 0) return(NULL)
+  
+  max_len <- max(sapply(hists, length))
+  mat <- sapply(hists, function(h) c(h, rep(h[length(h)], max_len - length(h))))
+  return(mat)
+}
 
-pdf(file.path(output_dir, "convergencia_PSO_O1.pdf"), width = 10, height = 6)
-plot(avaliacoes, F_mediana_clean,
-     col  = "blue", type = "l", lwd = 2,
-     main = paste("Convergencia PSO O1 (D=", D, ", runs=", RUNS, ")"),
-     xlab = "Numero de avaliacoes da funcao profit()",
-     ylab = "Mediana do melhor lucro acumulado ($)")
-abline(h = lucro_mediana, col = "red", lty = 2)
-legend("bottomright", bty = "n",
-       legend = c("Mediana entre runs",
-                  paste0("Mediana final: $", round(lucro_mediana))),
-       col = c("blue", "red"), lty = c(1, 2), lwd = 2)
-dev.off()
+plot_runs <- function(F_mat, titulo, pdf_out, cor_med = "steelblue") {
+  mat <- build_mat(F_mat)
+  if (is.null(mat)) {
+    cat("Sem dados para grafico:", titulo, "\n")
+    return(NULL)
+  }
+  
+  med_curve <- apply(mat, 1, median, na.rm = TRUE)
+  x_fes <- seq_len(nrow(mat))
+  y_rng <- range(mat[is.finite(mat)], na.rm = TRUE)
+  
+  pdf(pdf_out, width = 9, height = 6)
+  
+  for (j in seq_len(ncol(mat))) {
+    if (j == 1) {
+      plot(x_fes, mat[, j],
+           type = "l",
+           col = "grey80",
+           lwd = 1,
+           xlab = "Numero de Avaliacoes (FES)",
+           ylab = "Melhor Lucro",
+           main = titulo,
+           ylim = y_rng)
+    } else {
+      lines(x_fes, mat[, j], col = "grey80", lwd = 1)
+    }
+  }
+  
+  lines(x_fes, med_curve, col = cor_med, lwd = 2.8)
+  abline(h = lucro_mediana, col = "red", lty = 2, lwd = 2)
+  
+  legend("bottomright",
+         legend = c("Runs individuais",
+                    "Mediana",
+                    paste0("Mediana final: $", round(lucro_mediana))),
+         col = c("grey70", cor_med, "red"),
+         lwd = c(1, 2.8, 2),
+         lty = c(1, 1, 2),
+         bty = "n")
+  
+  dev.off()
+  
+  cat("Grafico guardado:", pdf_out, "\n")
+}
+
+plot_runs(
+  F_runs,
+  titulo = paste0("PSO O1 - ", RUNS, " runs"),
+  pdf_out = file.path(output_dir, "convergencia_PSO_O1.pdf")
+)
 cat("\nPDF guardado:", file.path(output_dir, "convergencia_PSO_O1.pdf"), "\n")
 
 # -----------------------------------------------------------------------------

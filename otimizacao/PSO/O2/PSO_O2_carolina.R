@@ -16,11 +16,11 @@ library(rminer)
 # -----------------------------------------------------------------------------
 # carregar dados e config
 # -----------------------------------------------------------------------------
-setwd("~/TIAPOSE2526/data")
-source("~/TIAPOSE2526/utils/tratamentoDeDados.R")
-source("~/TIAPOSE2526/utils/config_otimizacao.R")
+setwd("~/TIAPOSE_projeto/tiapose2526/data")
+source("~/TIAPOSE_projeto/tiapose2526/utils/tratamentoDeDados.R")
+source("~/TIAPOSE_projeto/tiapose2526/utils/config_otimizacao.R")
 
-output_dir <- "~/TIAPOSE2526/otimizacao/PSO/O2"
+output_dir <- "~/TIAPOSE_projeto/tiapose2526/otimizacao/PSO/O2"
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
 # -----------------------------------------------------------------------------
@@ -186,28 +186,30 @@ repair <- function(S) {
 # global variables: EV, BEST, F, TYPE, MAXIT
 # -----------------------------------------------------------------------------
 
-# Death Penalty com penalidade proporcional a violacao
-# Penalidade cresce com o excesso de unidades — da ao PSO gradiente para
-# navegar em direcao a regiao feasivel (variante estatica da Death Penalty)
-# Adaptado de: P. Cortez, Modern Optimization with R, 2021, Springer.
+
 eval_death <- function(S) {
   S  <- normalize(S)
   EV <<- EV + 1
   u  <- total_units(S)
+  
   if (!is.na(u) && u > LIMIT_UNITS) {
-    # penalidade proporcional ao excesso (nao binaria — permite navegacao)
     excess <- (u - LIMIT_UNITS) / LIMIT_UNITS
     res    <- profit(S) - 1e5 * excess
-    # BEST so conta solucoes feasiveis — FHIST guarda ultimo BEST feasivel
-    if (EV <= MAXIT) FHIST[EV] <<- ifelse(is.finite(BEST), BEST, NA)
+    
+    if (EV <= MAXIT) {
+      FHIST[EV] <<- ifelse(is.finite(BEST), BEST, res)
+    }
+    
     return(-res)
   }
+  
   res  <- profit(S)
   BEST <<- g_best(BEST, res, TYPE)
+  
   if (EV <= MAXIT) FHIST[EV] <<- BEST
+  
   return(-res)
 }
-
 # Repair: repara a solucao antes de avaliar — garante sempre solucao valida
 eval_repair <- function(S) {
   S    <- repair(S)    # S reparado localmente
@@ -253,13 +255,19 @@ correr_runs <- function(fn_eval, usar_repair = FALSE, nome = "") {
                                  s = popSize, w = 0.729, c.p = 1.494, c.g = 1.494,
                                  vectorize = FALSE))
 
-    if (usar_repair)
+    if (usar_repair) {
       S_run <- repair(ps$par)
-    else
+    } else {
       S_run <- normalize(ps$par)
-
-    lucro_run        <- profit(S_run)
-    lucros[run]      <- lucro_run
+      
+      # garantir que Death Penalty só aceita solução válida
+      if (total_units(S_run) > LIMIT_UNITS) {
+        S_run <- repair(S_run)
+      }
+    }
+    
+    lucro_run   <- profit(S_run)
+    lucros[run] <- lucro_run
     F_mat[run, ]     <- FHIST
 
     if (lucro_run > lucro_best_global) {
@@ -302,74 +310,184 @@ cat("Tempo total:", round(tempo_total, 1), "s\n")
 # eixo X = numero de avaliacoes da funcao profit()
 # adaptado de: opt-4-convergence-2demos.R (P. Cortez)
 # -----------------------------------------------------------------------------
-plot_convergencia <- function(F_mat, lucro_mediana, nome, cor = "blue") {
-  F_med   <- apply(F_mat, 2, function(col) median(col, na.rm = TRUE))
-  F_clean <- F_med[!is.na(F_med) & is.finite(F_med)]
-  if (length(F_clean) == 0) F_clean <- 0
-  av <- 1:length(F_clean)
 
-  pdf(file.path(output_dir, paste0("convergencia_PSO_O2_", nome, ".pdf")),
-      width = 10, height = 6)
-  plot(av, F_clean, type = "l", lwd = 2, col = cor,
-       main = paste("Convergencia PSO O2 -", nome, "(D=", D, ", runs=", RUNS, ")"),
-       xlab = "Numero de avaliacoes da funcao profit()",
-       ylab = "Mediana do melhor lucro acumulado ($)")
-  abline(h = lucro_mediana, col = "red", lty = 2)
-  legend("bottomright", bty = "n",
-         legend = c("Mediana entre runs",
-                    paste0("Mediana final: $", round(lucro_mediana))),
-         col = c(cor, "red"), lty = c(1, 2), lwd = 2)
+build_mat <- function(F_mat) {
+  hists <- list()
+  
+  for (i in 1:nrow(F_mat)) {
+    h <- F_mat[i, ]
+    h <- h[is.finite(h)]
+    
+    if (length(h) > 0) {
+      hists[[length(hists) + 1]] <- h
+    }
+  }
+  
+  if (length(hists) == 0) return(NULL)
+  
+  max_len <- max(sapply(hists, length))
+  mat <- sapply(hists, function(h) c(h, rep(h[length(h)], max_len - length(h))))
+  
+  return(mat)
+}
+
+plot_runs <- function(F_mat, titulo, pdf_out, csv_out, cor_med = "steelblue") {
+  mat <- build_mat(F_mat)
+  
+  if (is.null(mat)) {
+    cat("Sem dados para grafico:", titulo, "\n")
+    return(NULL)
+  }
+  
+  med_curve <- apply(mat, 1, median, na.rm = TRUE)
+  x_fes <- seq_len(nrow(mat))
+  y_rng <- range(mat[is.finite(mat)], na.rm = TRUE)
+  
+  pdf(pdf_out, width = 9, height = 6)
+  
+  for (j in seq_len(ncol(mat))) {
+    if (j == 1) {
+      plot(x_fes, mat[, j],
+           type = "l",
+           col = "grey80",
+           lwd = 1,
+           ylim = y_rng,
+           xlab = "Numero de Avaliacoes (FES)",
+           ylab = "Melhor Lucro",
+           main = titulo)
+    } else {
+      lines(x_fes, mat[, j], col = "grey80", lwd = 1)
+    }
+  }
+  
+  lines(x_fes, med_curve, col = cor_med, lwd = 2.5)
+  
+  legend("bottomright",
+         legend = c("Runs individuais", "Mediana"),
+         col = c("grey70", cor_med),
+         lwd = c(1, 2.5),
+         bty = "n")
+  
   dev.off()
-  cat("PDF guardado: convergencia_PSO_O2_", nome, ".pdf\n")
-
-  # CSV convergencia
-  write.csv(data.frame(Avaliacao     = av,
-                       Lucro_Mediana = round(F_clean, 2)),
-            file      = file.path(output_dir, paste0("convergencia_PSO_O2_", nome, ".csv")),
+  
+  write.csv(data.frame(Avaliacao = x_fes,
+                       Lucro_Mediana = round(med_curve, 2)),
+            file = csv_out,
             row.names = FALSE)
+  
+  cat("Grafico guardado:", pdf_out, "\n")
+  
+  invisible(med_curve)
 }
 
-plot_convergencia(res_death$F_mat,  med_death,  "DeathPenalty", cor = "blue")
-plot_convergencia(res_repair$F_mat, med_repair, "Repair",       cor = "darkgreen")
-
-# grafico comparativo Death Penalty vs Repair
-F_med_death  <- apply(res_death$F_mat,  2, function(col) median(col, na.rm = TRUE))
-F_med_repair <- apply(res_repair$F_mat, 2, function(col) median(col, na.rm = TRUE))
-F_d  <- F_med_death[!is.na(F_med_death)  & is.finite(F_med_death)]
-F_r  <- F_med_repair[!is.na(F_med_repair) & is.finite(F_med_repair)]
-
-if (length(F_d) > 0 && length(F_r) > 0) {
-  n    <- min(length(F_d), length(F_r))  # alinhar comprimentos
-  ymin <- min(c(F_d[1:n], F_r[1:n]), na.rm = TRUE)
-  ymax <- max(c(F_d[1:n], F_r[1:n]), na.rm = TRUE)
-
-  pdf(file.path(output_dir, "comparacao_PSO_O2.pdf"), width = 10, height = 6)
-  plot(1:n, F_d[1:n], type = "l", lwd = 2, col = "blue",
-       ylim = c(ymin, ymax),
-       main = paste("PSO O2 - DeathPenalty vs Repair (runs=", RUNS, ")"),
-       xlab = "Numero de avaliacoes da funcao profit()",
-       ylab = "Mediana do melhor lucro acumulado ($)")
-  lines(1:n, F_r[1:n], lwd = 2, col = "darkgreen")
-  abline(h = med_death,  col = "blue",      lty = 2)
-  abline(h = med_repair, col = "darkgreen", lty = 2)
-  legend("bottomright", bty = "n",
-         legend = c(paste0("DeathPenalty (med=$", round(med_death), ")"),
-                    paste0("Repair       (med=$", round(med_repair), ")")),
-         col = c("blue", "darkgreen"), lty = 1, lwd = 2)
+plot_dp_rep <- function(F_death, F_repair, med_death, med_repair, pdf_out) {
+  mat_dp <- build_mat(F_death)
+  mat_rep <- build_mat(F_repair)
+  
+  y_all <- c(
+    if (!is.null(mat_dp)) mat_dp[is.finite(mat_dp)],
+    if (!is.null(mat_rep)) mat_rep[is.finite(mat_rep)]
+  )
+  
+  if (length(y_all) == 0) {
+    cat("Sem dados para grafico comparativo.\n")
+    return(NULL)
+  }
+  
+  y_finite <- y_all[is.finite(y_all)]
+  q_low    <- quantile(y_finite, 0.05, na.rm = TRUE)  # corta 5% mais baixo
+  y_rng    <- c(max(q_low, -5000), max(y_finite, na.rm = TRUE) * 1.05)
+  
+  pdf(pdf_out, width = 10, height = 6)
+  
+  if (!is.null(mat_dp)) {
+    curve_dp <- apply(mat_dp, 1, median, na.rm = TRUE)
+    
+    for (j in seq_len(ncol(mat_dp))) {
+      if (j == 1) {
+        plot(seq_len(nrow(mat_dp)), mat_dp[, j],
+             type = "l",
+             col = "#FFAAAA",
+             lwd = 1,
+             ylim = y_rng,
+             xlab = "Numero de Avaliacoes (FES)",
+             ylab = "Melhor Lucro",
+             main = "PSO O2: Death Penalty vs Repair (runs + mediana)")
+      } else {
+        lines(seq_len(nrow(mat_dp)), mat_dp[, j], col = "#FFAAAA", lwd = 1)
+      }
+    }
+    
+    lines(seq_along(curve_dp), curve_dp, col = "firebrick", lwd = 2.5)
+  } else {
+    plot.new()
+  }
+  
+  if (!is.null(mat_rep)) {
+    curve_rep <- apply(mat_rep, 1, median, na.rm = TRUE)
+    
+    if (is.null(mat_dp)) {
+      plot(seq_len(nrow(mat_rep)), mat_rep[, 1],
+           type = "l",
+           col = "#AADDAA",
+           lwd = 1,
+           ylim = y_rng,
+           xlab = "Numero de Avaliacoes (FES)",
+           ylab = "Melhor Lucro",
+           main = "PSO O2: Death Penalty vs Repair (runs + mediana)")
+    }
+    
+    for (j in seq_len(ncol(mat_rep))) {
+      lines(seq_len(nrow(mat_rep)), mat_rep[, j], col = "#AADDAA", lwd = 1)
+    }
+    
+    lines(seq_along(curve_rep), curve_rep, col = "forestgreen", lwd = 2.5)
+  }
+  
+  legend("bottomright",
+         legend = c(sprintf("DP runs (med=%.0f)", med_death),
+                    sprintf("Repair runs (med=%.0f)", med_repair),
+                    "Mediana DP",
+                    "Mediana Repair"),
+         col = c("#FFAAAA", "#AADDAA", "firebrick", "forestgreen"),
+         lwd = c(1, 1, 2.5, 2.5),
+         bty = "n")
+  
   dev.off()
-  cat("PDF guardado: comparacao_PSO_O2.pdf\n")
-} else {
-  cat("AVISO: dados insuficientes para grafico comparativo\n")
+  cat("Grafico guardado:", pdf_out, "\n")
 }
 
-# boxplot comparativo
+plot_runs(
+  res_death$F_mat,
+  titulo = paste0("PSO O2 - Death Penalty - ", RUNS, " runs"),
+  pdf_out = file.path(output_dir, "convergencia_PSO_O2_DeathPenalty.pdf"),
+  csv_out = file.path(output_dir, "convergencia_PSO_O2_DeathPenalty.csv"),
+  cor_med = "steelblue"
+)
+
+plot_runs(
+  res_repair$F_mat,
+  titulo = paste0("PSO O2 - Repair - ", RUNS, " runs"),
+  pdf_out = file.path(output_dir, "convergencia_PSO_O2_Repair.pdf"),
+  csv_out = file.path(output_dir, "convergencia_PSO_O2_Repair.csv"),
+  cor_med = "darkgreen"
+)
+
+plot_dp_rep(
+  res_death$F_mat,
+  res_repair$F_mat,
+  med_death,
+  med_repair,
+  pdf_out = file.path(output_dir, "comparacao_PSO_O2.pdf")
+)
+
 pdf(file.path(output_dir, "boxplot_PSO_O2.pdf"), width = 8, height = 6)
 boxplot(list(DeathPenalty = res_death$lucros, Repair = res_repair$lucros),
         col  = c("steelblue", "darkgreen"),
         main = paste("PSO O2 - Distribuicao lucros (", RUNS, "runs)"),
         ylab = "Lucro ($)")
-abline(h = med_death,  col = "steelblue",  lty = 2, lwd = 1.5)
-abline(h = med_repair, col = "darkgreen",  lty = 2, lwd = 1.5)
+abline(h = med_death,  col = "steelblue", lty = 2, lwd = 1.5)
+abline(h = med_repair, col = "darkgreen", lty = 2, lwd = 1.5)
 dev.off()
 cat("PDF guardado: boxplot_PSO_O2.pdf\n")
 
@@ -381,11 +499,11 @@ tabela <- data.frame(
   Metodo        = c("PSO_DeathPenalty", "PSO_Repair"),
   Previsao      = c("ARIMAX", "ARIMAX"),
   Runs          = c(RUNS, RUNS),
-  Lucro_Mediana = round(c(med_death, med_repair), 2),
-  Lucro_Max     = round(c(max(res_death$lucros),  max(res_repair$lucros)),  2),
-  Lucro_Min     = round(c(min(res_death$lucros),  min(res_repair$lucros)),  2),
-  Unidades_Best = round(c(total_units(res_death$S_best), total_units(res_repair$S_best)), 2),
-  Tempo_Total_s = round(tempo_total, 2)
+  Lucro_Mediana = as.numeric(round(c(med_death, med_repair), 2)),
+  Lucro_Max     = as.numeric(round(c(max(res_death$lucros), max(res_repair$lucros)), 2)),
+  Lucro_Min     = as.numeric(round(c(min(res_death$lucros), min(res_repair$lucros)), 2)),
+  Unidades_Best = as.numeric(round(c(total_units(res_death$S_best), total_units(res_repair$S_best)), 2)),
+  Tempo_Total_s = rep(as.numeric(round(tempo_total, 2)), 2)
 )
 write.csv(tabela,
           file      = file.path(output_dir, "tabela_resumo_PSO_O2.csv"),
