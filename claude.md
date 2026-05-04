@@ -198,6 +198,54 @@ Implementar curvas de convergência com wrapper de função traced.
 
 ---
 
+## App Shiny DSS — `app.R`
+
+Ficheiro: `app.R` (raiz do projeto). Fontes e utils: `utils/config_otimizacao.R`, `utils/visualizacao_utils.R`.
+
+### Estrutura da App
+
+4 painéis via `page_navbar` (bslib):
+
+1. **Dashboard** — KPI boxes com melhores resultados globais + gráfico semanal O1 + barras de mediana + tabela estatísticas
+2. **Previsões** — selector semana/loja, KPI boxes por loja, barchart 7 dias, heatmap 4×7, tabela resumo
+3. **Otimização** — tabs O1 / O2 / O3; O3 tem fronteira de Pareto real + sidebar com ponto de compromisso
+4. **Grupo** — tabela comparativa + barchart O1 por membro (sem nomes — usar "Membro A/B/C/D")
+
+### Dados carregados (read.csv no arranque, não reactivo)
+
+| Variável | Ficheiro |
+| --- | --- |
+| `profits` | `otimizacao/Integrado/profits_por_semana.csv` |
+| `prev_df` | `otimizacao/Integrado/prev_12_semanas.csv` |
+| `algo_stats` | `otimizacao/Integrado/tabela_comparativa_final.csv` |
+| `pareto_raw` | `otimizacao/NSGA2/v2/pareto_O3_fronteira.csv` |
+
+Atualizar os CSVs e reiniciar o app é suficiente para reflectir novos resultados.
+
+### Convenções Visuais
+
+- **Tema:** bslib `flatly`, cor primária `#4682B4` (SteelBlue)
+- **Navbar:** gradiente escuro `#0f2444 → #2d5a9e`
+- **Background:** `#eef2f7` (cinzento frio); cards brancos com sombra suave
+- **Ícones em `showcase`:** usar sempre `ico("nome")` (helper definido no topo do app) — **nunca** `bs_icon()` directo no showcase, pois renderiza enorme
+- **Value box sem showcase:** para boxes compactas (height ≤ 90px), meter o ícone inline no título: `tags$span(bs_icon("x"), " Título")`
+- **Tamanho do valor:** `.value-box-value { font-size: 1.1rem }` via CSS
+- **Cores dos algoritmos:**
+  - Monte Carlo → `#6c757d` (cinzento)
+  - Hill Climbing → `#e67e22` (laranja)
+  - SANN → `#4682B4` (azul)
+  - GA → `#2E8B57` (verde)
+  - NSGA-II → `#8e44ad` (roxo)
+- **Sem nomes de membros** visíveis na interface — apenas algoritmo e objetivo
+
+### Erros Comuns a Evitar (App)
+
+- `bs_icon()` directo no `showcase` → ícone enorme, usar `ico()` sempre
+- Value boxes com `height` fixo + showcase → usar ícone inline no título
+- `read.csv` dentro de reactivos → desnecessário, os dados não mudam em runtime
+
+---
+
 ## Estrutura do Relatório
 
 Secções: Introdução, Execução do Projeto (auto-avaliação grupo A 0–20 + individual), Previsão, Otimização, Demo (link YouTube), Conclusões, Bibliografia, Apêndices.
