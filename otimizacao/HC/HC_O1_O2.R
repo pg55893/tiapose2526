@@ -72,26 +72,37 @@ build_mat <- function(hists) {
   sapply(valid, function(h) c(h, rep(h[length(h)], max_len - length(h))))
 }
 
-plot_runs <- function(hists, titulo, pdf_out, cor_med = "steelblue") {
+# Helper para desenhar bandas (min-max) e mediana (col_line permite mudar a cor da linha)
+plot_banded_series <- function(x, mat, col, add = FALSE, col_line = "red", ...) {
+  med <- apply(mat, 1, median, na.rm = TRUE)
+  inf <- apply(mat, 1, min, na.rm = TRUE)
+  sup <- apply(mat, 1, max, na.rm = TRUE)
+  col_band <- adjustcolor(col, alpha.f = 0.25)
+
+  if (!add) {
+    plot(x, med, type = "n", ...)
+    grid(col = "grey90", lty = 1)
+  }
+  polygon(c(x, rev(x)), c(sup, rev(inf)), col = col_band, border = NA)
+  lines(x, med, col = col_line, lwd = 2.5)
+  abline(h = tail(med, 1), lty = 2, col = adjustcolor(col_line, alpha.f = 0.6))
+}
+
+plot_runs <- function(hists, titulo, pdf_out, cor_med = "darkorange") {
   mat <- build_mat(hists)
   if (is.null(mat)) { cat("Sem dados para grafico:", titulo, "\n"); return() }
   med_curve <- apply(mat, 1, median, na.rm = TRUE)
   x_fes     <- seq_len(nrow(mat))
-  y_rng     <- range(mat[is.finite(mat)], na.rm = TRUE)
 
-  pdf(pdf_out, width = 9, height = 6)
-  for (j in seq_len(ncol(mat))) {
-    if (j == 1)
-      plot(x_fes, mat[, j], type = "l", col = "grey80", lwd = 1,
-           xlab = "Numero de Avaliacoes (FES)", ylab = "Melhor Lucro",
-           main = titulo, ylim = y_rng)
-    else
-      lines(x_fes, mat[, j], col = "grey80", lwd = 1)
-  }
-  lines(x_fes, med_curve, col = cor_med, lwd = 2.5)
+  pdf(pdf_out, width = 10, height = 6.5)
+  plot_banded_series(x_fes, mat, cor_med,
+                     xlab = "Numero de Avaliacoes (FES)", ylab = "Melhor Lucro",
+                     main = titulo)
   legend("bottomright",
-         legend = c("Runs individuais", "Mediana"),
-         col    = c("grey70", cor_med), lwd = c(1, 2.5), bty = "n")
+         legend = c("Mediana (Red)", "Mediana final", "Banda Min-Max"),
+         col    = c("red", "grey40", "grey80"), fill = c(NA, NA, "grey80"),
+         border = c(NA, NA, "grey80"), lwd = c(2.5, 1, NA), lty = c(1, 2, NA),
+         bty = "n", cex = 0.85)
   dev.off()
   cat("Grafico guardado:", pdf_out, "\n")
   invisible(med_curve)
@@ -105,77 +116,70 @@ plot_dp_rep <- function(hists_dp, hists_rep, med_dp, med_rep, pdf_out) {
   if (length(y_all) == 0) { cat("Sem dados O2 para grafico.\n"); return() }
   y_rng <- range(y_all, na.rm = TRUE)
 
-  pdf(pdf_out, width = 10, height = 6)
-  # DP runs
+  pdf(pdf_out, width = 10, height = 6.5)
+
+  # 1. Death Penalty (Laranja)
   if (!is.null(mat_dp)) {
-    curve_dp <- apply(mat_dp, 1, median, na.rm = TRUE)
-    for (j in seq_len(ncol(mat_dp))) {
-      if (j == 1)
-        plot(seq_len(nrow(mat_dp)), mat_dp[, j], type = "l",
-             col = "#FFAAAA", lwd = 1,
-             xlab = "Numero de Avaliacoes (FES)", ylab = "Melhor Lucro",
-             main = "HC O2: Death Penalty vs Repair (runs + mediana)",
-             ylim = y_rng)
-      else
-        lines(seq_len(nrow(mat_dp)), mat_dp[, j], col = "#FFAAAA", lwd = 1)
-    }
-    lines(seq_along(curve_dp), curve_dp, col = "firebrick", lwd = 2.5)
-  } else {
-    plot.new()
+    x_dp <- seq_len(nrow(mat_dp))
+    plot_banded_series(x_dp, mat_dp, "darkorange", col_line = "darkorange", add = FALSE,
+                       ylim = y_rng,
+                       xlab = "Numero de Avaliacoes (FES)", ylab = "Melhor Lucro",
+                       main = "HC O2: Death Penalty vs Repair (Mediana e Bandas)")
   }
-  # Repair runs
+
+  # 2. Repair (Azul Água)
   if (!is.null(mat_rep)) {
-    curve_rep <- apply(mat_rep, 1, median, na.rm = TRUE)
-    for (j in seq_len(ncol(mat_rep)))
-      lines(seq_len(nrow(mat_rep)), mat_rep[, j], col = "#AADDAA", lwd = 1)
-    lines(seq_along(curve_rep), curve_rep, col = "forestgreen", lwd = 2.5)
+    x_rep <- seq_len(nrow(mat_rep))
+    plot_banded_series(x_rep, mat_rep, "#00CED1", col_line = "#00CED1", add = TRUE)
   }
+
   legend("bottomright",
-         legend = c(sprintf("DP runs (med=%.0f)",     med_dp),
-                    sprintf("Repair runs (med=%.0f)", med_rep),
-                    "Mediana DP", "Mediana Repair"),
-         col  = c("#FFAAAA", "#AADDAA", "firebrick", "forestgreen"),
-         lwd  = c(1, 1, 2.5, 2.5), bty = "n")
+         legend = c(sprintf("Death Penalty (med=%.0f)", med_dp),
+                    sprintf("Repair (med=%.0f)",        med_rep),
+                    "Mediana Final (Dashed)"),
+         col  = c("darkorange", "#00CED1", "grey40"),
+         fill = c(NA, NA, NA), border = c(NA, NA, NA),
+         lwd  = c(2.5, 2.5, 1), lty = c(1, 1, 2), bty = "n")
   dev.off()
   cat("Grafico guardado:", pdf_out, "\n")
 }
 
 # =============================================================
-# O1 — Hill Climbing, 20 runs
+# O1 — Hill Climbing, 20 runs (COMENTADO PARA EXECUTAR APENAS O2)
 # =============================================================
-cat("=== O1: Hill Climbing (vizinhanca multiplicativa, 20 runs) ===\n")
-
-eval_O1_hc <- function(S) -profit(pmin(pmax(S, lower), upper))
-
-lucros_O1 <- numeric(NRUNS)
-BEST_S_O1 <- NULL
-best_O1   <- -Inf
-hists_O1  <- list()
-
-set.seed(42)
-for (i in 1:NRUNS) {
-  s0  <- runif(84) * (upper - lower) + lower
-  res <- hill_climbing(eval_O1_hc, s0, max_iter = 20000, lower, upper)
-  S_tmp         <- pmin(pmax(res$par, lower), upper)
-  S_tmp[idx_JX] <- round(S_tmp[idx_JX])
-  L             <- profit(S_tmp)
-  lucros_O1[i]  <- L
-  hists_O1[[i]] <- res$hist
-  cat(sprintf("Run %2d | Lucro: %8.2f\n", i, L))
-  if (L > best_O1) { best_O1 <- L; BEST_S_O1 <- S_tmp }
-}
-
-med_O1 <- median(lucros_O1)
-cat(sprintf("\n>> Mediana lucro O1 : %.2f\n", med_O1))
-cat(sprintf(">> Melhor lucro O1  : %.2f\n", best_O1))
-cat(sprintf(">> Unidades         : %d\n",   total_units(BEST_S_O1)))
-
-med_curve_O1 <- plot_runs(
-  hists_O1,
-  titulo  = paste0("HC O1 - vizinhanca multiplicativa - ", NRUNS, " runs"),
-  pdf_out = "/Users/edias/TIAPOSE2526/otimizacao/HC/HC_convergencia_O1.pdf"
-)
-saveRDS(med_curve_O1, "/Users/edias/TIAPOSE2526/otimizacao/HC/convergencia_O1_HC.rds")
+# cat("=== O1: Hill Climbing (vizinhanca multiplicativa, 20 runs) ===\n")
+# 
+# eval_O1_hc <- function(S) -profit(pmin(pmax(S, lower), upper))
+# 
+# lucros_O1 <- numeric(NRUNS)
+# BEST_S_O1 <- NULL
+# best_O1   <- -Inf
+# hists_O1  <- list()
+# 
+# set.seed(42)
+# for (i in 1:NRUNS) {
+#   s0  <- runif(84) * (upper - lower) + lower
+#   res <- hill_climbing(eval_O1_hc, s0, max_iter = 20000, lower, upper)
+#   S_tmp         <- pmin(pmax(res$par, lower), upper)
+#   S_tmp[idx_JX] <- round(S_tmp[idx_JX])
+#   L             <- profit(S_tmp)
+#   lucros_O1[i]  <- L
+#   hists_O1[[i]] <- res$hist
+#   cat(sprintf("Run %2d | Lucro: %8.2f\n", i, L))
+#   if (L > best_O1) { best_O1 <- L; BEST_S_O1 <- S_tmp }
+# }
+# 
+# med_O1 <- median(lucros_O1)
+# cat(sprintf("\n>> Mediana lucro O1 : %.2f\n", med_O1))
+# cat(sprintf(">> Melhor lucro O1  : %.2f\n", best_O1))
+# cat(sprintf(">> Unidades         : %d\n",   total_units(BEST_S_O1)))
+# 
+# med_curve_O1 <- plot_runs(
+#   hists_O1,
+#   titulo  = paste0("HC O1 - vizinhanca multiplicativa - ", NRUNS, " runs"),
+#   pdf_out = "/Users/edias/TIAPOSE2526/otimizacao/HC/HC_convergencia_O1.pdf"
+# )
+# saveRDS(med_curve_O1, "/Users/edias/TIAPOSE2526/otimizacao/HC/convergencia_O1_HC.rds")
 
 # =============================================================
 # O2 — Death Penalty, 20 runs
