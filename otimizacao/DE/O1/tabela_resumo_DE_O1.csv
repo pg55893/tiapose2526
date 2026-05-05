@@ -1,2 +1,2 @@
-"Objetivo","Metodo","Previsao","Runs","Lucro_Mediana","Lucro_Max","Lucro_Min","Unidades_Best","Total_HR_Best","Tempo_Total_s"
-"O1","DE","ARIMAX",20,17114.5,17480,16833,56450,523,144.06
+"Objetivo","Metodo","Previsao","Runs","Lucro_Mediana","Lucro_Media","Lucro_Max","Lucro_Min","Unidades_Best","Total_HR_Best","Tempo_Total_s"
+"O1","DE","ARIMAX",5,16973,17003.6,17095,16914,56753,515,27.97
