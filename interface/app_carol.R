@@ -42,12 +42,12 @@ hist_data <- lapply(
     p <- file.path(BASE_PATH, "data", paste0(f, ".csv"))
     if(!file.exists(p)) return(NULL)
     tryCatch({
-        d <- read.csv(p, stringsAsFactors = FALSE, check.names = FALSE)
-        # Limpar nomes de colunas (remover espaços ou aspas extra)
-        colnames(d) <- gsub("[[:space:]]|\"", "", colnames(d))
-        d$Date <- as.Date(d$Date)
-        d
-      }, error = function(e) NULL)
+      d <- read.csv(p, stringsAsFactors = FALSE, check.names = FALSE)
+      # Limpar nomes de colunas (remover espaços ou aspas extra)
+      colnames(d) <- gsub("[[:space:]]|\"", "", colnames(d))
+      d$Date <- as.Date(d$Date)
+      d
+    }, error = function(e) NULL)
   }
 )
 
@@ -151,17 +151,17 @@ run_mc <- function(prev_week, objetivo, n_iter = 2000) {
   for (i in seq_len(n_iter)) {
     S <- runif(84) * upper
     val <- switch(objetivo,
-      O1 = profit(S),
-      O2 = {
-        u <- total_units(S)
-        # Penalização suave para ajudar o algoritmo a encontrar o limite
-        if (is.na(u) || u > 10000) profit(S) - (u - 10000) * 10 else profit(S)
-      },
-      O3 = {
-        # Maximizar lucro reduzindo RH (Ponto de compromisso)
-        hr <- sum(round(S[seq(2, 84, 3)]) + round(S[seq(3, 84, 3)]))
-        profit(S) - hr * 50 
-      }
+                  O1 = profit(S),
+                  O2 = {
+                    u <- total_units(S)
+                    # Penalização suave para ajudar o algoritmo a encontrar o limite
+                    if (is.na(u) || u > 10000) profit(S) - (u - 10000) * 10 else profit(S)
+                  },
+                  O3 = {
+                    # Maximizar lucro reduzindo RH (Ponto de compromisso)
+                    hr <- sum(round(S[seq(2, 84, 3)]) + round(S[seq(3, 84, 3)]))
+                    profit(S) - hr * 50 
+                  }
     )
     if (!is.na(val) && !is.infinite(val) && val > best_val) {
       best_val <- val
@@ -178,17 +178,17 @@ run_sann <- function(prev_week, objetivo, n_iter = 1500) {
   upper <<- calc_upper(PREV)
   incProgress(.1, message = "A iniciar SANN...")
   eval_fn <- switch(objetivo,
-    O1 = eval,
-    O2 = eval_O2,
-    O3 = function(S) {
-      u <- total_units(S)
-      hr <- sum(round(S[seq(2, 84, 3)]) + round(S[seq(3, 84, 3)]))
-      if (is.na(u) || u > 10000) Inf else -profit(S) + hr * 20
-    }
+                    O1 = eval,
+                    O2 = eval_O2,
+                    O3 = function(S) {
+                      u <- total_units(S)
+                      hr <- sum(round(S[seq(2, 84, 3)]) + round(S[seq(3, 84, 3)]))
+                      if (is.na(u) || u > 10000) Inf else -profit(S) + hr * 20
+                    }
   )
   res <- optim(runif(84) * upper, eval_fn,
-    method = "SANN",
-    control = list(maxit = n_iter, temp = 1000)
+               method = "SANN",
+               control = list(maxit = n_iter, temp = 1000)
   )
   incProgress(.9)
   res$par
@@ -196,284 +196,439 @@ run_sann <- function(prev_week, objetivo, n_iter = 1500) {
 
 # ---------- CSS ----------
 CSS <- "
-/* Navbar */
-.navbar {
-  background: linear-gradient(135deg, #0f2444 0%, #1e3a6e 60%, #2d5a9e 100%) !important;
-  box-shadow: 0 2px 12px rgba(0,0,0,.2); padding: .45rem 1.5rem;
-}
-/* Navbar Global: Branco Puro em todos os estados */
-.navbar-nav .nav-link, 
-.navbar-nav .nav-link *, 
-.navbar-nav .nav-link i, 
-.navbar-nav .nav-link svg {
-  color: white !important;
-  fill: white !important;
-  opacity: 0.8; /* Ligeiramente baço quando inativo */
-  transition: all 0.2s ease;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+* { box-sizing: border-box; }
+
+html, body {
+  background: #f6f1e8 !important;
+  font-family: 'Inter', sans-serif !important;
 }
 
-.navbar-nav .nav-link.active, 
-.navbar-nav .nav-link.active *,
-.navbar-nav .nav-link:hover,
-.navbar-nav .nav-link:hover * {
-  color: white !important;
-  fill: white !important;
-  opacity: 1 !important; /* Brilho total quando ativo/hover */
+/* =========================
+   NAVBAR TIPO DASHBOARD
+========================= */
+body > nav.navbar,
+.navbar,
+.bslib-page-navbar > nav {
+  background: #f6f1e8 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  min-height: 92px !important;
+  padding: 24px 36px 16px 36px !important;
 }
 
-.nav-link.active {
-  background: rgba(255,255,255,0.2) !important;
-  border-radius: 8px;
+/* título */
+.navbar-brand {
+  color: #1f2933 !important;
+  font-size: 1.45rem !important;
+  font-weight: 800 !important;
+  margin-right: 40px !important;
+  letter-spacing: -0.5px !important;
 }
 
-/* Cards */
-.card { border-radius:14px !important; border:none !important;
-  box-shadow:0 2px 14px rgba(15,36,68,.08) !important; transition:box-shadow .2s; }
-.card:hover { box-shadow:0 5px 22px rgba(15,36,68,.13) !important; }
-.card-header { font-weight:600; font-size:.88rem; letter-spacing:.25px;
-  border-radius:14px 14px 0 0 !important; background:#fff !important;
-  border-bottom:1.5px solid #eef2f7 !important; padding:.8rem 1.1rem; color:#0f2444; }
-.card-footer { background:#fafbfd !important; border-radius:0 0 14px 14px !important;
-  border-top:1.5px solid #eef2f7 !important; font-size:.85rem; color:#667; }
+.navbar-brand svg {
+  color: #2f6fae !important;
+  fill: #2f6fae !important;
+}
 
-/* Value boxes */
-.value-box { border-radius:14px !important; }
-.value-box .value-box-value { font-size:0.92rem !important; font-weight:700; }
-.value-box .value-box-title { font-size:.62rem !important; text-transform:uppercase; letter-spacing:.6px; opacity:.7; }
-.value-box .value-box-showcase { padding:.4rem .5rem !important; }
-.value-box .value-box-area { padding:.5rem .7rem !important; }
+/* caixa branca onde ficam os botões */
+.navbar-nav.me-auto {
+  background: #ffffff !important;
+  border-radius: 22px !important;
+  padding: 8px !important;
+  box-shadow: 0 12px 30px rgba(31, 41, 51, 0.10) !important;
+  display: flex !important;
+  gap: 6px !important;
+}
 
-/* Sidebar */
-.sidebar { background:#f5f7fa !important; border-radius:14px !important;
-  border:1.5px solid #e8edf3 !important; }
+/* botões */
+.navbar-nav .nav-link {
+  min-width: 155px !important;
+  height: 46px !important;
+  border-radius: 16px !important;
+  padding: 0 22px !important;
+  background: transparent !important;
+  color: #7b7f86 !important;
+  border: none !important;
+  font-weight: 700 !important;
+  font-size: 0.93rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  transition: 0.18s ease !important;
+}
 
-/* Body */
-body { background-color:#eef2f7 !important; }
+.navbar-nav .nav-link svg,
+.navbar-nav .nav-link i {
+  color: #7b7f86 !important;
+  fill: #7b7f86 !important;
+}
 
-/* Section labels */
-.sec-label { font-size:.7rem; text-transform:uppercase; letter-spacing:.7px;
-  color:#8899aa; font-weight:600; margin-bottom:.25rem; display:block; }
+.navbar-nav .nav-link:hover {
+  background: #f1eee8 !important;
+  color: #1f2933 !important;
+}
 
-/* Algo badges */
-.badge-sann { background:#4682B420; color:#2a5a8a; border:1px solid #4682B440; }
-.algo-badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:.8rem; font-weight:600; }
+.navbar-nav .nav-link.active {
+  background: #efe9df !important;
+  color: #1f2933 !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+}
 
-/* Tables */
-.dataTables_wrapper { font-size:.86rem; }
+.navbar-nav .nav-link.active svg,
+.navbar-nav .nav-link.active i {
+  color: #2f6fae !important;
+  fill: #2f6fae !important;
+}
 
-/* Nav underline */
-.nav-underline .nav-link { color:#4682B4 !important; font-weight:500; }
-.nav-underline .nav-link.active { border-bottom-color:#4682B4 !important; font-weight:700; color:#0f2444 !important; }
+/* texto TIAPOSE */
+.navbar .nav-item span {
+  color: #9ca3af !important;
+  font-size: 0.8rem !important;
+}
 
-/* Spinners */
-.shiny-spinner-placeholder { min-height:160px; }
+/* =========================
+   SIDEBAR
+========================= */
+.sidebar {
+  background: #efe9df !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 28px 24px !important;
+  min-height: calc(100vh - 92px) !important;
+}
 
-/* Botão otimizar */
-.btn-primary { background:#4682B4 !important; border-color:#4682B4 !important; width:100%; }
-.btn-primary:hover { background:#2d5a9e !important; }
+.sidebar-title {
+  color: #1f2933 !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  margin-bottom: 22px !important;
+}
+
+.sidebar hr {
+  border-top: 1px solid rgba(31, 41, 51, 0.12) !important;
+  margin: 24px 0 !important;
+}
+
+/* inputs */
+.form-label,
+.control-label {
+  color: #5f6670 !important;
+  font-size: 0.86rem !important;
+  font-weight: 700 !important;
+}
+
+.form-select,
+.form-control,
+.selectize-input {
+  background: #ffffff !important;
+  border: none !important;
+  border-radius: 14px !important;
+  min-height: 46px !important;
+  box-shadow: 0 6px 16px rgba(31, 41, 51, 0.08) !important;
+  font-size: 0.9rem !important;
+}
+
+/* sliders */
+.irs--shiny .irs-bar,
+.irs--shiny .irs-single,
+.irs--shiny .irs-from,
+.irs--shiny .irs-to {
+  background: #2f6fae !important;
+  border-color: #2f6fae !important;
+}
+
+.irs--shiny .irs-handle {
+  border-color: #2f6fae !important;
+}
+
+/* =========================
+   CONTEÚDO
+========================= */
+.bslib-sidebar-layout {
+  background: #f6f1e8 !important;
+}
+
+.card {
+  border-radius: 24px !important;
+  border: none !important;
+  background: #ffffff !important;
+  box-shadow: 0 14px 34px rgba(31, 41, 51, 0.09) !important;
+  overflow: hidden !important;
+}
+
+.card-header {
+  background: #ffffff !important;
+  border-bottom: 1px solid #f1f1f1 !important;
+  color: #1f2933 !important;
+  font-weight: 800 !important;
+  font-size: 0.92rem !important;
+  padding: 1rem 1.25rem !important;
+}
+
+.card-footer {
+  background: #ffffff !important;
+  border-top: 1px solid #f1f1f1 !important;
+}
+
+/* KPIs */
+.value-box {
+  border-radius: 24px !important;
+  border: none !important;
+  box-shadow: 0 14px 34px rgba(31, 41, 51, 0.09) !important;
+}
+
+.value-box .value-box-value {
+  font-size: 2rem !important;
+  font-weight: 800 !important;
+}
+
+.value-box .value-box-title {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+}
+
+/* botões */
+.btn-primary {
+  background: #2f6fae !important;
+  border: none !important;
+  border-radius: 14px !important;
+  min-height: 46px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 8px 18px rgba(47, 111, 174, 0.25) !important;
+}
+
+.btn-primary:hover {
+  background: #245a8f !important;
+}
+
+/* tabelas */
+.dataTables_wrapper {
+  font-size: 0.86rem !important;
+}
+
+table.dataTable thead th {
+  background: #fafafa !important;
+  color: #5f6670 !important;
+  font-size: 0.78rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+table.dataTable tbody tr:hover {
+  background: #f8f5ef !important;
+}
 "
-
 # =============================================================
 # UI
 # =============================================================
 ui <- page_navbar(
   title = tags$span(bs_icon("building-check"), " USA Stores · IDSS"),
   theme = bs_theme(
-    version = 5, bootswatch = "flatly", primary = "#4682B4",
+    version = 5,
+    bootswatch = "flatly",
+    primary = "#2f6fae",
     base_font = font_google("Inter")
   ),
   header = tags$head(tags$style(HTML(CSS))),
-  bg = "#0f2444",
-
+  bg = "#f6f1e8",
+  
   # ============================================================
   # TAB 1 — PREVISÃO
   # ============================================================
   nav_panel("Previsão",
-    icon = bs_icon("graph-up-arrow"),
-    layout_sidebar(
-      sidebar = sidebar(
-        title = tags$span(bs_icon("sliders"), " Filtros"),
-        width = 215,
-        sliderInput("p_semana", "Semana:", min = 1, max = N_SEMANAS, value = 1, step = 1),
-        hr(style = "margin:.5rem 0;"),
-        selectInput("p_loja", "Lojas em destaque:", 
-                    choices = LOJA_NAMES, selected = "Philadelphia", multiple = TRUE),
-        hr(style = "margin:.5rem 0;"),
-        selectInput("p_metodo_prev", "Método de Previsão:",
-                    choices = c("Híbrido (Melhor Rank)" = "auto",
-                                "Random Forest (Cenário 2)" = "rf_c2",
-                                "Random Forest (Cenário 1)" = "rf_c1",
-                                "ETS / Holt-Winters" = "ets",
-                                "ARIMA (Univariado)" = "arima",
-                                "Seasonal Naive" = "naive"),
-                    selected = "auto"),
-        hr(style = "margin:.5rem 0;"),
-        helpText(bs_icon("info-circle"), tags$small(" Growing window · 12 iter. · H=7 · NMAE/RRSE/R²"))
-      ),
-      div(
-        # Mini KPIs por loja
-        layout_columns(
-          uiOutput("p_kpi_bal"), uiOutput("p_kpi_lan"),
-          uiOutput("p_kpi_phi"), uiOutput("p_kpi_ric"),
-          col_widths = c(3, 3, 3, 3)
-        ),
-        tags$div(style = "height:.9rem;"),
-
-        # Gráfico previsão + Histórico
-        layout_columns(
-          card(
-            card_header(uiOutput("p_forecast_title")),
-            plotlyOutput("p_forecast_bar", height = "255px") %>% withSpinner(color = "#4682B4", size = .8),
-            card_footer(uiOutput("p_footer"))
-          ),
-          card(
-            card_header(tags$span(bs_icon("clock-history"), " Histórico — ", uiOutput("p_loja_label", inline = TRUE))),
-            plotOutput("p_hist_chart", height = "255px") %>% withSpinner(color = "#4682B4", size = .8)
-          ),
-          col_widths = c(5, 7)
-        ),
-        tags$div(style = "height:.9rem;"),
-
-        # Tabela diária (todas as lojas)
-          card(
-            card_header(tags$span(
-              bs_icon("table"), " Previsões Diárias — Semana ",
-              textOutput("p_semana_label", inline = TRUE), " (todas as lojas)"
-            )),
-            # Filtros externos para a tabela (Sem teclado!)
-            card_body(
-              layout_columns(
-                selectInput("p_filter_loja", "Filtrar por Loja:", choices = LOJA_NAMES, multiple = TRUE, width = "100%"),
-                selectInput("p_filter_dia", "Filtrar por Dia:", choices = DIAS, multiple = TRUE, width = "100%"),
-                col_widths = c(6, 6)
+            icon = bs_icon("graph-up-arrow"),
+            layout_sidebar(
+              sidebar = sidebar(
+                title = tags$span(bs_icon("sliders"), " Filtros"),
+                width = 280,
+                sliderInput("p_semana", "Semana:", min = 1, max = N_SEMANAS, value = 1, step = 1),
+                hr(style = "margin:.5rem 0;"),
+                selectInput("p_loja", "Lojas em destaque:", 
+                            choices = LOJA_NAMES, selected = "Philadelphia", multiple = TRUE),
+                hr(style = "margin:.5rem 0;"),
+                selectInput("p_metodo_prev", "Método de Previsão:",
+                            choices = c("Híbrido (Melhor Rank)" = "auto",
+                                        "Random Forest (Cenário 2)" = "rf_c2",
+                                        "Random Forest (Cenário 1)" = "rf_c1",
+                                        "ETS / Holt-Winters" = "ets",
+                                        "ARIMA (Univariado)" = "arima",
+                                        "Seasonal Naive" = "naive"),
+                            selected = "auto"),
+                hr(style = "margin:.5rem 0;"),
+                helpText(bs_icon("info-circle"), tags$small(" Growing window · 12 iter. · H=7 · NMAE/RRSE/R²"))
               ),
-              DTOutput("p_daily_table")
+              div(
+                # Mini KPIs por loja
+                layout_columns(
+                  uiOutput("p_kpi_bal"), uiOutput("p_kpi_lan"),
+                  uiOutput("p_kpi_phi"), uiOutput("p_kpi_ric"),
+                  col_widths = c(3, 3, 3, 3)
+                ),
+                tags$div(style = "height:.9rem;"),
+                
+                # Gráfico previsão + Histórico
+                layout_columns(
+                  card(
+                    card_header(uiOutput("p_forecast_title")),
+                    plotlyOutput("p_forecast_bar", height = "255px") %>% withSpinner(color = "#4682B4", size = .8),
+                    card_footer(uiOutput("p_footer"))
+                  ),
+                  card(
+                    card_header(tags$span(bs_icon("clock-history"), " Histórico — ", uiOutput("p_loja_label", inline = TRUE))),
+                    plotOutput("p_hist_chart", height = "255px") %>% withSpinner(color = "#4682B4", size = .8)
+                  ),
+                  col_widths = c(5, 7)
+                ),
+                tags$div(style = "height:.9rem;"),
+                
+                # Tabela diária (todas as lojas)
+                card(
+                  card_header(tags$span(
+                    bs_icon("table"), " Previsões Diárias — Semana ",
+                    textOutput("p_semana_label", inline = TRUE), " (todas as lojas)"
+                  )),
+                  # Filtros externos para a tabela (Sem teclado!)
+                  card_body(
+                    layout_columns(
+                      selectInput("p_filter_loja", "Filtrar por Loja:", choices = LOJA_NAMES, multiple = TRUE, width = "100%"),
+                      selectInput("p_filter_dia", "Filtrar por Dia:", choices = DIAS, multiple = TRUE, width = "100%"),
+                      col_widths = c(6, 6)
+                    ),
+                    DTOutput("p_daily_table")
+                  )
+                )
+              )
             )
-          )
-      )
-    )
   ),
-
+  
   # ============================================================
   # TAB 2 — OTIMIZAÇÃO
   # ============================================================
   nav_panel("Otimização",
-    icon = bs_icon("cpu"),
-    layout_sidebar(
-      sidebar = sidebar(
-        title = "Configuração do DSS",
-        width = 250,
-        selectInput("o_objetivo", "Objetivo de Análise:",
-                    choices = c("O1: Maximizar Lucro" = "O1",
-                                "O2: Lucro com Restrição" = "O2",
-                                "O3: Multi-objetivo (Pareto)" = "O3")),
-        uiOutput("o_metodo_ui"),
-        hr(),
-        sliderInput("o_iter", "Iterações (FES):", min = 500, max = 5000, value = 2000, step = 500),
-        conditionalPanel(
-          condition = "input.o_objetivo == 'O2'",
-          helpText(bs_icon("exclamation-triangle"), " Restrição: Máx. 10.000 unidades.")
-        ),
-        conditionalPanel(
-          condition = "input.o_metodo == 'SANN'",
-          hr(),
-          sliderInput("o_temp", "Temperatura Inicial (SANN):", 
-                      min = 100, max = 5000, value = 1000, step = 100),
-          helpText(tags$small("Ajuste baseado na análise de sensibilidade."))
-        ),
-        actionButton("o_run", "Executar Otimização", 
-                     icon = icon("play"), class = "btn-primary w-100", style = "margin-top:1rem;")
-      ),
-      div(
-        # KPIs resultado
-        layout_columns(
-          value_box(tags$span(bs_icon("currency-dollar"), " Lucro Total"),
-            uiOutput("o_kpi_lucro"),
-            theme = "success"
-          ),
-          value_box(tags$span(bs_icon("box-seam"), " Unidades Totais"),
-            uiOutput("o_kpi_units"),
-            theme = "primary"
-          ),
-          value_box(tags$span(bs_icon("people"), " Funcionários (RH)"),
-            uiOutput("o_kpi_hr"),
-            theme = "secondary"
-          ),
-          col_widths = c(4, 4, 4)
-        ),
-        tags$div(style = "height:.9rem;"),
-
-        # Plano diário
-        card(
-          card_header(tags$span(bs_icon("table"), " Plano Semanal — J, X, PR por Dia e Loja")),
-          uiOutput("o_plan_ui")
-        ),
-        tags$div(style = "height:.9rem;"),
-
-        # Lucro por loja
-        card(
-          card_header(tags$span(bs_icon("bar-chart"), " Lucro Líquido por Loja")),
-          uiOutput("o_chart_ui")
-        )
-      )
-    )
+            icon = bs_icon("cpu"),
+            layout_sidebar(
+              sidebar = sidebar(
+                title = "Configuração do DSS",
+                width = 280,
+                selectInput("o_objetivo", "Objetivo de Análise:",
+                            choices = c("O1: Maximizar Lucro" = "O1",
+                                        "O2: Lucro com Restrição" = "O2",
+                                        "O3: Multi-objetivo (Pareto)" = "O3")),
+                uiOutput("o_metodo_ui"),
+                hr(),
+                sliderInput("o_iter", "Iterações (FES):", min = 500, max = 5000, value = 2000, step = 500),
+                conditionalPanel(
+                  condition = "input.o_objetivo == 'O2'",
+                  helpText(bs_icon("exclamation-triangle"), " Restrição: Máx. 10.000 unidades.")
+                ),
+                conditionalPanel(
+                  condition = "input.o_metodo == 'SANN'",
+                  hr(),
+                  sliderInput("o_temp", "Temperatura Inicial (SANN):", 
+                              min = 100, max = 5000, value = 1000, step = 100),
+                  helpText(tags$small("Ajuste baseado na análise de sensibilidade."))
+                ),
+                actionButton("o_run", "Executar Otimização", 
+                             icon = icon("play"), class = "btn-primary w-100", style = "margin-top:1rem;")
+              ),
+              div(
+                # KPIs resultado
+                layout_columns(
+                  value_box(tags$span(bs_icon("currency-dollar"), " Lucro Total"),
+                            uiOutput("o_kpi_lucro"),
+                            theme = "success"
+                  ),
+                  value_box(tags$span(bs_icon("box-seam"), " Unidades Totais"),
+                            uiOutput("o_kpi_units"),
+                            theme = "primary"
+                  ),
+                  value_box(tags$span(bs_icon("people"), " Funcionários (RH)"),
+                            uiOutput("o_kpi_hr"),
+                            theme = "secondary"
+                  ),
+                  col_widths = c(4, 4, 4)
+                ),
+                tags$div(style = "height:.9rem;"),
+                
+                # Plano diário
+                card(
+                  card_header(tags$span(bs_icon("table"), " Plano Semanal — J, X, PR por Dia e Loja")),
+                  uiOutput("o_plan_ui")
+                ),
+                tags$div(style = "height:.9rem;"),
+                
+                # Lucro por loja
+                card(
+                  card_header(tags$span(bs_icon("bar-chart"), " Lucro Líquido por Loja")),
+                  uiOutput("o_chart_ui")
+                )
+              )
+            )
   ),
-
+  
   # ============================================================
   # TAB 3 — DSS INTEGRADO
   # ============================================================
   nav_panel("DSS Integrado",
-    icon = bs_icon("layers"),
-    layout_sidebar(
-      sidebar = sidebar(
-        title = tags$span(bs_icon("layers"), " Decisão"),
-        width = 215,
-        sliderInput("d_semana", "Semana:", min = 1, max = N_SEMANAS, value = 1, step = 1),
-        hr(style = "margin:.5rem 0;"),
-        selectInput("d_objetivo", "Objetivo:",
-          choices = c(
-            "O1 — Máximo Lucro" = "O1",
-            "O2 — Restrição ≤10k unidades" = "O2",
-            "O3 — Pareto (Lucro + RH)" = "O3"
-          )
-        ),
-        actionButton("d_btn",
-          label = tagList(bs_icon("play-fill"), " Gerar Plano"),
-          class = "btn-primary"
-        ),
-        hr(style = "margin:.5rem 0;"),
-        helpText(bs_icon("info-circle"), tags$small(" Otimização multi-loja em tempo real."))
-      ),
-      div(
-        # KPIs no TOPO (Destaque principal)
-        uiOutput("d_kpi_top"),
-        tags$div(style = "height:.9rem;"),
-        
-        layout_columns(
-          card(
-            card_header(tags$span(
-              bs_icon("graph-up-arrow"), " Previsão — Todas as Lojas (Semana ",
-              textOutput("d_semana_label", inline = TRUE), ")"
-            )),
-            plotlyOutput("d_forecast_chart", height = "255px") %>% withSpinner(color = "#4682B4", size = .8)
-          ),
-          card(
-            card_header(tags$span(bs_icon("award"), " Melhores Resultados do Grupo (Histórico)")),
-            DTOutput("d_best_table")
-          ),
-          col_widths = c(7, 5)
-        ),
-        tags$div(style = "height:.9rem;"),
-        card(
-          card_header(tags$span(bs_icon("table"), " Plano Otimizado — Detalhado")),
-          uiOutput("d_plan_ui")
-        )
-      )
-    )
+            icon = bs_icon("layers"),
+            layout_sidebar(
+              sidebar = sidebar(
+                title = tags$span(bs_icon("layers"), " Decisão"),
+                width = 280,
+                sliderInput("d_semana", "Semana:", min = 1, max = N_SEMANAS, value = 1, step = 1),
+                hr(style = "margin:.5rem 0;"),
+                selectInput("d_objetivo", "Objetivo:",
+                            choices = c(
+                              "O1 — Máximo Lucro" = "O1",
+                              "O2 — Restrição ≤10k unidades" = "O2",
+                              "O3 — Pareto (Lucro + RH)" = "O3"
+                            )
+                ),
+                actionButton("d_btn",
+                             label = tagList(bs_icon("play-fill"), " Gerar Plano"),
+                             class = "btn-primary"
+                ),
+                hr(style = "margin:.5rem 0;"),
+                helpText(bs_icon("info-circle"), tags$small(" Otimização multi-loja em tempo real."))
+              ),
+              div(
+                # KPIs no TOPO (Destaque principal)
+                uiOutput("d_kpi_top"),
+                tags$div(style = "height:.9rem;"),
+                
+                layout_columns(
+                  card(
+                    card_header(tags$span(
+                      bs_icon("graph-up-arrow"), " Previsão — Todas as Lojas (Semana ",
+                      textOutput("d_semana_label", inline = TRUE), ")"
+                    )),
+                    plotlyOutput("d_forecast_chart", height = "255px") %>% withSpinner(color = "#4682B4", size = .8)
+                  ),
+                  card(
+                    card_header(tags$span(bs_icon("award"), " Melhores Resultados do Grupo (Histórico)")),
+                    DTOutput("d_best_table")
+                  ),
+                  col_widths = c(7, 5)
+                ),
+                tags$div(style = "height:.9rem;"),
+                card(
+                  card_header(tags$span(bs_icon("table"), " Plano Otimizado — Detalhado")),
+                  uiOutput("d_plan_ui")
+                )
+              )
+            )
   ),
   nav_spacer(),
   nav_item(tags$span(bs_icon("mortarboard"), " TIAPOSE 2025/26",
-    style = "color:rgba(255,255,255,.45); font-size:.78rem; padding:.4rem;"
+                     style = "color:rgba(255,255,255,.45); font-size:.78rem; padding:.4rem;"
   ))
 )
 
@@ -484,27 +639,27 @@ server <- function(input, output, session) {
   # Reactive vals para guardar solução optimizada
   rv_opt <- reactiveVal(NULL)
   rv_dss <- reactiveVal(NULL)
-
+  
   # UI Dinâmica para o Algoritmo (Lista completa solicitada)
   output$o_metodo_ui <- renderUI({
     if (input$o_objetivo == "O3") {
       selectInput("o_metodo", "Algoritmo:", choices = c("NSGA-II (Pareto)" = "NSGA2"))
     } else {
       selectInput("o_metodo", "Algoritmo:",
-        choices = list(
-          "Local Search" = c("SANN (Simulated Annealing)" = "SANN", 
-                             "HC (Hill Climbing)" = "HC", 
-                             "Tabu Search" = "TABU"),
-          "Population-based" = c("GA (Genetic Algorithm)" = "GA", 
-                                 "PSO (Swarm Intelligence)" = "PSO", 
-                                 "DE (Differential Evolution)" = "DE",
-                                 "rbga.bin (Binário)" = "RBGA"),
-          "Outros" = c("Monte Carlo (Baseline)" = "MC")
-        )
+                  choices = list(
+                    "Local Search" = c("SANN (Simulated Annealing)" = "SANN", 
+                                       "HC (Hill Climbing)" = "HC", 
+                                       "Tabu Search" = "TABU"),
+                    "Population-based" = c("GA (Genetic Algorithm)" = "GA", 
+                                           "PSO (Swarm Intelligence)" = "PSO", 
+                                           "DE (Differential Evolution)" = "DE",
+                                           "rbga.bin (Binário)" = "RBGA"),
+                    "Outros" = c("Monte Carlo (Baseline)" = "MC")
+                  )
       )
     }
   })
-
+  
   # Resultado da otimização
   r_opt_res <- eventReactive(input$o_run, {
     withProgress(message = paste('A executar', input$o_metodo, '...'), value = 0, {
@@ -531,10 +686,10 @@ server <- function(input, output, session) {
       )
     })
   }, ignoreNULL = FALSE)
-
+  
   rv_opt <- reactiveVal(NULL)
   observeEvent(input$o_run, { rv_opt(r_opt_res()) })
-
+  
   # Reset ao mudar semana/objetivo
   observeEvent(list(input$o_semana, input$o_objetivo, input$o_metodo), {
     rv_opt(NULL)
@@ -542,11 +697,11 @@ server <- function(input, output, session) {
   observeEvent(list(input$d_semana, input$d_objetivo), {
     rv_dss(NULL)
   })
-
+  
   # ==========================================================
   # TAB 1 — PREVISÃO
   # ==========================================================
-
+  
   r_prev_week <- reactive({
     pw <- get_prev_week(input$p_semana)
     metodo <- input$p_metodo_prev
@@ -579,35 +734,35 @@ server <- function(input, output, session) {
     })
     do.call(rbind, df_list)
   })
-
+  
   output$p_semana_label <- renderText({
     input$p_semana
   })
   output$p_loja_label <- renderText({
     paste(input$p_loja, collapse = ", ")
   })
-
+  
   output$p_model_badge <- renderUI({
     req(input$p_loja)
     metodo <- input$p_metodo_prev
     
     label <- switch(metodo,
-      "auto"  = "Recomendação do Sistema",
-      "arima" = "Modelo ARIMA Ativo",
-      "naive" = "Baseline Naive Ativa"
+                    "auto"  = "Recomendação do Sistema",
+                    "arima" = "Modelo ARIMA Ativo",
+                    "naive" = "Baseline Naive Ativa"
     )
     
     div(
       span(class = "sec-label", label),
       lapply(input$p_loja, function(lj) {
         m <- if (metodo == "auto") {
-               if (lj == "Baltimore") "ETS/HW" else "Random Forest"
-             } else toupper(metodo)
+          if (lj == "Baltimore") "ETS/HW" else "Random Forest"
+        } else toupper(metodo)
         span(bs_icon("cpu"), " ", m, class = "algo-badge badge-sann", style = "margin-right:4px; margin-bottom:4px;")
       })
     )
   })
-
+  
   make_kpi_p <- function(loja_name) {
     renderUI({
       pw <- r_prev_week()
@@ -626,14 +781,14 @@ server <- function(input, output, session) {
   output$p_kpi_lan <- make_kpi_p("Lancaster")
   output$p_kpi_phi <- make_kpi_p("Philadelphia")
   output$p_kpi_ric <- make_kpi_p("Richmond")
-
+  
   output$p_forecast_title <- renderUI({
     tags$span(
       bs_icon("bar-chart-fill"), " Previsão — ", strong(paste(input$p_loja, collapse = ", ")),
       " · Semana ", input$p_semana
     )
   })
-
+  
   output$p_forecast_bar <- renderPlotly({
     df <- r_prev_loja()
     req(nrow(df) > 0)
@@ -652,7 +807,7 @@ server <- function(input, output, session) {
       labs(x = NULL, y = "Clientes Previstos")
     ggplotly(p, tooltip = "text")
   })
-
+  
   output$p_footer <- renderUI({
     prev <- r_prev_loja()
     div(tags$small(
@@ -663,7 +818,7 @@ server <- function(input, output, session) {
       style = "color:#556;"
     ))
   })
-
+  
   output$p_hist_chart <- renderPlot({
     df <- hist_data[[input$p_loja]]
     
@@ -679,14 +834,14 @@ server <- function(input, output, session) {
     validate(
       need(nrow(df_plot) > 0, "Sem dados históricos para exibir nos últimos 180 dias.")
     )
-
+    
     ggplot(df_plot, aes(x = Date, y = Num_Customers)) +
       geom_area(fill = paste0(LOJA_CORES[input$p_loja], "40"), 
                 color = LOJA_CORES[input$p_loja], linewidth = 1) +
       theme_minimal(base_size = 12) +
       labs(x = "Data", y = "Clientes (Real)")
   })
-
+  
   output$p_daily_table <- renderDT({
     pw <- r_prev_week()
     sem <- input$p_semana
@@ -716,38 +871,38 @@ server <- function(input, output, session) {
     if (length(input$p_filter_dia) > 0) {
       df <- df[df$Dia %in% input$p_filter_dia, ]
     }
-
+    
     datatable(df,
-      options = list(
-        dom = "t", pageLength = 28, scrollY = "320px",
-        columnDefs = list(
-          list(className = "dt-center", targets = 1:5)
-        )
-      ),
-      rownames = FALSE, class = "table-sm table-hover"
+              options = list(
+                dom = "t", pageLength = 28, scrollY = "320px",
+                columnDefs = list(
+                  list(className = "dt-center", targets = 1:5)
+                )
+              ),
+              rownames = FALSE, class = "table-sm table-hover"
     ) %>%
       formatStyle("Loja", fontWeight = "bold") %>%
       formatStyle("Prev.",
-        background         = styleColorBar(df$`Prev.`, "#4682B430"),
-        backgroundSize     = "100% 80%",
-        backgroundRepeat   = "no-repeat",
-        backgroundPosition = "center"
+                  background         = styleColorBar(df$`Prev.`, "#4682B430"),
+                  backgroundSize     = "100% 80%",
+                  backgroundRepeat   = "no-repeat",
+                  backgroundPosition = "center"
       ) %>%
       formatStyle("Erro (%)",
-        color = styleInterval(c(-10, 10), c("#c0392b", "#2E8B57", "#c0392b")),
-        fontWeight = "bold"
+                  color = styleInterval(c(-10, 10), c("#c0392b", "#2E8B57", "#c0392b")),
+                  fontWeight = "bold"
       ) %>%
       formatStyle("Dif.",
-        color      = styleInterval(c(-1, 1),
-                       c("#c0392b", "#888", "#2E8B57")),
-        fontWeight = "bold"
+                  color      = styleInterval(c(-1, 1),
+                                             c("#c0392b", "#888", "#2E8B57")),
+                  fontWeight = "bold"
       )
   })
-
+  
   # ==========================================================
   # TAB 2 — OTIMIZAÇÃO
   # ==========================================================
-
+  
   # Ação de Otimização (O1, O2, O3)
   observeEvent(input$o_run, {
     pw <- get_prev_week(1) # Usar semana 1 como base para a demo
@@ -781,14 +936,14 @@ server <- function(input, output, session) {
       ))
     })
   })
-
+  
   # Função para gerar o plano detalhado (Tabela J, X, PR)
   r_plan_opt <- reactive({
     res <- rv_opt()
     S_plan <- if (is.null(res)) S1 else S1 * runif(84, 0.9, 1.1) # Simular variação no plano para a demo
     decompose_plan(S_plan, PREV)
   })
-
+  
   output$o_kpi_lucro <- renderUI({
     res <- rv_opt()
     val <- if (is.null(res)) 5690 else res$total_profit
@@ -797,7 +952,7 @@ server <- function(input, output, session) {
       p("lucro semanal estimado", style = "font-size:.78rem; margin:0; opacity:.8;")
     )
   })
-
+  
   output$o_kpi_units <- renderUI({
     res <- rv_opt()
     u <- if (is.null(res)) 9500 else round(res$unidades)
@@ -810,7 +965,7 @@ server <- function(input, output, session) {
         style = "font-size:.78rem; margin:0; opacity:.9;")
     )
   })
-
+  
   output$o_kpi_hr <- renderUI({
     res <- rv_opt()
     hr <- if (is.null(res)) 69 else sum(res$rh_total)
@@ -819,7 +974,7 @@ server <- function(input, output, session) {
       p("total de funcionários", style = "font-size:.78rem; margin:0; opacity:.8;")
     )
   })
-
+  
   output$o_plan_ui <- renderUI({
     if (is.null(rv_opt())) {
       div(
@@ -831,40 +986,40 @@ server <- function(input, output, session) {
       tagList(
         # Legenda explicativa
         div(style = "display:flex; gap:15px; font-size:0.83rem; color:#666; background:#f8f9fa; padding:10px; border-radius:12px; margin-bottom:10px; border: 1px solid #eee;",
-          span(tags$b(style="color:#2c3e50;", "PR:"), " Promoção (%)"),
-          span(tags$b(style="color:#2c3e50;", "X:"), " Func. Experientes (Sénior)"),
-          span(tags$b(style="color:#2c3e50;", "J:"), " Func. Juniores"),
-          span(tags$b(style="color:#2c3e50;", "Atend.:"), " Clientes Atendidos")
+            span(tags$b(style="color:#2c3e50;", "PR:"), " Promoção (%)"),
+            span(tags$b(style="color:#2c3e50;", "X:"), " Func. Experientes (Sénior)"),
+            span(tags$b(style="color:#2c3e50;", "J:"), " Func. Juniores"),
+            span(tags$b(style="color:#2c3e50;", "Atend.:"), " Clientes Atendidos")
         ),
         DTOutput("o_plan_table")
       )
     }
   })
-
+  
   output$o_plan_table <- renderDT({
     plan <- r_plan_opt()
     datatable(plan,
-      options = list(dom = "ft", pageLength = 28, scrollY = "400px", scrollX = TRUE),
-      rownames = FALSE, class = "table-sm table-hover table-striped"
+              options = list(dom = "ft", pageLength = 28, scrollY = "400px", scrollX = TRUE),
+              rownames = FALSE, class = "table-sm table-hover table-striped"
     ) %>%
       formatStyle("Loja", fontWeight = "bold") %>%
       formatCurrency(c("Receita", "Custo RH", "Lucro"), currency = "$", digits = 0) %>%
       formatStyle("Lucro",
-        color      = styleInterval(0, c("#c0392b", "#1d5937")),
-        fontWeight = "bold"
+                  color      = styleInterval(0, c("#c0392b", "#1d5937")),
+                  fontWeight = "bold"
       ) %>%
       formatStyle("Unidades",
-        background         = styleColorBar(plan$Unidades, "#4682B430"),
-        backgroundSize     = "100% 80%",
-        backgroundRepeat   = "no-repeat",
-        backgroundPosition = "center"
+                  background         = styleColorBar(plan$Unidades, "#4682B430"),
+                  backgroundSize     = "100% 80%",
+                  backgroundRepeat   = "no-repeat",
+                  backgroundPosition = "center"
       )
   })
-
+  
   output$o_chart_ui <- renderUI({
     plotlyOutput("o_profit_chart", height = "230px")
   })
-
+  
   output$o_profit_chart <- renderPlotly({
     res <- rv_opt()
     
@@ -885,11 +1040,11 @@ server <- function(input, output, session) {
                                  "Avaliações (FES)", "Melhor Lucro ($)")
     ggplotly(p)
   })
-
+  
   # ==========================================================
   # TAB 3 — DSS INTEGRADO
   # ==========================================================
-
+  
   observeEvent(input$d_btn, {
     pw <- get_prev_week(input$d_semana)
     # Limpar plano anterior para mostrar o spinner
@@ -900,7 +1055,7 @@ server <- function(input, output, session) {
       rv_dss(S)
     })
   })
-
+  
   r_plan_dss <- reactive({
     S <- rv_dss()
     req(!is.null(S))
@@ -909,11 +1064,11 @@ server <- function(input, output, session) {
     upper <<- calc_upper(PREV)
     decompose_plan(S, pw)
   })
-
+  
   output$d_semana_label <- renderText({
     input$d_semana
   })
-
+  
   output$d_kpi_top <- renderUI({
     S <- rv_dss()
     if (is.null(S)) {
@@ -929,24 +1084,24 @@ server <- function(input, output, session) {
     
     layout_columns(
       value_box(tags$span(bs_icon("currency-dollar"), " Lucro"),
-        fmt_dol(p),
-        theme = "success", height = "100px",
-        p("lucro semanal estimado", style = "margin:0; font-size:.7rem; opacity:.8;")
+                fmt_dol(p),
+                theme = "success", height = "100px",
+                p("lucro semanal estimado", style = "margin:0; font-size:.7rem; opacity:.8;")
       ),
       value_box(tags$span(bs_icon("box-seam"), " Unidades"),
-        format(round(u), big.mark = ","),
-        theme = "info", height = "100px",
-        p("total de unidades vendidas", style = "margin:0; font-size:.7rem; opacity:.8;")
+                format(round(u), big.mark = ","),
+                theme = "info", height = "100px",
+                p("total de unidades vendidas", style = "margin:0; font-size:.7rem; opacity:.8;")
       ),
       value_box(tags$span(bs_icon("people"), " RH Total"),
-        as.character(hr),
-        theme = "secondary", height = "100px",
-        p("funcionários escalados", style = "margin:0; font-size:.7rem; opacity:.8;")
+                as.character(hr),
+                theme = "secondary", height = "100px",
+                p("funcionários escalados", style = "margin:0; font-size:.7rem; opacity:.8;")
       ),
       col_widths = c(4, 4, 4)
     )
   })
-
+  
   output$d_forecast_chart <- renderPlotly({
     pw <- get_prev_week(input$d_semana)
     df <- data.frame(
@@ -968,26 +1123,26 @@ server <- function(input, output, session) {
       labs(x = NULL, y = "Clientes Previstos", fill = NULL)
     ggplotly(p, tooltip = "text") %>% layout(legend = list(orientation = "h", y = -0.2))
   })
-
+  
   output$d_best_table <- renderDT({
     req(!is.null(algo_stats))
     df <- algo_stats[, c("Algoritmo", "Objetivo", "Mediana", "Max")]
     colnames(df) <- c("Algoritmo", "Obj.", "Mediana ($)", "Máx ($)")
     datatable(df,
-      options = list(dom = "t", pageLength = 10),
-      rownames = FALSE, class = "table-sm table-hover"
+              options = list(dom = "t", pageLength = 10),
+              rownames = FALSE, class = "table-sm table-hover"
     ) %>%
       formatCurrency(c("Mediana ($)", "Máx ($)"), currency = "$", digits = 0) %>%
       formatStyle("Mediana ($)",
-        color      = styleInterval(0, c("#c0392b", "#1d5937")),
-        fontWeight = "bold"
+                  color      = styleInterval(0, c("#c0392b", "#1d5937")),
+                  fontWeight = "bold"
       ) %>%
       formatStyle("Obj.",
-        backgroundColor = styleEqual(c("O1", "O2", "O3"), c("#dbeafe", "#dcfce7", "#fef9c3")),
-        fontWeight = "bold", textAlign = "center"
+                  backgroundColor = styleEqual(c("O1", "O2", "O3"), c("#dbeafe", "#dcfce7", "#fef9c3")),
+                  fontWeight = "bold", textAlign = "center"
       )
   })
-
+  
   output$d_plan_ui <- renderUI({
     if (is.null(rv_dss())) {
       div(
@@ -999,18 +1154,18 @@ server <- function(input, output, session) {
       DTOutput("d_plan_table")
     }
   })
-
+  
   output$d_plan_table <- renderDT({
     plan <- r_plan_dss()
     datatable(plan,
-      options = list(dom = "ft", pageLength = 28, scrollY = "380px", scrollX = TRUE),
-      rownames = FALSE, class = "table-sm table-hover table-striped"
+              options = list(dom = "ft", pageLength = 28, scrollY = "380px", scrollX = TRUE),
+              rownames = FALSE, class = "table-sm table-hover table-striped"
     ) %>%
       formatStyle("Loja", fontWeight = "bold") %>%
       formatCurrency(c("Receita", "Custo RH", "Lucro"), currency = "$", digits = 0) %>%
       formatStyle("Lucro",
-        color      = styleInterval(0, c("#c0392b", "#1d5937")),
-        fontWeight = "bold"
+                  color      = styleInterval(0, c("#c0392b", "#1d5937")),
+                  fontWeight = "bold"
       )
   })
 }
