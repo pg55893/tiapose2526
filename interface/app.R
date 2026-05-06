@@ -17,6 +17,13 @@ BASE_PATH <- "/Users/edias/TIAPOSE2526"
 source(file.path(BASE_PATH, "utils/config_otimizacao.R"))
 source(file.path(BASE_PATH, "utils/visualizacao_utils.R"))
 
+# ---------- Constantes ----------
+LOJA_NAMES <- c("Baltimore", "Lancaster", "Philadelphia", "Richmond")
+LOJA_PREFIX <- c(Baltimore = "Bal", Lancaster = "Lan", Philadelphia = "Phi", Richmond = "Ric")
+DIAS <- c("Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb")
+LOJA_CORES <- c(Baltimore = "#4682B4", Lancaster = "#2E8B57", Philadelphia = "#e67e22", Richmond = "#8e44ad")
+COMPROMISSO <- data.frame(lucro = 1241, total_HR = 80)
+
 # ---------- Dados estáticos ----------
 prev_df <- tryCatch(read.csv(file.path(BASE_PATH, "otimizacao/Integrado/prev_12_semanas.csv")), error = function(e) NULL)
 algo_stats <- tryCatch(read.csv(file.path(BASE_PATH, "otimizacao/Integrado/tabela_comparativa_final.csv")), error = function(e) NULL)
@@ -51,13 +58,7 @@ SEMANA_DATES <- if (!is.null(hist_data[["Baltimore"]])) {
   lapply(1:6, function(i) balt$Date[(W + (i - 1) * H + 1):(W + i * H)])
 } else NULL
 
-# ---------- Constantes ----------
 N_SEMANAS <- if (!is.null(prev_df)) nrow(prev_df) else 6
-LOJA_NAMES <- c("Baltimore", "Lancaster", "Philadelphia", "Richmond")
-LOJA_PREFIX <- c(Baltimore = "Bal", Lancaster = "Lan", Philadelphia = "Phi", Richmond = "Ric")
-DIAS <- c("Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb")
-LOJA_CORES <- c(Baltimore = "#4682B4", Lancaster = "#2E8B57", Philadelphia = "#e67e22", Richmond = "#8e44ad")
-COMPROMISSO <- data.frame(lucro = 1241, total_HR = 80)
 
 # ---------- Helpers ----------
 ico <- function(name) tags$span(bs_icon(name), style = "font-size:1.1rem; line-height:1;")

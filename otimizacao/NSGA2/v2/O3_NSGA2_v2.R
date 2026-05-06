@@ -125,12 +125,21 @@ if (length(validas) == 0) {
   stop("Nenhuma solucao valida na run representativa. Aumentar NGENS ou POPSIZE.")
 }
 
-lucros_pareto <- -pareto_vals[validas, 1]
-hr_pareto     <-  pareto_vals[validas, 2]
+# Filtra apenas lucros não negativos (exigência do professor)
+mask_pos      <- which((-pareto_vals[validas, 1]) >= 0)
+if (length(mask_pos) == 0) {
+  # Se todas forem negativas, pegamos a menos negativa ou paramos?
+  # Por segurança, avisar e manter o que houver, ou forçar 0.
+  cat("AVISO: Todas as solucoes da run tem lucro negativo. Mostrando apenas >= 0 (vazio).\n")
+}
+validas_pos   <- validas[mask_pos]
+lucros_pareto <- -pareto_vals[validas_pos, 1]
+hr_pareto     <-  pareto_vals[validas_pos, 2]
 
-cat(sprintf("\n>> Fronteira Pareto (run %d): %d solucoes\n", idx_med_run, length(validas)))
-cat(sprintf(">> Lucro: [%.2f, %.2f]\n", min(lucros_pareto), max(lucros_pareto)))
-cat(sprintf(">> HR:    [%d, %d]\n", min(hr_pareto), max(hr_pareto)))
+cat(sprintf("\n>> Fronteira Pareto (run %d): %d solucoes (filtradas profit >= 0)\n",
+            idx_med_run, length(validas_pos)))
+cat(sprintf(">> Lucro: [%.2f, %.2f]\n", min(lucros_pareto, 0), max(lucros_pareto, 0)))
+cat(sprintf(">> HR:    [%d, %d]\n", min(hr_pareto, 0), max(hr_pareto, 0)))
 
 # =============================================================
 # SECÇÃO 2 — ESCALARIZAÇÃO COM DIFERENTES VALORES DE W
@@ -148,7 +157,7 @@ W_vals <- c(0.25, 0.50, 0.75, 0.90)
 resultados_W <- lapply(W_vals, function(W) {
   score    <- W * lucros_norm - (1 - W) * hr_norm
   idx_best <- which.max(score)
-  idx_sol  <- validas[idx_best]
+  idx_sol  <- validas_pos[idx_best]
   S_w      <- pareto_pops[idx_sol, ]
   S_w      <- pmin(pmax(S_w, lower), upper)
   S_w[idx_JX] <- round(S_w[idx_JX])
@@ -186,7 +195,7 @@ if (file.exists(resultado_SANN_file)) {
     lucro_O2_sann   <- as.numeric(res_O2$lucro[1])
     unidades_O2_sann <- as.numeric(res_O2$unidades[1])
     hr_O2_sann       <- as.numeric(res_O2$total_HR[1])
-    cat(sprintf("SANN O2 : Lucro=%.2f | HR=%d | Unidades=%d\n",
+    cat(sprintf("SANN O2 : Lucro=%.2f | HR=%.0f | Unidades=%.0f\n",
                 lucro_O2_sann, hr_O2_sann, unidades_O2_sann))
   } else {
     lucro_O2_sann <- NA; hr_O2_sann <- NA; unidades_O2_sann <- NA
@@ -196,7 +205,7 @@ if (file.exists(resultado_SANN_file)) {
   cat("AVISO: resultado_SANN.csv nao encontrado - comparacao sem SANN O2.\n")
 }
 
-cat(sprintf("NSGA-II O3 (W=0.75): Lucro=%.2f | HR=%d | Unidades=%d\n",
+cat(sprintf("NSGA-II O3 (W=0.75): Lucro=%.2f | HR=%.0f | Unidades=%.0f\n",
             sol_compromisso$lucro, sol_compromisso$hr, sol_compromisso$unidades))
 
 # =============================================================
@@ -210,7 +219,8 @@ plot(hr_pareto[ord], lucros_pareto[ord],
      xlab = "Total HR (minimizar)", ylab = "Lucro (maximizar)",
      main = sprintf("Fronteira Pareto O3 - NSGA-II (HV mediana=%.3g, %d runs)",
                     med_hv, NRUNS),
-     pch = 19, col = "steelblue", cex = 0.8, type = "b", lwd = 1.2)
+     pch = 19, col = "steelblue", cex = 0.8, type = "b", lwd = 1.2,
+     ylim = c(0, max(lucros_pareto, 1000) * 1.1)) # Força eixo Y a começar no 0
 
 # Pontos para cada W
 cores_W  <- c("orange", "purple", "firebrick", "darkgreen")
