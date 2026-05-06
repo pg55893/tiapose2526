@@ -1,0 +1,8 @@
+=== Resumo Metricas rbga_bin_O1_O2.R ===
+Timestamp              : 2026-05-05 21:21:38
+NRUNS                  : 5
+POPSIZE                : 50
+ITERS                  : 200
+Mediana O1             : 17911.00
+Mediana O2 DP          : 945.50
+Mediana O2 Repair      : 1008.00
