@@ -1,0 +1,8 @@
+=== Resumo Metricas tabu_O1_O2.R ===
+Timestamp              : 2026-05-05 21:50:42
+NRUNS                  : 5
+TS_ITERS               : 1000
+TS_NEIGH               : 10
+Mediana O1             : 17850.00
+Mediana O2 DP          : 551.00
+Mediana O2 Repair      : 559.00

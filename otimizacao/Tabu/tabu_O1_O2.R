@@ -3,7 +3,7 @@
 # Tabu Search para O1, O2 Death Penalty e O2 Repair
 # Codificacao binaria: 476 bits (28 posicoes x 17 bits)
 # PR: 5 bits | J: 6 bits | X: 6 bits por (loja, dia)
-# 20 runs, mediana profit, FES no eixo X
+# 5 runs, mediana profit, FES no eixo X
 # =============================================================
 
 library(tabuSearch)
@@ -59,6 +59,7 @@ repair <- function(S) {
   S <- pmin(pmax(S, lower), upper)
   BEST_repair <- NULL
   best_p      <- -Inf
+  # fase 1: reduz PR x0.95
   for (iter in 1:200) {
     u <- total_units(S)
     if (!is.na(u) && u <= 10000) {
@@ -67,6 +68,19 @@ repair <- function(S) {
       break
     }
     S[idx_PR_local] <- pmax(S[idx_PR_local] * 0.95, 0)
+  }
+  # fase 2: se PR=0 nao chegou, escala J e X para reduzir clientes atendidos
+  if (is.null(BEST_repair)) {
+    for (iter in 1:200) {
+      u <- total_units(S)
+      if (!is.na(u) && u <= 10000) {
+        p <- profit(S)
+        if (p > best_p) { best_p <- p; BEST_repair <- S }
+        break
+      }
+      S[idx_J_all] <- pmax(floor(S[idx_J_all] * 0.9), 0)
+      S[idx_X_all] <- pmax(floor(S[idx_X_all] * 0.9), 0)
+    }
   }
   return(BEST_repair)
 }
@@ -87,7 +101,7 @@ cat("X  <= upper_X :", all(S_test[idx_X_all] <= upper[idx_X_all]), "\n\n")
 # =============================================================
 # PARAMETROS
 # =============================================================
-NRUNS    <- 20
+NRUNS    <- 5   # reduzido de 20: esforço computacional justificado pelas 12 iterações de backtesting
 TS_ITERS <- 1000
 TS_NEIGH <- 10     # FES/run ~ 10000
 TS_LIST  <- 15
@@ -134,7 +148,7 @@ plot_tabu <- function(hists, titulo, pdf_out, cor_med = "steelblue") {
 # tabuSearch MAXIMIZA objFunc
 # =============================================================
 run_tabu <- function(obj_lucro_fn, label, seed_base, cor_med = "steelblue",
-                     pdf_name, rds_name) {
+                     pdf_name, rds_name, post_fn = identity) {
   cat(sprintf("\n=== Tabu Search %s (%d runs) ===\n", label, NRUNS))
   lucros <- numeric(NRUNS)
   hists  <- list()
@@ -165,7 +179,7 @@ run_tabu <- function(obj_lucro_fn, label, seed_base, cor_med = "steelblue",
       error = function(e) cat("ERRO run", i, ":", conditionMessage(e), "\n")
     )
 
-    S_best <- decode_S(best_bits_run)
+    S_best <- post_fn(decode_S(best_bits_run))
     L      <- if (best_val_run > -Inf) best_val_run else NA
     lucros[i]  <- L
     hists[[i]] <- hist_run
@@ -235,7 +249,8 @@ res_O2_rep <- run_tabu(
   seed_base = 456,
   cor_med  = "darkorange",
   pdf_name = "convergencia_O2_rep_tabu.pdf",
-  rds_name = "convergencia_O2_rep_tabu.rds"
+  rds_name = "convergencia_O2_rep_tabu.rds",
+  post_fn  = function(S) { r <- repair(S); if (is.null(r)) S else r }
 )
 
 # RDS principal O2 = Repair (para comparativos.R)
@@ -303,6 +318,46 @@ CSV_OUT <- file.path(TABU_DIR, "resultado_tabu.csv")
 write.csv(resultado_tabu, CSV_OUT, row.names = FALSE)
 cat("\n=== Resultado Final Tabu Search ===\n")
 print(resultado_tabu)
+
+# =============================================================
+# RESUMO MÉTRICAS — mediana por objetivo
+# =============================================================
+med_o1     <- res_O1$lucros
+med_o2_dp  <- res_O2_dp$lucros
+med_o2_rep <- res_O2_rep$lucros
+
+mediana_o1     <- median(med_o1,     na.rm = TRUE)
+mediana_o2_dp  <- median(med_o2_dp,  na.rm = TRUE)
+mediana_o2_rep <- median(med_o2_rep, na.rm = TRUE)
+
+cat("\n=== RESUMO METRICAS ===\n")
+cat(sprintf("Mediana da mediana O1           : %.2f\n", mediana_o1))
+cat(sprintf("Mediana da mediana O2 (DP)      : %.2f\n", mediana_o2_dp))
+cat(sprintf("Mediana da mediana O2 (Repair)  : %.2f\n", mediana_o2_rep))
+
+resumo_metricas <- list(
+  mediana_o1     = mediana_o1,
+  mediana_o2_dp  = mediana_o2_dp,
+  mediana_o2_rep = mediana_o2_rep,
+  N_runs         = NRUNS,
+  TS_iters       = TS_ITERS,
+  TS_neigh       = TS_NEIGH,
+  timestamp      = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+)
+
+SUMMARY_TXT <- file.path(TABU_DIR, "resumo_metricas_tabu.txt")
+cat(
+  sprintf("=== Resumo Metricas tabu_O1_O2.R ===\n"),
+  sprintf("Timestamp              : %s\n",  resumo_metricas$timestamp),
+  sprintf("NRUNS                  : %d\n",  resumo_metricas$N_runs),
+  sprintf("TS_ITERS               : %d\n",  resumo_metricas$TS_iters),
+  sprintf("TS_NEIGH               : %d\n",  resumo_metricas$TS_neigh),
+  sprintf("Mediana O1             : %.2f\n", resumo_metricas$mediana_o1),
+  sprintf("Mediana O2 DP          : %.2f\n", resumo_metricas$mediana_o2_dp),
+  sprintf("Mediana O2 Repair      : %.2f\n", resumo_metricas$mediana_o2_rep),
+  file = SUMMARY_TXT, sep = ""
+)
+cat("Resumo guardado em:", SUMMARY_TXT, "\n\n")
 
 # =============================================================
 # VALIDAÇÕES FINAIS

@@ -1,3 +1,4 @@
-"membro","algoritmo","objetivo","lucro","mediana","unidades","N_bits","N_runs","popSize","iters"
-"Nuno","GA-bin (rbga.bin)","O1",18569,17965,58819,476,20,50,200
-"Nuno","GA-bin (rbga.bin)","O2",1260,1064.5,9994,476,20,50,200
+"membro","algoritmo","objetivo","metodo_O2","lucro","mediana","unidades","N_bits","N_runs","popSize","iters"
+"Nuno","GA-bin (rbga.bin)","O1","—",18414,17911,58604,476,5,50,200
+"Nuno","GA-bin (rbga.bin)","O2_DP","Death Penalty",1072,945.5,9983,476,5,50,200
+"Nuno","GA-bin (rbga.bin)","O2_Repair","Repair",1017,1008,9997,476,5,50,200

@@ -1,7 +1,7 @@
 # =============================================================
 # MC_v2.R — Nuno
 # Monte Carlo O1, O2 Death Penalty e O2 Repair
-# 20 runs independentes, mediana profit, FES no eixo X
+# 5 runs independentes, mediana profit, FES no eixo X
 # Padrão compatível com comparativos.R do grupo (mesmo que SANN v2)
 # =============================================================
 
@@ -17,7 +17,7 @@ cat("Log iniciado:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
 # =============================================================
 # PARÂMETROS
 # =============================================================
-NRUNS  <- 20
+NRUNS  <- 5   # reduzido de 20: esforço computacional justificado pelas 12 iterações de backtesting
 N_ITER <- 10000
 
 idx_JX <- as.vector(outer(0:27, c(2, 3), function(b, o) b * 3 + o))
@@ -78,25 +78,40 @@ build_mat_mc <- function(hists) {
   sapply(valid, function(h) c(h, rep(h[length(h)], max_len - length(h))))
 }
 
-plot_runs_mc <- function(hists, titulo, pdf_out, cor_med = "steelblue") {
+plot_runs_mc <- function(hists, titulo, pdf_out, cor_med = "steelblue", clip_negative = FALSE) {
   mat <- build_mat_mc(hists)
   if (is.null(mat)) { cat("Sem dados para grafico:", titulo, "\n"); return(NULL) }
   fv  <- mat[is.finite(mat)]
   if (length(fv) == 0) { cat("AVISO: sem solucoes validas:", titulo, "\n"); return(NULL) }
-  med_curve <- apply(mat, 1, median, na.rm = TRUE)
-  x_fes     <- seq_len(nrow(mat))
+  med_curve  <- apply(mat, 1, median, na.rm = TRUE)
+  min_curve  <- apply(mat, 1, min,    na.rm = TRUE)
+  max_curve  <- apply(mat, 1, max,    na.rm = TRUE)
+  x_fes      <- seq_len(nrow(mat))
+  ylim_range <- range(fv)
+  if (clip_negative) ylim_range[1] <- max(0, ylim_range[1])
+  med_final  <- med_curve[length(med_curve)]
   pdf(pdf_out, width = 9, height = 6)
-  for (j in seq_len(ncol(mat))) {
-    if (j == 1)
-      plot(x_fes, mat[, j], type = "l", col = "grey80", lwd = 1,
-           xlab = "Numero de Avaliacoes (FES)", ylab = "Melhor Lucro ($)",
-           main = titulo, ylim = range(fv))
-    else
-      lines(x_fes, mat[, j], col = "grey80", lwd = 1)
-  }
-  lines(x_fes, med_curve, col = cor_med, lwd = 2.5)
-  legend("bottomright", legend = c("Runs individuais", "Mediana"),
-         col = c("grey70", cor_med), lwd = c(1, 2.5), bty = "n")
+  # empty frame
+  plot(x_fes, med_curve, type = "n",
+       xlab = "Numero de Avaliacoes (FES)", ylab = "Melhor Lucro ($)",
+       main = titulo, ylim = ylim_range)
+  # ribbon (min–max across runs)
+  polygon(c(x_fes, rev(x_fes)), c(min_curve, rev(max_curve)),
+          col = adjustcolor(cor_med, alpha.f = 0.15), border = NA)
+  # individual run lines
+  for (j in seq_len(ncol(mat)))
+    lines(x_fes, mat[, j], col = "grey80", lwd = 1)
+  # median line
+  lines(x_fes, med_curve, col = cor_med, lwd = 2)
+  # median final value as red dashed horizontal reference
+  abline(h = med_final, col = "red", lwd = 1.5, lty = 2)
+  text(x = max(x_fes), y = med_final,
+       labels = sprintf("Mediana final: $%.0f", med_final),
+       col = "red", adj = c(1, -0.4), cex = 0.85)
+  legend("bottomright",
+         legend = c("Runs individuais", "Min–Max", "Mediana", "Mediana final"),
+         col    = c("grey70", adjustcolor(cor_med, alpha.f = 0.4), cor_med, "red"),
+         lwd    = c(1, 8, 2, 1.5), lty = c(1, 1, 1, 2), bty = "n")
   dev.off()
   cat("Grafico guardado:", pdf_out, "\n")
   invisible(med_curve)
@@ -209,9 +224,10 @@ cat(sprintf(">> Melhor O2 (DP)  : %.2f\n", best_O2_dp))
 if (!is.null(BEST_S_O2_dp)) cat(sprintf(">> Unidades        : %d\n", total_units(BEST_S_O2_dp)))
 
 med_curve_O2_dp <- plot_runs_mc(hists_O2_dp,
-  titulo  = paste0("Monte Carlo O2 (Death Penalty) — ", NRUNS, " runs"),
-  pdf_out = file.path(MC_OUT_DIR, "convergencia_O2_dp_MC.pdf"),
-  cor_med = "tomato")
+  titulo        = paste0("Monte Carlo O2 (Death Penalty) — ", NRUNS, " runs"),
+  pdf_out       = file.path(MC_OUT_DIR, "convergencia_O2_dp_MC.pdf"),
+  cor_med       = "tomato",
+  clip_negative = TRUE)
 saveRDS(med_curve_O2_dp, file.path(MC_OUT_DIR, "convergencia_O2_dp_MC.rds"))
 cat("RDS O2 DP guardado.\n\n")
 
@@ -265,9 +281,10 @@ cat(sprintf(">> Melhor O2 (Repair)  : %.2f\n", best_O2_rep))
 if (!is.null(BEST_S_O2_rep)) cat(sprintf(">> Unidades            : %d\n", total_units(BEST_S_O2_rep)))
 
 med_curve_O2_rep <- plot_runs_mc(hists_O2_rep,
-  titulo  = paste0("Monte Carlo O2 (Repair) — ", NRUNS, " runs"),
-  pdf_out = file.path(MC_OUT_DIR, "convergencia_O2_rep_MC.pdf"),
-  cor_med = "darkorange")
+  titulo        = paste0("Monte Carlo O2 (Repair) — ", NRUNS, " runs"),
+  pdf_out       = file.path(MC_OUT_DIR, "convergencia_O2_rep_MC.pdf"),
+  cor_med       = "darkorange",
+  clip_negative = TRUE)
 saveRDS(med_curve_O2_rep, file.path(MC_OUT_DIR, "convergencia_O2_rep_MC.rds"))
 # RDS principal O2 = Repair (para comparativos.R)
 saveRDS(med_curve_O2_rep, file.path(MC_OUT_DIR, "convergencia_O2_MC.rds"))
@@ -278,33 +295,71 @@ cat("RDS O2 Repair guardado.\n\n")
 # =============================================================
 cat("=== Convergencia O2: Death Penalty vs Repair ===\n")
 
-build_med_curve <- function(hists) {
+build_run_mat <- function(hists) {
   valid <- Filter(function(h) !is.null(h) && length(h) > 0, hists)
   if (length(valid) == 0) return(NULL)
   ml  <- max(sapply(valid, length))
-  mat <- sapply(valid, function(h) c(h, rep(h[length(h)], ml - length(h))))
-  apply(mat, 1, median, na.rm = TRUE)
+  sapply(valid, function(h) c(h, rep(h[length(h)], ml - length(h))))
 }
 
-curve_dp  <- build_med_curve(hists_O2_dp)
-curve_rep <- build_med_curve(hists_O2_rep)
+mat_dp  <- build_run_mat(hists_O2_dp)
+mat_rep <- build_run_mat(hists_O2_rep)
+
+COL_DP      <- "#ee8a37"
+COL_REP     <- "#049e86"
+FILL_DP     <- "#fed0a5"
+FILL_REP    <- "#9ceadd"
 
 pdf(file.path(MC_OUT_DIR, "convergencia_O2_dp_vs_repair_MC.pdf"), width = 10, height = 6)
-all_vals <- c(curve_dp[is.finite(curve_dp)], curve_rep[is.finite(curve_rep)])
-if (length(all_vals) > 0) {
-  ylim_cmp <- range(all_vals)
-  x_dp  <- seq_along(curve_dp)
-  x_rep <- seq_along(curve_rep)
-  x_max <- max(length(curve_dp), length(curve_rep), 1)
+
+all_pos <- c(
+  if (!is.null(mat_dp))  mat_dp[mat_dp   >= 0] else NULL,
+  if (!is.null(mat_rep)) mat_rep[mat_rep >= 0] else NULL
+)
+if (length(all_pos) > 0) {
+  ylim_cmp <- c(0, max(all_pos))
+  x_max    <- max(if (!is.null(mat_dp)) nrow(mat_dp) else 1,
+                  if (!is.null(mat_rep)) nrow(mat_rep) else 1)
+
   plot(NA, xlim = c(1, x_max), ylim = ylim_cmp,
-       xlab = "Numero de Avaliacoes (FES)", ylab = "Mediana Melhor Lucro ($)",
+       xlab = "Numero de Avaliacoes (FES)", ylab = "Melhor Lucro ($)",
        main = paste0("Monte Carlo O2 — Death Penalty vs Repair (", NRUNS, " runs)"))
-  if (!is.null(curve_dp))  lines(x_dp,  curve_dp,  col = "tomato",     lwd = 2.5)
-  if (!is.null(curve_rep)) lines(x_rep, curve_rep, col = "darkorange",  lwd = 2.5)
+
+  # ribbons (min–max across runs)
+  if (!is.null(mat_dp)) {
+    x_dp <- seq_len(nrow(mat_dp))
+    polygon(c(x_dp, rev(x_dp)),
+            c(apply(mat_dp, 1, min, na.rm = TRUE),
+              rev(apply(mat_dp, 1, max, na.rm = TRUE))),
+            col = FILL_DP, border = NA)
+  }
+  if (!is.null(mat_rep)) {
+    x_rep <- seq_len(nrow(mat_rep))
+    polygon(c(x_rep, rev(x_rep)),
+            c(apply(mat_rep, 1, min, na.rm = TRUE),
+              rev(apply(mat_rep, 1, max, na.rm = TRUE))),
+            col = FILL_REP, border = NA)
+  }
+
+  # individual run lines (semi-transparent)
+  if (!is.null(mat_dp))
+    for (j in seq_len(ncol(mat_dp)))
+      lines(x_dp, mat_dp[, j], col = adjustcolor(COL_DP, alpha.f = 0.3), lwd = 1)
+  if (!is.null(mat_rep))
+    for (j in seq_len(ncol(mat_rep)))
+      lines(x_rep, mat_rep[, j], col = adjustcolor(COL_REP, alpha.f = 0.3), lwd = 1)
+
+  # median lines on top
+  if (!is.null(mat_dp))
+    lines(x_dp,  apply(mat_dp,  1, median, na.rm = TRUE), col = COL_DP,  lwd = 2)
+  if (!is.null(mat_rep))
+    lines(x_rep, apply(mat_rep, 1, median, na.rm = TRUE), col = COL_REP, lwd = 2)
+
   legend("bottomright",
-         legend = c(sprintf("Death Penalty (med=%.0f)", med_O2_dp),
-                    sprintf("Repair        (med=%.0f)", med_O2_rep)),
-         col = c("tomato", "darkorange"), lwd = 2.5, bty = "n")
+         legend = c("DP runs", "Repair runs", "Mediana DP", "Mediana Repair"),
+         col    = c(adjustcolor(COL_DP, alpha.f = 0.3), adjustcolor(COL_REP, alpha.f = 0.3),
+                    COL_DP, COL_REP),
+         lwd    = c(1, 1, 2, 2), bty = "n")
 }
 dev.off()
 cat("Grafico comparativo O2 guardado.\n\n")
@@ -335,6 +390,45 @@ write.csv(resultado_MC, CSV_OUT, row.names = FALSE)
 cat("=== Resultado Final MC ===\n")
 print(resultado_MC)
 cat("\nCSV guardado em:", CSV_OUT, "\n")
+
+# =============================================================
+# RESUMO MÉTRICAS — mediana por objetivo
+# lucros_O* = vetor com o melhor profit de cada run independente
+# =============================================================
+med_o1     <- lucros_O1
+med_o2_dp  <- lucros_O2_dp
+med_o2_rep <- lucros_O2_rep
+
+mediana_o1     <- median(med_o1,     na.rm = TRUE)
+mediana_o2_dp  <- median(med_o2_dp,  na.rm = TRUE)
+mediana_o2_rep <- median(med_o2_rep, na.rm = TRUE)
+
+cat("\n=== RESUMO METRICAS ===\n")
+cat(sprintf("Mediana da mediana O1           : %.2f\n", mediana_o1))
+cat(sprintf("Mediana da mediana O2 (DP)      : %.2f\n", mediana_o2_dp))
+cat(sprintf("Mediana da mediana O2 (Repair)  : %.2f\n", mediana_o2_rep))
+
+resumo_metricas <- list(
+  mediana_o1     = mediana_o1,
+  mediana_o2_dp  = mediana_o2_dp,
+  mediana_o2_rep = mediana_o2_rep,
+  N_runs         = NRUNS,
+  N_iter         = N_ITER,
+  timestamp      = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+)
+
+SUMMARY_TXT <- file.path(MC_OUT_DIR, "resumo_metricas_MC.txt")
+cat(
+  sprintf("=== Resumo Metricas MC_v2.R ===\n"),
+  sprintf("Timestamp              : %s\n",  resumo_metricas$timestamp),
+  sprintf("NRUNS                  : %d\n",  resumo_metricas$N_runs),
+  sprintf("N_ITER                 : %d\n",  resumo_metricas$N_iter),
+  sprintf("Mediana O1             : %.2f\n", resumo_metricas$mediana_o1),
+  sprintf("Mediana O2 DP          : %.2f\n", resumo_metricas$mediana_o2_dp),
+  sprintf("Mediana O2 Repair      : %.2f\n", resumo_metricas$mediana_o2_rep),
+  file = SUMMARY_TXT, sep = ""
+)
+cat("Resumo guardado em:", SUMMARY_TXT, "\n\n")
 
 # =============================================================
 # VALIDAÇÕES FINAIS

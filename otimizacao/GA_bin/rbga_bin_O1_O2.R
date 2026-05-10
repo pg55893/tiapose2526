@@ -3,7 +3,7 @@
 # Algoritmo Genetico binario (rbga.bin) para O1, O2 Death Penalty e O2 Repair
 # Mesma codificacao binaria do tabu_O1_O2.R:
 #   476 bits (28 posicoes x 17 bits: PR=5, J=6, X=6)
-# 20 runs, mediana profit, FES no eixo X
+# 5 runs, mediana profit, FES no eixo X
 # =============================================================
 
 library(genalg)
@@ -52,6 +52,9 @@ repair <- function(S) {
   S <- pmin(pmax(S, lower), upper)
   BEST_repair <- NULL
   best_p      <- -Inf
+  idx_J_all   <- seq(2, 84, by = 3)
+  idx_X_all   <- seq(3, 84, by = 3)
+  # fase 1: reduz PR x0.95
   for (iter in 1:200) {
     u <- total_units(S)
     if (!is.na(u) && u <= 10000) {
@@ -60,6 +63,19 @@ repair <- function(S) {
       break
     }
     S[idx_PR] <- pmax(S[idx_PR] * 0.95, 0)
+  }
+  # fase 2: se PR=0 nao chegou, escala J e X para reduzir clientes atendidos
+  if (is.null(BEST_repair)) {
+    for (iter in 1:200) {
+      u <- total_units(S)
+      if (!is.na(u) && u <= 10000) {
+        p <- profit(S)
+        if (p > best_p) { best_p <- p; BEST_repair <- S }
+        break
+      }
+      S[idx_J_all] <- pmax(floor(S[idx_J_all] * 0.9), 0)
+      S[idx_X_all] <- pmax(floor(S[idx_X_all] * 0.9), 0)
+    }
   }
   return(BEST_repair)
 }
@@ -79,7 +95,7 @@ cat("profit(S_test) =", profit(S_test), "\n\n")
 # =============================================================
 # PARAMETROS GA BINARIO
 # =============================================================
-NRUNS   <- 20
+NRUNS   <- 5   # reduzido de 20: esforço computacional justificado pelas 12 iterações de backtesting
 POPSIZE <- 50
 ITERS   <- 200
 MUTCH   <- 0.01
@@ -184,14 +200,14 @@ run_gabin <- function(eval_func, label, seed_base, cor_med = "steelblue",
          xlab = "Numero de Avaliacoes (FES)", ylab = "Lucro ($)",
          main = paste0("rbga.bin ", label, " — ", NRUNS, " runs"))
     grid()
-    for (r2 in 1:NRUNS)
-      if (any(is.finite(hist_runs[r2, ])))
-        lines(hist_runs[r2, ], col = "grey80", lwd = 0.7)
     ok <- is.finite(vmin) & is.finite(vmax)
     if (any(ok))
       polygon(c(which(ok), rev(which(ok))),
               c(vmin[ok], rev(vmax[ok])),
               col = adjustcolor(cor_med, 0.15), border = NA)
+    for (r2 in 1:NRUNS)
+      if (any(is.finite(hist_runs[r2, ])))
+        lines(hist_runs[r2, ], col = "grey80", lwd = 0.7)
     lines(med_curve, col = cor_med, lwd = 2.5)
     abline(h = med, lty = 2, col = "grey40")
     legend("bottomright", bty = "n", cex = 0.85,
@@ -322,6 +338,46 @@ write.csv(resultado_gabin, CSV_OUT, row.names = FALSE)
 
 cat("\n=== Resultado Final rbga.bin ===\n")
 print(resultado_gabin)
+
+# =============================================================
+# RESUMO MÉTRICAS — mediana por objetivo
+# =============================================================
+med_o1     <- res_O1$lucros
+med_o2_dp  <- res_O2_dp$lucros
+med_o2_rep <- res_O2_rep$lucros
+
+mediana_o1     <- median(med_o1,     na.rm = TRUE)
+mediana_o2_dp  <- median(med_o2_dp,  na.rm = TRUE)
+mediana_o2_rep <- median(med_o2_rep, na.rm = TRUE)
+
+cat("\n=== RESUMO METRICAS ===\n")
+cat(sprintf("Mediana da mediana O1           : %.2f\n", mediana_o1))
+cat(sprintf("Mediana da mediana O2 (DP)      : %.2f\n", mediana_o2_dp))
+cat(sprintf("Mediana da mediana O2 (Repair)  : %.2f\n", mediana_o2_rep))
+
+resumo_metricas <- list(
+  mediana_o1     = mediana_o1,
+  mediana_o2_dp  = mediana_o2_dp,
+  mediana_o2_rep = mediana_o2_rep,
+  N_runs         = NRUNS,
+  popsize        = POPSIZE,
+  iters          = ITERS,
+  timestamp      = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+)
+
+SUMMARY_TXT <- file.path(GABIN_DIR, "resumo_metricas_gabin.txt")
+cat(
+  sprintf("=== Resumo Metricas rbga_bin_O1_O2.R ===\n"),
+  sprintf("Timestamp              : %s\n",  resumo_metricas$timestamp),
+  sprintf("NRUNS                  : %d\n",  resumo_metricas$N_runs),
+  sprintf("POPSIZE                : %d\n",  resumo_metricas$popsize),
+  sprintf("ITERS                  : %d\n",  resumo_metricas$iters),
+  sprintf("Mediana O1             : %.2f\n", resumo_metricas$mediana_o1),
+  sprintf("Mediana O2 DP          : %.2f\n", resumo_metricas$mediana_o2_dp),
+  sprintf("Mediana O2 Repair      : %.2f\n", resumo_metricas$mediana_o2_rep),
+  file = SUMMARY_TXT, sep = ""
+)
+cat("Resumo guardado em:", SUMMARY_TXT, "\n\n")
 
 # =============================================================
 # VALIDAÇÕES FINAIS
