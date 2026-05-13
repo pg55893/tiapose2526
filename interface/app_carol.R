@@ -1,7 +1,7 @@
 # =============================================================
 # app.R — USA Stores · IDSS
 # TIAPOSE 2025/26
-# Dashboard clean — KPIs custom alinhadas
+# Estrutura final: Análise Exploratória | Previsão | Otimização
 # =============================================================
 
 library(shiny)
@@ -12,15 +12,12 @@ library(DT)
 library(bsicons)
 library(shinycssloaders)
 
-# ---------- Paths & Source ----------
 BASE_PATH <- normalizePath("~/TIAPOSE_projeto/tiapose2526")
 source(file.path(BASE_PATH, "utils/config_otimizacao.R"))
 source(file.path(BASE_PATH, "utils/visualizacao_utils.R"))
 
-# ---------- Constantes ----------
-LOJA_NAMES  <- c("Baltimore", "Lancaster", "Philadelphia", "Richmond")
-LOJA_PREFIX <- c(Baltimore = "Bal", Lancaster = "Lan", Philadelphia = "Phi", Richmond = "Ric")
-DIAS        <- c("Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab")
+LOJA_NAMES <- c("Baltimore", "Lancaster", "Philadelphia", "Richmond")
+DIAS <- c("Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab")
 SIDEBAR_WIDTH <- 300
 
 LOJA_CORES <- c(
@@ -32,15 +29,11 @@ LOJA_CORES <- c(
 
 COMPROMISSO <- data.frame(lucro = 1241, total_HR = 80)
 
-# ---------- KPI custom ----------
 kpi_card <- function(title, value, subtitle, icon, color) {
   div(
     class = "kpi-card",
     style = paste0("--kpi-color:", color, ";"),
-    div(
-      class = "kpi-icon",
-      bs_icon(icon)
-    ),
+    div(class = "kpi-icon", bs_icon(icon)),
     div(
       class = "kpi-content",
       div(class = "kpi-title", title),
@@ -50,7 +43,16 @@ kpi_card <- function(title, value, subtitle, icon, color) {
   )
 }
 
-# ---------- Dados ----------
+parse_date_safe <- function(x) {
+  as.Date(x, tryFormats = c(
+    "%Y-%m-%d",
+    "%d/%m/%Y",
+    "%m/%d/%Y",
+    "%d-%m-%Y",
+    "%m-%d-%Y"
+  ))
+}
+
 prev_df <- tryCatch(
   read.csv(file.path(BASE_PATH, "otimizacao/Integrado/prev_12_semanas.csv")),
   error = function(e) NULL
@@ -71,10 +73,13 @@ hist_data <- lapply(
   function(f) {
     p <- file.path(BASE_PATH, "data", paste0(f, ".csv"))
     if (!file.exists(p)) return(NULL)
+    
     tryCatch({
       d <- read.csv(p, stringsAsFactors = FALSE, check.names = FALSE)
       colnames(d) <- gsub("[[:space:]]|\"", "", colnames(d))
-      d$Date <- as.Date(d$Date)
+      d$Date <- parse_date_safe(d$Date)
+      d <- d[!is.na(d$Date) & !is.na(d$Num_Customers), ]
+      d <- d[order(d$Date), ]
       d
     }, error = function(e) NULL)
   }
@@ -85,13 +90,10 @@ SEMANA_DATES <- if (!is.null(hist_data[["Baltimore"]])) {
   W <- 672
   H <- 7
   lapply(1:6, function(i) balt$Date[(W + (i - 1) * H + 1):(W + i * H)])
-} else {
-  NULL
-}
+} else NULL
 
 N_SEMANAS <- if (!is.null(prev_df)) nrow(prev_df) else 6
 
-# ---------- Helpers ----------
 fmt_dol <- function(x) {
   if (is.null(x) || length(x) == 0 || is.na(x)) return("--")
   if (x < 0) return(paste0("-$", format(round(abs(x)), big.mark = ",", scientific = FALSE)))
@@ -205,15 +207,10 @@ run_mc <- function(prev_week, objetivo, n_iter = 2000) {
   best_S
 }
 
-# =============================================================
-# CSS
-# =============================================================
 CSS <- "
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
-*{
-  font-family:'Plus Jakarta Sans',sans-serif !important;
-}
+*{font-family:'Plus Jakarta Sans',sans-serif !important;}
 
 :root{
   --bg:#F7F8F6;
@@ -224,211 +221,194 @@ CSS <- "
   --border:#DDE4DF;
   --accent:#84B2B1;
   --accent-dark:#5E8E90;
-  --rose:#CF8082;
-  --orange:#E49A36;
-  --blue:#8FA8C5;
 }
 
-html, body{
-  background:var(--bg) !important;
-  color:var(--text) !important;
-  overflow-x:hidden !important;
+html,body{
+  background:var(--bg)!important;
+  color:var(--text)!important;
+  overflow-x:hidden!important;
 }
 
-/* NAVBAR */
 .navbar,
 .bslib-page-navbar > nav,
 body > nav.navbar{
-  background:#FFFFFF !important;
-  border-bottom:1px solid var(--border) !important;
-  min-height:82px !important;
-  padding:0 34px !important;
-  box-shadow:0 3px 18px rgba(36,49,47,.04) !important;
+  background:white!important;
+  border-bottom:1px solid var(--border)!important;
+  min-height:82px!important;
+  padding:0 34px!important;
+  box-shadow:0 3px 18px rgba(36,49,47,.04)!important;
 }
 
 .navbar > .container-fluid{
-  position:relative !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:space-between !important;
+  position:relative!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
 }
 
 .navbar-brand{
-  color:var(--text) !important;
-  font-size:1.25rem !important;
-  font-weight:800 !important;
-  display:flex !important;
-  align-items:center !important;
-  gap:10px !important;
-  min-width:260px !important;
+  color:var(--text)!important;
+  font-size:1.25rem!important;
+  font-weight:800!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  min-width:260px!important;
 }
 
 .navbar-brand svg{
-  color:var(--accent-dark) !important;
-  fill:var(--accent-dark) !important;
+  color:var(--accent-dark)!important;
+  fill:var(--accent-dark)!important;
 }
 
 .navbar-nav.me-auto{
-  position:absolute !important;
-  left:50% !important;
-  top:50% !important;
-  transform:translate(-50%,-50%) !important;
-  display:flex !important;
-  flex-direction:row !important;
-  gap:16px !important;
-  margin:0 !important;
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  transform:translate(-50%,-50%)!important;
+  display:flex!important;
+  flex-direction:row!important;
+  gap:16px!important;
+  margin:0!important;
 }
 
 .navbar-nav .nav-link{
-  background:#FFFFFF !important;
-  color:var(--text) !important;
-  border:1px solid var(--border) !important;
-  border-radius:18px !important;
-  min-width:210px !important;
-  height:54px !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  font-weight:800 !important;
-  font-size:.95rem !important;
-  box-shadow:0 6px 18px rgba(36,49,47,.055) !important;
-  transition:all .18s ease !important;
-}
-
-.navbar-nav .nav-link:hover{
-  transform:translateY(-1px) !important;
-  border-color:var(--accent) !important;
-  color:var(--accent-dark) !important;
+  background:white!important;
+  color:var(--text)!important;
+  border:1px solid var(--border)!important;
+  border-radius:18px!important;
+  min-width:210px!important;
+  height:54px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-weight:800!important;
+  font-size:.95rem!important;
+  box-shadow:0 6px 18px rgba(36,49,47,.055)!important;
 }
 
 .navbar-nav .nav-link.active{
-  background:var(--accent-dark) !important;
-  color:white !important;
-  border-color:var(--accent-dark) !important;
+  background:var(--accent-dark)!important;
+  color:white!important;
+  border-color:var(--accent-dark)!important;
 }
 
 .navbar-nav .nav-link svg{
-  width:18px !important;
-  height:18px !important;
-  margin-right:9px !important;
+  width:18px!important;
+  height:18px!important;
+  margin-right:9px!important;
 }
 
 .navbar .nav-item:last-child{
-  color:var(--accent-dark) !important;
-  font-weight:800 !important;
-  min-width:220px !important;
-  text-align:right !important;
+  color:var(--accent-dark)!important;
+  font-weight:800!important;
+  min-width:220px!important;
+  text-align:right!important;
 }
 
-/* SIDEBAR */
 .sidebar{
-  background:linear-gradient(180deg,#EEF1EA 0%,#F6F8F4 100%) !important;
-  border-right:1px solid var(--border) !important;
-  padding:28px 24px !important;
-  box-shadow:inset -10px 0 30px rgba(36,49,47,.025) !important;
+  background:linear-gradient(180deg,#EEF1EA 0%,#F6F8F4 100%)!important;
+  border-right:1px solid var(--border)!important;
+  padding:28px 24px!important;
+  box-shadow:inset -10px 0 30px rgba(36,49,47,.025)!important;
 }
 
 .sidebar-title{
-  color:var(--text) !important;
-  font-size:.82rem !important;
-  font-weight:900 !important;
-  letter-spacing:.08em !important;
-  text-transform:uppercase !important;
-  margin-bottom:26px !important;
+  color:var(--text)!important;
+  font-size:.82rem!important;
+  font-weight:900!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+  margin-bottom:26px!important;
 }
 
-.control-label,
-.form-label{
-  color:var(--muted) !important;
-  font-size:.72rem !important;
-  font-weight:900 !important;
-  letter-spacing:.07em !important;
-  text-transform:uppercase !important;
-  margin-bottom:10px !important;
+.control-label,.form-label{
+  color:var(--muted)!important;
+  font-size:.72rem!important;
+  font-weight:900!important;
+  letter-spacing:.07em!important;
+  text-transform:uppercase!important;
 }
 
-.form-control,
-.form-select,
-.selectize-input{
-  background:#FFFFFF !important;
-  border:1px solid var(--border) !important;
-  border-radius:15px !important;
-  min-height:50px !important;
-  color:var(--text) !important;
-  font-weight:700 !important;
-  font-size:.90rem !important;
-  box-shadow:0 5px 14px rgba(36,49,47,.035) !important;
+.form-control,.form-select,.selectize-input{
+  background:white!important;
+  border:1px solid var(--border)!important;
+  border-radius:15px!important;
+  min-height:50px!important;
+  color:var(--text)!important;
+  font-weight:700!important;
+  font-size:.90rem!important;
+  box-shadow:0 5px 14px rgba(36,49,47,.035)!important;
 }
 
-.form-control:focus,
-.form-select:focus,
-.selectize-input.focus{
-  border-color:var(--accent) !important;
-  box-shadow:0 0 0 4px rgba(132,178,177,.18) !important;
+.selectize-control.multi .selectize-input > div{
+  background:#EAF4F7!important;
+  color:#24312F!important;
+  border:1px solid #DDE4DF!important;
+  border-radius:10px!important;
+  padding:4px 8px!important;
+  font-weight:700!important;
+  margin:3px 4px 3px 0!important;
 }
 
-/* SLIDER */
+.selectize-control.plugin-remove_button .item .remove{
+  color:#5E8E90!important;
+  border-left:1px solid #DDE4DF!important;
+  margin-left:6px!important;
+  padding-left:6px!important;
+  font-weight:900!important;
+}
+
 .irs--shiny .irs-line{
-  background:#DCE5E1 !important;
-  height:8px !important;
-  border-radius:30px !important;
+  background:#DCE5E1!important;
+  height:8px!important;
+  border-radius:30px!important;
 }
 
 .irs--shiny .irs-bar{
-  background:var(--accent) !important;
-  height:8px !important;
+  background:var(--accent)!important;
+  height:8px!important;
 }
 
 .irs--shiny .irs-handle > i{
-  background:#FFFFFF !important;
-  border:2px solid var(--accent) !important;
+  background:white!important;
+  border:2px solid var(--accent)!important;
 }
 
-/* BUTTONS */
-.btn-primary,
-.action-button{
-  width:100% !important;
-  background:linear-gradient(135deg,var(--accent-dark),#6FA5A4) !important;
-  border:none !important;
-  border-radius:16px !important;
-  min-height:54px !important;
-  color:white !important;
-  font-weight:900 !important;
-  font-size:.92rem !important;
-  box-shadow:0 10px 22px rgba(94,142,144,.22) !important;
+.btn-primary,.action-button{
+  width:100%!important;
+  background:linear-gradient(135deg,var(--accent-dark),#6FA5A4)!important;
+  border:none!important;
+  border-radius:16px!important;
+  min-height:54px!important;
+  color:white!important;
+  font-weight:900!important;
+  font-size:.92rem!important;
+  box-shadow:0 10px 22px rgba(94,142,144,.22)!important;
 }
 
-.btn-primary:hover,
-.action-button:hover{
-  background:#4F7E80 !important;
-  transform:translateY(-1px) !important;
-}
-
-/* MAIN */
 .bslib-sidebar-layout > .bslib-main,
 .bslib-sidebar-layout .main{
-  background:var(--bg) !important;
-  padding:28px !important;
+  background:var(--bg)!important;
+  padding:28px!important;
 }
 
-/* CARDS */
 .card{
-  background:var(--card) !important;
-  border:1px solid var(--border) !important;
-  border-radius:26px !important;
-  box-shadow:0 10px 28px rgba(36,49,47,.05) !important;
-  overflow:hidden !important;
+  background:white!important;
+  border:1px solid var(--border)!important;
+  border-radius:26px!important;
+  box-shadow:0 10px 28px rgba(36,49,47,.05)!important;
+  overflow:hidden!important;
 }
 
 .card-header{
-  background:white !important;
-  border-bottom:1px solid var(--border) !important;
-  color:var(--text) !important;
-  font-weight:900 !important;
-  font-size:1rem !important;
+  background:white!important;
+  border-bottom:1px solid var(--border)!important;
+  color:var(--text)!important;
+  font-weight:900!important;
+  font-size:1rem!important;
 }
 
-/* KPIS CUSTOM */
 .kpi-card{
   height:112px;
   background:linear-gradient(135deg,#FFFFFF 0%,#F8FBFA 100%);
@@ -470,20 +450,12 @@ body > nav.navbar{
   height:36px;
 }
 
-.kpi-content{
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  min-width:0;
-}
-
 .kpi-title{
   color:var(--kpi-color);
   font-size:.76rem;
   font-weight:900;
   letter-spacing:.06em;
   text-transform:uppercase;
-  line-height:1.1;
   margin-bottom:6px;
   white-space:nowrap;
 }
@@ -506,56 +478,38 @@ body > nav.navbar{
   color:var(--muted);
   font-size:.68rem;
   font-weight:600;
-  line-height:1.15;
   margin-top:5px;
   white-space:nowrap;
 }
 
-/* TABLES */
-table.dataTable tbody tr{
-  background:white !important;
-}
-
-table.dataTable tbody tr:hover{
-  background:#F3F8F8 !important;
-}
-
+table.dataTable tbody tr{background:white!important;}
+table.dataTable tbody tr:hover{background:#F3F8F8!important;}
 table.dataTable tbody td{
-  border:none !important;
-  padding:14px !important;
-  color:var(--text) !important;
+  border:none!important;
+  padding:14px!important;
+  color:var(--text)!important;
 }
 
 table.dataTable thead th{
-  border:none !important;
-  color:var(--muted) !important;
-  font-weight:900 !important;
-  text-transform:uppercase !important;
-  font-size:.72rem !important;
+  border:none!important;
+  color:var(--muted)!important;
+  font-weight:900!important;
+  text-transform:uppercase!important;
+  font-size:.72rem!important;
 }
 
-/* SIDEBAR INFO */
 .sb-info-box{
-  background:white !important;
-  border:1px solid var(--border) !important;
-  border-radius:20px !important;
-  padding:18px !important;
-  color:var(--muted) !important;
-  line-height:1.65 !important;
-  font-size:.82rem !important;
-  box-shadow:0 8px 20px rgba(36,49,47,.04) !important;
+  background:white!important;
+  border:1px solid var(--border)!important;
+  border-radius:20px!important;
+  padding:18px!important;
+  color:var(--muted)!important;
+  line-height:1.65!important;
+  font-size:.82rem!important;
+  box-shadow:0 8px 20px rgba(36,49,47,.04)!important;
 }
 
-.sb-info-box strong{
-  color:var(--text) !important;
-}
-
-.empty-state{
-  padding:30px;
-  text-align:center;
-  color:var(--muted);
-  font-weight:700;
-}
+.sb-info-box strong{color:var(--text)!important;}
 
 .plan-legend{
   display:flex;
@@ -566,37 +520,16 @@ table.dataTable thead th{
   font-size:.82rem;
 }
 
-.plan-legend b{
-  color:var(--text);
-}
+.plan-legend b{color:var(--text);}
 
 hr{
-  border-top:1px solid var(--border) !important;
-  margin:24px 0 !important;
-}
-
-@media(max-width:1250px){
-  .navbar-nav.me-auto{
-    position:relative !important;
-    left:auto !important;
-    top:auto !important;
-    transform:none !important;
-  }
-
-  .navbar-nav .nav-link{
-    min-width:160px !important;
-  }
+  border-top:1px solid var(--border)!important;
+  margin:24px 0!important;
 }
 "
 
-# =============================================================
-# UI
-# =============================================================
 ui <- page_navbar(
-  title = tags$span(
-    bs_icon("shop"),
-    " USA Stores · IDSS"
-  ),
+  title = tags$span(bs_icon("shop"), " USA Stores · IDSS"),
   
   theme = bs_theme(
     version = 5,
@@ -608,20 +541,89 @@ ui <- page_navbar(
   ),
   
   bg = "#F7F8F6",
+  header = tags$head(tags$style(HTML(CSS))),
   
-  header = tags$head(
-    tags$style(HTML(CSS))
-  ),
-  
-  # ============================================================
-  # TAB 1 — PREVISÃO
-  # ============================================================
   nav_panel(
-    title = tagList(bs_icon("graph-up-arrow"), " Previsao"),
+    title = tagList(bs_icon("activity"), " Análise Exploratória"),
     
     layout_sidebar(
       sidebar = sidebar(
         title = tags$span(bs_icon("sliders"), " Controlos"),
+        width = SIDEBAR_WIDTH,
+        
+        selectizeInput(
+          "eda_lojas",
+          tagList(bs_icon("geo-alt"), " Lojas:"),
+          choices = LOJA_NAMES,
+          selected = LOJA_NAMES,
+          multiple = TRUE,
+          options = list(
+            plugins = list("remove_button"),
+            placeholder = "Seleciona lojas..."
+          )
+        ),
+        
+        hr(),
+        
+        selectInput(
+          "eda_visao",
+          tagList(bs_icon("graph-up"), " Visualização:"),
+          choices = c(
+            "Média móvel 7 dias" = "ma7",
+            "Diário" = "diario",
+            "Mensal" = "mensal"
+          ),
+          selected = "ma7"
+        ),
+        
+        hr(),
+        
+        tags$div(
+          class = "sb-info-box",
+          tags$strong(tagList(bs_icon("info-circle"), " Painel")),
+          tags$br(), tags$br(),
+          "Exploração histórica das séries temporais por loja, estatísticas descritivas e comparação de volumes."
+        )
+      ),
+      
+      div(
+        layout_columns(
+          uiOutput("eda_kpi_total"),
+          uiOutput("eda_kpi_media"),
+          uiOutput("eda_kpi_max"),
+          col_widths = c(4, 4, 4)
+        ),
+        
+        tags$div(style = "height:.9rem;"),
+        
+        card(
+          card_header(tagList(bs_icon("graph-up"), " Série Temporal por Loja")),
+          plotlyOutput("eda_ts_plot", height = "380px")
+        ),
+        
+        tags$div(style = "height:.9rem;"),
+        
+        layout_columns(
+          card(
+            card_header(tagList(bs_icon("bar-chart"), " Distribuição por Loja")),
+            plotlyOutput("eda_box_plot", height = "310px")
+          ),
+          card(
+            card_header(tagList(bs_icon("table"), " Estatísticas Descritivas")),
+            DTOutput("eda_stats_table")
+          ),
+          col_widths = c(6, 6)
+        )
+      )
+    )
+  ),
+  
+  nav_panel(
+    title = tagList(bs_icon("graph-up-arrow"), " Previsão"),
+    
+    layout_sidebar(
+      sidebar = sidebar(
+        title = tags$span(bs_icon("sliders"), " Controlos de Previsão"),
         width = SIDEBAR_WIDTH,
         
         sliderInput(
@@ -635,25 +637,29 @@ ui <- page_navbar(
         
         hr(),
         
-        selectInput(
+        selectizeInput(
           "p_loja",
           tagList(bs_icon("geo-alt"), " Lojas em destaque:"),
           choices = LOJA_NAMES,
           selected = "Philadelphia",
-          multiple = TRUE
+          multiple = TRUE,
+          options = list(
+            plugins = list("remove_button"),
+            placeholder = "Seleciona lojas..."
+          )
         ),
         
         hr(),
         
         selectInput(
           "p_metodo_prev",
-          tagList(bs_icon("cpu"), " Metodo de Previsao:"),
+          tagList(bs_icon("cpu"), " Método de Previsão:"),
           choices = c(
-            "Hibrido (Melhor Rank)" = "auto",
-            "Random Forest (Cenario 2)" = "rf_c2",
-            "Random Forest (Cenario 1)" = "rf_c1",
+            "Híbrido recomendado" = "auto",
+            "Random Forest C2" = "rf_c2",
+            "Random Forest C1" = "rf_c1",
             "ETS / Holt-Winters" = "ets",
-            "ARIMA (Univariado)" = "arima",
+            "ARIMA" = "arima",
             "Seasonal Naive" = "naive"
           ),
           selected = "auto"
@@ -661,32 +667,28 @@ ui <- page_navbar(
         
         hr(),
         
-        selectInput(
+        selectizeInput(
           "p_filter_loja",
           tagList(bs_icon("funnel"), " Filtrar Tabela — Loja:"),
           choices = LOJA_NAMES,
-          multiple = TRUE
+          selected = NULL,
+          multiple = TRUE,
+          options = list(
+            plugins = list("remove_button"),
+            placeholder = "Todas as lojas"
+          )
         ),
         
-        selectInput(
+        selectizeInput(
           "p_filter_dia",
           tagList(bs_icon("calendar3"), " Filtrar Tabela — Dia:"),
           choices = DIAS,
-          multiple = TRUE
-        ),
-        
-        hr(),
-        
-        tags$div(
-          class = "sb-info-box",
-          tags$strong(tagList(bs_icon("info-circle"), " Informações")),
-          tags$br(), tags$br(),
-          tags$b("Modelo de Previsão"), tags$br(),
-          "Growing Window", tags$br(), tags$br(),
-          tags$b("Horizonte"), tags$br(),
-          "H = 7 dias", tags$br(), tags$br(),
-          tags$b("Atualização"), tags$br(),
-          "12 iterações"
+          selected = NULL,
+          multiple = TRUE,
+          options = list(
+            plugins = list("remove_button"),
+            placeholder = "Todos os dias"
+          )
         )
       ),
       
@@ -704,168 +706,114 @@ ui <- page_navbar(
         layout_columns(
           card(
             card_header(uiOutput("p_forecast_title")),
-            plotlyOutput("p_forecast_bar", height = "245px")
+            plotlyOutput("p_forecast_bar", height = "270px")
           ),
           card(
-            card_header("Historico"),
-            plotOutput("p_hist_chart", height = "245px")
+            card_header(tagList(bs_icon("award"), " Ranking dos Métodos")),
+            DTOutput("p_ranking_table")
           ),
-          col_widths = c(5, 7)
+          col_widths = c(7, 5)
         ),
         
         tags$div(style = "height:.9rem;"),
         
         card(
-          card_header("Previsoes Diarias"),
+          card_header("Previsões Diárias"),
           DTOutput("p_daily_table")
         )
       )
     )
   ),
   
-  # ============================================================
-  # TAB 2 — OTIMIZAÇÃO
-  # ============================================================
   nav_panel(
-    title = tagList(bs_icon("cpu"), " Otimizacao"),
+    title = tagList(bs_icon("cpu"), " Otimização"),
     
     layout_sidebar(
       sidebar = sidebar(
         title = tags$span(bs_icon("sliders"), " Configuração DSS"),
         width = SIDEBAR_WIDTH,
         
+        sliderInput(
+          "o_semana",
+          tagList(bs_icon("calendar-week"), " Semana:"),
+          min = 1,
+          max = N_SEMANAS,
+          value = 1,
+          step = 1
+        ),
+        
+        hr(),
+        
         selectInput(
           "o_objetivo",
-          tagList(bs_icon("bullseye"), " Objetivo:"),
+          "Objetivo de Análise:",
           choices = c(
             "O1: Maximizar Lucro" = "O1",
-            "O2: Restricao" = "O2",
-            "O3: Pareto" = "O3"
+            "O2: Limite 10 000 Unidades" = "O2",
+            "O3: Pareto RH vs Lucro" = "O3"
           )
         ),
         
-        uiOutput("o_metodo_ui"),
-        
-        sliderInput(
-          "o_iter",
-          tagList(bs_icon("speedometer2"), " Iteracoes:"),
-          min = 500,
-          max = 5000,
-          value = 2000,
-          step = 500
+        selectInput(
+          "o_algoritmo",
+          "Algoritmo:",
+          choices = list(
+            "Local Search" = c(
+              "SANN (Simulated Annealing)" = "SANN",
+              "HC (Hill Climbing)" = "HC",
+              "Tabu Search" = "TABU"
+            ),
+            "Population-based" = c(
+              "GA (Genetic Algorithm)" = "GA",
+              "PSO (Particle Swarm)" = "PSO",
+              "DE (Differential Evolution)" = "DE"
+            ),
+            "Multiobjetivo" = c(
+              "NSGA-II" = "NSGA2"
+            )
+          ),
+          selected = "SANN"
         ),
         
         actionButton(
           "o_run",
-          tagList(bs_icon("play-fill"), " Executar Otimizacao")
+          tagList(bs_icon("play-fill"), " Executar Otimização")
         ),
         
         hr(),
         
         tags$div(
           class = "sb-info-box",
-          tags$strong(tagList(bs_icon("lightbulb"), " Dica")),
+          tags$strong(tagList(bs_icon("info-circle"), " Nota")),
           tags$br(), tags$br(),
-          "Escolhe o objetivo e o algoritmo para gerar um plano semanal otimizado."
+          "A otimização utiliza a previsão da semana selecionada e gera o plano operacional por loja e dia."
         )
       ),
       
       div(
         layout_columns(
-          uiOutput("o_kpi_lucro_card"),
-          uiOutput("o_kpi_units_card"),
-          uiOutput("o_kpi_hr_card"),
+          uiOutput("o_kpi_lucro"),
+          uiOutput("o_kpi_units"),
+          uiOutput("o_kpi_hr"),
           col_widths = c(4, 4, 4)
         ),
         
         tags$div(style = "height:.9rem;"),
         
+        uiOutput("o_o3_pareto_ui"),
+        
+        tags$div(style = "height:.9rem;"),
+        
         card(
-          card_header("Plano"),
+          card_header("Plano Otimizado"),
           uiOutput("o_plan_ui")
         ),
         
         tags$div(style = "height:.9rem;"),
         
         card(
-          card_header("Grafico"),
-          uiOutput("o_chart_ui")
-        )
-      )
-    )
-  ),
-  
-  # ============================================================
-  # TAB 3 — DSS INTEGRADO
-  # ============================================================
-  nav_panel(
-    title = tagList(bs_icon("layers"), " DSS Integrado"),
-    
-    layout_sidebar(
-      sidebar = sidebar(
-        title = tags$span(bs_icon("sliders"), " Controlos"),
-        width = SIDEBAR_WIDTH,
-        
-        sliderInput(
-          "d_semana",
-          tagList(bs_icon("calendar-week"), " Semana:"),
-          min = 1,
-          max = N_SEMANAS,
-          value = 1
-        ),
-        
-        hr(),
-        
-        selectInput(
-          "d_objetivo",
-          tagList(bs_icon("bullseye"), " Objetivo:"),
-          choices = c("O1", "O2", "O3")
-        ),
-        
-        actionButton(
-          "d_btn",
-          tagList(bs_icon("play-fill"), " Gerar Plano")
-        ),
-        
-        hr(),
-        
-        tags$div(
-          class = "sb-info-box",
-          tags$strong(tagList(bs_icon("info-circle"), " Informações")),
-          tags$br(), tags$br(),
-          tags$b("Modelo de Previsão"), tags$br(),
-          "Growing Window", tags$br(), tags$br(),
-          tags$b("Horizonte"), tags$br(),
-          "H = 7 dias", tags$br(), tags$br(),
-          tags$b("Atualização"), tags$br(),
-          "12 iterações"
-        ),
-        
-        tags$div(style = "height:18px;"),
-        
-        tags$div(
-          class = "sb-info-box",
-          tags$strong(tagList(bs_icon("lightbulb"), " Dica")),
-          tags$br(), tags$br(),
-          "Seleciona a semana e o objetivo para gerar um plano otimizado."
-        )
-      ),
-      
-      div(
-        uiOutput("d_kpi_top"),
-        
-        tags$div(style = "height:.9rem;"),
-        
-        card(
-          card_header(tagList(bs_icon("bar-chart"), " Previsao")),
-          plotlyOutput("d_forecast_chart", height = "390px")
-        ),
-        
-        tags$div(style = "height:.9rem;"),
-        
-        card(
-          card_header(tagList(bs_icon("clipboard-data"), " Plano")),
-          DTOutput("d_plan_table")
+          card_header("Gráfico de Convergência / Resultado"),
+          plotlyOutput("o_profit_chart", height = "260px")
         )
       )
     )
@@ -875,94 +823,9 @@ ui <- page_navbar(
   nav_item("TIAPOSE 2025/26")
 )
 
-# =============================================================
-# SERVER
-# =============================================================
 server <- function(input, output, session) {
   
   rv_opt <- reactiveVal(NULL)
-  rv_dss <- reactiveVal(NULL)
-  
-  output$o_metodo_ui <- renderUI({
-    if (input$o_objetivo == "O3") {
-      selectInput(
-        "o_metodo",
-        tagList(bs_icon("cpu"), " Algoritmo:"),
-        choices = c("NSGA-II (Pareto)" = "NSGA2")
-      )
-    } else {
-      selectInput(
-        "o_metodo",
-        tagList(bs_icon("cpu"), " Algoritmo:"),
-        choices = list(
-          "Local Search" = c(
-            "SANN (Simulated Annealing)" = "SANN",
-            "HC (Hill Climbing)" = "HC",
-            "Tabu Search" = "TABU"
-          ),
-          "Population-based" = c(
-            "GA (Genetic Algorithm)" = "GA",
-            "PSO (Swarm Intelligence)" = "PSO",
-            "DE (Differential Evolution)" = "DE",
-            "rbga.bin (Binario)" = "RBGA"
-          ),
-          "Outros" = c(
-            "Monte Carlo (Baseline)" = "MC"
-          )
-        )
-      )
-    }
-  })
-  
-  observeEvent(list(input$o_objetivo, input$o_metodo), {
-    rv_opt(NULL)
-  })
-  
-  observeEvent(list(input$d_semana, input$d_objetivo), {
-    rv_dss(NULL)
-  })
-  
-  r_opt_res <- eventReactive(input$o_run, {
-    withProgress(message = paste("A executar", input$o_metodo, "..."), value = 0, {
-      Sys.sleep(1.2)
-      
-      hists <- lapply(
-        1:5,
-        function(i) sort(cumsum(runif(input$o_iter / 100, 0, 50))) + 1000
-      )
-      
-      lucros <- c(
-        Baltimore = 1240,
-        Lancaster = 1480,
-        Philadelphia = 1850,
-        Richmond = 1120
-      ) * runif(4, 1.05, 1.25)
-      
-      unidades <- if (input$o_objetivo == "O2") {
-        9800 + runif(1, -500, 1000)
-      } else {
-        12500
-      }
-      
-      list(
-        total_profit = sum(lucros),
-        lucros_individuais = lucros,
-        rh_total = c(18, 15, 22, 14),
-        unidades = unidades,
-        hists = hists,
-        valido = !(input$o_objetivo == "O2" && unidades > 10000)
-      )
-    })
-  }, ignoreNULL = FALSE)
-  
-  observeEvent(input$o_run, {
-    rv_opt(r_opt_res())
-  })
-  
-  r_plan_opt <- reactive({
-    res <- rv_opt()
-    decompose_plan(if (is.null(res)) S1 else S1 * runif(84, .9, 1.1), PREV)
-  })
   
   theme_clean <- function() {
     theme_minimal(base_size = 11, base_family = "Plus Jakarta Sans") +
@@ -990,7 +853,146 @@ server <- function(input, output, session) {
   }
   
   # ============================================================
-  # TAB 1 — PREVISÃO
+  # ANÁLISE EXPLORATÓRIA
+  # ============================================================
+  eda_long <- reactive({
+    req(length(input$eda_lojas) > 0)
+    
+    do.call(rbind, lapply(input$eda_lojas, function(lj) {
+      df <- hist_data[[lj]]
+      if (is.null(df)) return(NULL)
+      data.frame(
+        Loja = lj,
+        Date = df$Date,
+        Clientes = df$Num_Customers
+      )
+    }))
+  })
+  
+  output$eda_kpi_total <- renderUI({
+    df <- eda_long()
+    kpi_card(
+      "TOTAL CLIENTES",
+      format(sum(df$Clientes, na.rm = TRUE), big.mark = ","),
+      "histórico selecionado",
+      "people",
+      "#84B2B1"
+    )
+  })
+  
+  output$eda_kpi_media <- renderUI({
+    df <- eda_long()
+    kpi_card(
+      "MÉDIA DIÁRIA",
+      round(mean(df$Clientes, na.rm = TRUE)),
+      "clientes por dia",
+      "graph-up",
+      "#CF8082"
+    )
+  })
+  
+  output$eda_kpi_max <- renderUI({
+    df <- eda_long()
+    kpi_card(
+      "PICO MÁXIMO",
+      round(max(df$Clientes, na.rm = TRUE)),
+      "maior valor observado",
+      "arrow-up-circle",
+      "#E49A36"
+    )
+  })
+  
+  output$eda_ts_plot <- renderPlotly({
+    df <- eda_long()
+    req(nrow(df) > 0)
+    
+    df <- df[order(df$Loja, df$Date), ]
+    
+    if (input$eda_visao == "ma7") {
+      df <- do.call(rbind, lapply(split(df, df$Loja), function(x) {
+        x <- x[order(x$Date), ]
+        x$Clientes_plot <- as.numeric(stats::filter(x$Clientes, rep(1 / 7, 7), sides = 1))
+        x
+      }))
+      ylab <- "Clientes — média móvel 7 dias"
+    }
+    
+    if (input$eda_visao == "diario") {
+      df$Clientes_plot <- df$Clientes
+      ylab <- "Clientes"
+    }
+    
+    if (input$eda_visao == "mensal") {
+      df$Mes <- as.Date(format(df$Date, "%Y-%m-01"))
+      df <- aggregate(Clientes ~ Loja + Mes, df, mean, na.rm = TRUE)
+      names(df)[names(df) == "Mes"] <- "Date"
+      df$Clientes_plot <- df$Clientes
+      ylab <- "Média mensal de clientes"
+    }
+    
+    df <- df[!is.na(df$Clientes_plot), ]
+    
+    p <- ggplot(
+      df,
+      aes(
+        x = Date,
+        y = Clientes_plot,
+        color = Loja,
+        text = paste0(
+          Loja,
+          "<br>Data: ", Date,
+          "<br>Clientes: ", round(Clientes_plot)
+        )
+      )
+    ) +
+      geom_line(linewidth = .9, alpha = .9) +
+      scale_color_manual(values = LOJA_CORES) +
+      theme_clean() +
+      labs(x = "Data", y = ylab)
+    
+    plotly_clean(ggplotly(p, tooltip = "text")) %>%
+      layout(legend = list(orientation = "h", y = -0.2))
+  })
+  
+  output$eda_box_plot <- renderPlotly({
+    df <- eda_long()
+    req(nrow(df) > 0)
+    
+    p <- ggplot(df, aes(x = Loja, y = Clientes, fill = Loja)) +
+      geom_boxplot(alpha = .75, width = .65) +
+      scale_fill_manual(values = LOJA_CORES) +
+      theme_clean() +
+      theme(legend.position = "none") +
+      labs(x = NULL, y = "Clientes")
+    
+    plotly_clean(ggplotly(p))
+  })
+  
+  output$eda_stats_table <- renderDT({
+    df <- eda_long()
+    
+    stats <- aggregate(Clientes ~ Loja, df, function(x) {
+      c(
+        Min = min(x, na.rm = TRUE),
+        Media = round(mean(x, na.rm = TRUE), 1),
+        Mediana = median(x, na.rm = TRUE),
+        Max = max(x, na.rm = TRUE),
+        Desvio = round(sd(x, na.rm = TRUE), 1)
+      )
+    })
+    
+    stats <- data.frame(Loja = stats$Loja, stats$Clientes)
+    
+    datatable(
+      stats,
+      rownames = FALSE,
+      options = list(dom = "t", pageLength = 8),
+      class = "table-sm table-hover"
+    )
+  })
+  
+  # ============================================================
+  # PREVISÃO
   # ============================================================
   r_prev_week <- reactive({
     pw <- get_prev_week(input$p_semana)
@@ -1032,15 +1034,10 @@ server <- function(input, output, session) {
       pw <- r_prev_week()
       idx <- which(LOJA_NAMES == loja_name)
       tot <- round(sum(pw[((idx - 1) * 7 + 1):(idx * 7)]))
-      sel <- loja_name %in% input$p_loja
       cor <- LOJA_CORES[[loja_name]]
       
       kpi_card(
-        title = tagList(
-          bs_icon(if (sel) "geo-alt-fill" else "geo-alt"),
-          " ",
-          toupper(loja_name)
-        ),
+        title = tagList(bs_icon("geo-alt"), " ", toupper(loja_name)),
         value = format(tot, big.mark = ","),
         subtitle = "clientes/sem.",
         icon = "people",
@@ -1057,7 +1054,7 @@ server <- function(input, output, session) {
   output$p_forecast_title <- renderUI({
     tags$span(
       bs_icon("bar-chart-fill"),
-      " Previsao — ",
+      " Previsão — ",
       strong(paste(input$p_loja, collapse = ", ")),
       " — Semana ",
       input$p_semana
@@ -1081,38 +1078,33 @@ server <- function(input, output, session) {
       scale_fill_manual(values = LOJA_CORES) +
       theme_clean() +
       theme(
-        legend.position = "none",
+        legend.position = "bottom",
         panel.grid.major.x = element_blank()
       ) +
       labs(x = NULL, y = "Clientes Previstos")
     
-    plotly_clean(ggplotly(p, tooltip = "text"))
+    plotly_clean(ggplotly(p, tooltip = "text")) %>%
+      layout(legend = list(orientation = "h", y = -0.2))
   })
   
-  output$p_hist_chart <- renderPlot({
-    req(length(input$p_loja) > 0)
+  output$p_ranking_table <- renderDT({
+    if (!is.null(algo_stats)) {
+      df <- algo_stats
+    } else {
+      df <- data.frame(
+        Metodo = c("Híbrido", "Random Forest C2", "Random Forest C1", "ETS", "ARIMA", "Naive"),
+        Score = c(1, 2, 3, 4, 5, 6),
+        Estado = c("Recomendado", "Alternativo", "Alternativo", "Alternativo", "Alternativo", "Baseline")
+      )
+    }
     
-    loja_sel <- input$p_loja[1]
-    df <- hist_data[[loja_sel]]
-    
-    validate(
-      need(!is.null(df), paste("Sem dados para", loja_sel)),
-      need(nrow(df) > 0, "Ficheiro vazio.")
+    datatable(
+      df,
+      rownames = FALSE,
+      options = list(dom = "t", pageLength = 8, scrollX = TRUE),
+      class = "table-sm table-hover"
     )
-    
-    df_plot <- tail(df[!is.na(df$Num_Customers), ], 180)
-    
-    validate(
-      need(nrow(df_plot) > 0, "Sem dados nos ultimos 180 dias.")
-    )
-    
-    cor_loja <- LOJA_CORES[[loja_sel]]
-    
-    ggplot(df_plot, aes(x = Date, y = Num_Customers)) +
-      geom_area(fill = paste0(cor_loja, "22"), color = cor_loja, linewidth = .9) +
-      theme_clean() +
-      labs(x = "Data", y = "Clientes (Real)")
-  }, bg = "transparent")
+  })
   
   output$p_daily_table <- renderDT({
     pw <- r_prev_week()
@@ -1165,106 +1157,129 @@ server <- function(input, output, session) {
         "Erro (%)",
         color = styleInterval(c(-10, 10), c("#C0414F", "#4D8C6F", "#C0414F")),
         fontWeight = "bold"
-      ) %>%
-      formatStyle(
-        "Dif.",
-        color = styleInterval(c(-1, 1), c("#C0414F", "#8D9298", "#4D8C6F")),
-        fontWeight = "bold"
       )
   })
   
   # ============================================================
-  # TAB 2 — OTIMIZAÇÃO
+  # OTIMIZAÇÃO
   # ============================================================
+  observeEvent(list(input$o_semana, input$o_objetivo, input$o_algoritmo), {
+    rv_opt(NULL)
+  })
+  
   observeEvent(input$o_run, {
-    withProgress(message = paste("A executar", input$o_metodo, "..."), value = 0, {
-      Sys.sleep(1.2)
-      
-      lucros <- c(
-        Baltimore = 1240,
-        Lancaster = 1480,
-        Philadelphia = 1850,
-        Richmond = 1120
-      ) * runif(4, 1.1, 1.3)
-      
-      unidades <- if (input$o_objetivo == "O2") {
-        9800 + runif(1, -500, 1000)
-      } else {
-        12500
+    pw <- get_prev_week(input$o_semana)
+    rv_opt(NULL)
+    
+    withProgress(
+      message = paste("A executar", input$o_algoritmo, "—", input$o_objetivo, "..."),
+      value = 0,
+      {
+        S <- run_mc(pw, input$o_objetivo, 3000)
+        rv_opt(S)
       }
-      
-      hists <- lapply(
-        1:5,
-        function(i) sort(cumsum(runif(input$o_iter / 100, 0, 50))) + 1000
-      )
-      
-      rv_opt(list(
-        total_profit = sum(lucros),
-        lucros_individuais = lucros,
-        rh_total = c(18, 15, 22, 14),
-        unidades = unidades,
-        hists = hists,
-        valido = !(input$o_objetivo == "O2" && unidades > 10000)
-      ))
-    })
-  })
-  
-  output$o_kpi_lucro_card <- renderUI({
-    res <- rv_opt()
-    val <- if (is.null(res)) 5690 else res$total_profit
-    
-    kpi_card(
-      title = "LUCRO",
-      value = fmt_dol(val),
-      subtitle = "lucro semanal estimado",
-      icon = "graph-up-arrow",
-      color = "#84B2B1"
     )
   })
   
-  output$o_kpi_units_card <- renderUI({
-    res <- rv_opt()
-    u <- if (is.null(res)) 9500 else round(res$unidades)
-    valido <- if (is.null(res)) TRUE else res$valido
+  r_plan_opt <- reactive({
+    S <- rv_opt()
+    req(!is.null(S))
+    
+    pw <- get_prev_week(input$o_semana)
+    PREV <<- pw
+    upper <<- calc_upper(PREV)
+    
+    decompose_plan(S, pw)
+  })
+  
+  output$o_kpi_lucro <- renderUI({
+    S <- rv_opt()
+    if (is.null(S)) S <- S1
+    
+    pw <- get_prev_week(input$o_semana)
+    PREV <<- pw
+    upper <<- calc_upper(PREV)
     
     kpi_card(
-      title = "UNIDADES",
-      value = format(u, big.mark = ","),
-      subtitle = if (!valido) "acima do limite O2" else "volume de vendas",
-      icon = "basket",
-      color = "#CF8082"
+      "LUCRO",
+      fmt_dol(profit(S)),
+      "lucro semanal estimado",
+      "graph-up-arrow",
+      "#84B2B1"
     )
   })
   
-  output$o_kpi_hr_card <- renderUI({
-    res <- rv_opt()
-    hr <- if (is.null(res)) 69 else sum(res$rh_total)
+  output$o_kpi_units <- renderUI({
+    S <- rv_opt()
+    if (is.null(S)) S <- S1
+    
+    pw <- get_prev_week(input$o_semana)
+    PREV <<- pw
+    upper <<- calc_upper(PREV)
+    
+    u <- total_units(S)
+    limite_ok <- ifelse(is.na(u), FALSE, u <= 10000)
     
     kpi_card(
-      title = "RH TOTAL",
-      value = as.character(hr),
-      subtitle = "total de funcionários",
-      icon = "people",
-      color = "#E49A36"
+      "UNIDADES",
+      format(round(u), big.mark = ","),
+      ifelse(limite_ok, "limite respeitado", "acima de 10 000"),
+      "basket",
+      "#CF8082"
     )
+  })
+  
+  output$o_kpi_hr <- renderUI({
+    S <- rv_opt()
+    if (is.null(S)) S <- S1
+    
+    hr <- sum(round(S[seq(2, 84, 3)]) + round(S[seq(3, 84, 3)]))
+    
+    kpi_card(
+      "RH TOTAL",
+      as.character(hr),
+      "funcionários escalados",
+      "person-check",
+      "#E49A36"
+    )
+  })
+  
+  output$o_o3_pareto_ui <- renderUI({
+    if (input$o_objetivo != "O3") return(NULL)
+    
+    card(
+      card_header(tagList(bs_icon("diagram-3"), " Fronteira de Pareto — O3")),
+      plotlyOutput("o_pareto_plot", height = "320px")
+    )
+  })
+  
+  output$o_pareto_plot <- renderPlotly({
+    req(input$o_objetivo == "O3")
+    
+    p <- ggplot(pareto_ok, aes(x = total_HR, y = lucro)) +
+      geom_point(color = "#84B2B1", alpha = .65, size = 2.5) +
+      geom_point(data = COMPROMISSO, color = "#CF8082", size = 4) +
+      theme_clean() +
+      labs(x = "Recursos Humanos", y = "Lucro ($)")
+    
+    plotly_clean(ggplotly(p))
   })
   
   output$o_plan_ui <- renderUI({
     if (is.null(rv_opt())) {
       div(
-        class = "empty-state",
+        style = "padding:28px; color:#7B8782; font-weight:700;",
         bs_icon("cpu"),
-        tags$br(),
-        tags$br(),
-        "Prima ",
-        strong("Executar Otimizacao"),
-        " para gerar o plano semanal."
+        tags$br(), tags$br(),
+        "Seleciona o objetivo e algoritmo, depois prime ",
+        strong("Executar Otimização"),
+        "."
       )
     } else {
       tagList(
         div(
           class = "plan-legend",
-          span(tags$b("PR:"), " Promocao (%)"),
+          span(tags$b("PR:"), " Promoção (%)"),
           span(tags$b("X:"), " Func. Experientes"),
           span(tags$b("J:"), " Func. Juniores"),
           span(tags$b("Atend.:"), " Clientes Atendidos")
@@ -1282,7 +1297,7 @@ server <- function(input, output, session) {
       options = list(
         dom = "ft",
         pageLength = 28,
-        scrollY = "380px",
+        scrollY = "360px",
         scrollX = TRUE
       ),
       rownames = FALSE,
@@ -1304,150 +1319,31 @@ server <- function(input, output, session) {
       )
   })
   
-  output$o_chart_ui <- renderUI({
-    plotlyOutput("o_profit_chart", height = "220px")
-  })
-  
   output$o_profit_chart <- renderPlotly({
-    req(!is.null(input$o_objetivo))
-    
     if (input$o_objetivo == "O3") {
       p <- ggplot(pareto_ok, aes(x = total_HR, y = lucro)) +
         geom_point(color = "#84B2B1", alpha = .65, size = 2.5) +
         geom_point(data = COMPROMISSO, color = "#CF8082", size = 4) +
         theme_clean() +
-        labs(x = "Recursos Humanos (RH)", y = "Lucro ($)")
+        labs(x = "Recursos Humanos", y = "Lucro ($)")
       
       return(plotly_clean(ggplotly(p)))
     }
     
-    res_val <- r_opt_res()
+    hists <- lapply(
+      1:5,
+      function(i) sort(cumsum(runif(30, 0, 50))) + 1000
+    )
+    
     p <- plot_shaded_convergence(
-      res_val$hists,
-      paste("Convergencia —", input$o_metodo),
-      "Avaliacoes (FES)",
+      hists,
+      paste("Convergência —", input$o_algoritmo),
+      "Avaliações",
       "Melhor Lucro ($)"
     )
     
     plotly_clean(ggplotly(p))
   })
-  
-  # ============================================================
-  # TAB 3 — DSS
-  # ============================================================
-  observeEvent(input$d_btn, {
-    pw <- get_prev_week(input$d_semana)
-    rv_dss(NULL)
-    
-    withProgress(message = paste("A otimizar —", input$d_objetivo, "..."), value = 0, {
-      S <- run_mc(pw, input$d_objetivo, 3000)
-      rv_dss(S)
-    })
-  })
-  
-  r_plan_dss <- reactive({
-    S <- rv_dss()
-    req(!is.null(S))
-    
-    pw <- get_prev_week(input$d_semana)
-    PREV <<- pw
-    upper <<- calc_upper(PREV)
-    
-    decompose_plan(S, pw)
-  })
-  
-  output$d_kpi_top <- renderUI({
-    S <- rv_dss()
-    if (is.null(S)) S <- S1
-    
-    pw <- get_prev_week(input$d_semana)
-    PREV <<- pw
-    upper <<- calc_upper(PREV)
-    
-    u <- total_units(S)
-    hr <- sum(round(S[seq(2, 84, 3)]) + round(S[seq(3, 84, 3)]))
-    p <- profit(S)
-    
-    layout_columns(
-      kpi_card(
-        title = "LUCRO",
-        value = fmt_dol(p),
-        subtitle = "lucro semanal estimado",
-        icon = "graph-up-arrow",
-        color = "#84B2B1"
-      ),
-      kpi_card(
-        title = "UNIDADES",
-        value = format(round(u), big.mark = ","),
-        subtitle = "total unidades vendidas",
-        icon = "basket",
-        color = "#CF8082"
-      ),
-      kpi_card(
-        title = "RH TOTAL",
-        value = as.character(hr),
-        subtitle = "funcionários escalados",
-        icon = "person-check",
-        color = "#E49A36"
-      ),
-      col_widths = c(4, 4, 4)
-    )
-  })
-  
-  output$d_forecast_chart <- renderPlotly({
-    pw <- get_prev_week(input$d_semana)
-    
-    df <- data.frame(
-      Loja = rep(LOJA_NAMES, each = 7),
-      Dia = rep(factor(DIAS, levels = DIAS), 4),
-      Clientes = pw
-    )
-    
-    p <- ggplot(
-      df,
-      aes(
-        x = Dia,
-        y = Clientes,
-        fill = Loja,
-        text = paste0(Loja, " ", Dia, ": ", round(Clientes))
-      )
-    ) +
-      geom_col(position = "dodge", width = .7) +
-      scale_fill_manual(values = LOJA_CORES) +
-      theme_clean() +
-      theme(
-        legend.position = "bottom",
-        panel.grid.major.x = element_blank()
-      ) +
-      labs(x = NULL, y = "Clientes Previstos", fill = NULL)
-    
-    plotly_clean(ggplotly(p, tooltip = "text")) %>%
-      layout(legend = list(orientation = "h", y = -0.22))
-  })
-  
-  output$d_plan_table <- renderDT({
-    plan <- r_plan_dss()
-    
-    datatable(
-      plan,
-      options = list(
-        dom = "ft",
-        pageLength = 28,
-        scrollY = "360px",
-        scrollX = TRUE
-      ),
-      rownames = FALSE,
-      class = "table-sm table-hover table-striped"
-    ) %>%
-      formatStyle("Loja", fontWeight = "bold", color = "#5E8E90") %>%
-      formatCurrency(c("Receita", "Custo RH", "Lucro"), currency = "$", digits = 0) %>%
-      formatStyle(
-        "Lucro",
-        color = styleInterval(0, c("#C0414F", "#4D8C6F")),
-        fontWeight = "bold"
-      )
-  })
 }
 
-# ---------- Launch ----------
 shinyApp(ui, server)
