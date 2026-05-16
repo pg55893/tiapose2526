@@ -1,0 +1,313 @@
+Log iniciado: 2026-05-16 17:06:08 
+
+=== VALIDAÇÃO CONFIG ===
+profit(S1) = 4446 
+eval(S1)   = -4446 
+unidades   = 24732 
+lower[1:6] = 0 0 0 0 0 0 
+upper[1:6] = 0.3 19 17 0.3 19 17 
+=== Parametros ===
+RUNS        = 12 | W = 630 
+NRUNS_BT    = 5 
+N_ITER_MC   = 5000 
+MAX_ITER_HC = 5000 
+MAXIT_SANN  = 3000 | T_SANN = 1000 
+GA: popSize = 50 | iters = 100 | elit = 10 
+NSGA2: pop = 32 | gens = 200 | runs = 3 
+
+
+=== FASE INTEGRADA — 12 SEMANAS (VERSÃO FINAL) ===
+Algoritmos           : MC, HC, SANN, GA, NSGA2
+Objetivos            : O1 (max profit), O2 (<=10k unidades), O3 (bi-obj)
+NRUNS_BT             : 5 runs/semana
+NRUNS_NS (NSGA2)     : 3 runs/semana
+
+
+========================================
+SEMANA 1 / 12
+========================================
+  [Forecasting] Semana 1: Baltimore(ETS)... OK | Lancaster(RF)... OK | Philadelphia(RF)... OK | Richmond(RF)... OK
+    Baltimore: 91 44 46 69 105 101 161
+    Lancaster: 141 94 81 83 88 117 153
+    Philadelphia: 233 142 136 139 160 209 308
+    Richmond: 68 43 41 43 44 60 90
+  PREV actualizado | upper J max=52 X max=44
+  profit(S_test) = 3909.00 | units = 24162
+  [MC O1] ... med=8965.00
+  [MC O2] ... med=196.00
+  [HC O1] ... med=12395.00
+  [HC O2] ... med=-891.00
+  [SANN O1] ... med=10370.00
+  [SANN O2] ... med=885.00
+  [GA O1]  ... med=13577.00
+  [GA O2]  ... med=194.00
+  [NSGA2 O3] ... med_lucro=914.00 | med_HV=4.91e+03
+  Semana 1 concluida em 51.8s
+
+========================================
+SEMANA 2 / 12
+========================================
+  [Forecasting] Semana 2: Baltimore(ETS)... OK | Lancaster(RF)... OK | Philadelphia(RF)... OK | Richmond(RF)... OK
+    Baltimore: 81 62 45 70 51 113 132
+    Lancaster: 145 82 82 84 88 104 138
+    Philadelphia: 247 138 149 156 170 208 272
+    Richmond: 78 40 42 44 44 54 75
+  PREV actualizado | upper J max=46 X max=39
+  profit(S_test) = 3982.00 | units = 24240
+  [MC O1] ... med=8845.00
+  [MC O2] ... med=164.00
+  [HC O1] ... med=11338.00
+  [HC O2] ... med=-932.00
+  [SANN O1] ... med=10689.00
+  [SANN O2] ... med=959.00
+  [GA O1]  ... med=13101.00
+  [GA O2]  ... med=250.00
+  [NSGA2 O3] ... med_lucro=948.00 | med_HV=6.06e+03
+  Semana 2 concluida em 55.2s
+
+========================================
+SEMANA 3 / 12
+========================================
+  [Forecasting] Semana 3: Baltimore(ETS)... OK | Lancaster(RF)... OK | Philadelphia(RF)... OK | Richmond(RF)... OK
+    Baltimore: 104 55 62 68 67 106 148
+    Lancaster: 136 91 82 82 88 117 152
+    Philadelphia: 237 149 149 161 179 219 302
+    Richmond: 68 44 42 46 50 63 91
+  PREV actualizado | upper J max=51 X max=44
+  profit(S_test) = 4276.00 | units = 24552
+  [MC O1] ... med=9232.00
+  [MC O2] ... med=213.00
+  [HC O1] ... med=11898.00
+  [HC O2] ... med=-917.00
+  [SANN O1] ... med=11174.00
+  [SANN O2] ... med=1041.00
+  [GA O1]  ... med=14087.00
+  [GA O2]  ... med=247.00
+  [NSGA2 O3] ... med_lucro=975.00 | med_HV=4.3e+03
+  Semana 3 concluida em 52.1s
+
+========================================
+SEMANA 4 / 12
+========================================
+  [Forecasting] Semana 4: Baltimore(ETS)... OK | Lancaster(RF)... OK | Philadelphia(RF)... OK | Richmond(RF)... OK
+    Baltimore: 112 58 65 64 81 137 174
+    Lancaster: 136 84 80 86 87 108 163
+    Philadelphia: 242 148 146 155 167 216 324
+    Richmond: 72 44 42 44 45 62 102
+  PREV actualizado | upper J max=54 X max=47
+  profit(S_test) = 4157.00 | units = 24426
+  [MC O1] ... med=9690.00
+  [MC O2] ... med=174.00
+  [HC O1] ... med=11863.00
+  [HC O2] ... med=-930.00
+  [SANN O1] ... med=10217.00
+  [SANN O2] ... med=966.00
+  [GA O1]  ... med=14372.00
+  [GA O2]  ... med=249.00
+  [NSGA2 O3] ... med_lucro=954.00 | med_HV=5.18e+03
+  Semana 4 concluida em 53.5s
+
+========================================
+SEMANA 5 / 12
+========================================
+  [Forecasting] Semana 5: Baltimore(ETS)... OK | Lancaster(RF)... OK | Philadelphia(RF)... OK | Richmond(RF)... OK
+    Baltimore: 0 68 64 75 92 119 192
+    Lancaster: 0 91 91 96 100 121 174
+    Philadelphia: 0 165 164 169 190 237 329
+    Richmond: 0 48 49 47 55 65 101
+  PREV actualizado | upper J max=55 X max=47
+  profit(S_test) = 1137.00 | units = 21222
+  [MC O1] ... med=9124.00
+  [MC O2] ... med=137.00
+  [HC O1] ... med=10856.00
+  [HC O2] ... med=-1792.00
+  [SANN O1] ... med=10957.00
+  [SANN O2] ... med=782.00
+  [GA O1]  ... med=13402.00
+  [GA O2]  ... med=211.00
+  [NSGA2 O3] ... med_lucro=798.00 | med_HV=6.25e+03
+  Semana 5 concluida em 54.0s
+
+========================================
+SEMANA 6 / 12
+========================================
+  [Forecasting] Semana 6: Baltimore(ETS)... OK | Lancaster(RF)... OK | Philadelphia(RF)... OK | Richmond(RF)... OK
+    Baltimore: 92 63 58 82 64 89 138
+    Lancaster: 163 95 96 90 113 127 171
+    Philadelphia: 277 178 181 182 210 266 293
+    Richmond: 71 46 49 51 62 76 103
+  PREV actualizado | upper J max=49 X max=42
+  profit(S_test) = 4531.00 | units = 24822
+  [MC O1] ... med=10856.00
+  [MC O2] ... med=140.00
+  [HC O1] ... med=13746.00
+  [HC O2] ... med=-930.00
+  [SANN O1] ... med=12688.00
+  [SANN O2] ... med=944.00
+  [GA O1]  ... med=15997.00
+  [GA O2]  ... med=222.00
+  [NSGA2 O3] ... med_lucro=892.00 | med_HV=4.53e+03
+  Semana 6 concluida em 53.4s
+
+========================================
+SEMANA 7 / 12
+========================================
+  [Forecasting] Semana 7: Baltimore(ETS)... OK | Lancaster(RF)... OK | Philadelphia(RF)... OK | Richmond(RF)... OK
+    Baltimore: 93 58 53 59 59 101 162
+    Lancaster: 143 89 82 82 95 119 172
+    Philadelphia: 256 187 161 170 204 239 309
+    Richmond: 71 46 45 46 53 68 92
+  PREV actualizado | upper J max=52 X max=45
+  profit(S_test) = 4378.00 | units = 24660
+  [MC O1] ... med=9981.00
+  [MC O2] ... med=128.00
+  [HC O1] ... med=12968.00
+  [HC O2] ... med=-897.00
+  [SANN O1] ... med=10874.00
+  [SANN O2] ... med=900.00
+  [GA O1]  ... med=15022.00
+  [GA O2]  ... med=202.00
+  [NSGA2 O3] ... med_lucro=938.00 | med_HV=4.94e+03
+  Semana 7 concluida em 51.4s
+
+========================================
+SEMANA 8 / 12
+========================================
+  [Forecasting] Semana 8: Baltimore(ETS)... OK | Lancaster(RF)... OK | Philadelphia(RF)... OK | Richmond(RF)... OK
+    Baltimore: 82 87 47 65 64 79 133
+    Lancaster: 128 84 76 84 92 110 153
+    Philadelphia: 233 171 147 159 167 208 322
+    Richmond: 69 42 38 42 45 59 93
+  PREV actualizado | upper J max=54 X max=46
+  profit(S_test) = 3961.00 | units = 24218
+  [MC O1] ... med=9005.00
+  [MC O2] ... med=145.00
+  [HC O1] ... med=11098.00
+  [HC O2] ... med=-931.00
+  [SANN O1] ... med=10029.00
+  [SANN O2] ... med=966.00
+  [GA O1]  ... med=13770.00
+  [GA O2]  ... med=338.00
+  [NSGA2 O3] ... med_lucro=857.00 | med_HV=5.73e+03
+  Semana 8 concluida em 53.9s
+
+========================================
+SEMANA 9 / 12
+========================================
+  [Forecasting] Semana 9: Baltimore(ETS)... OK | Lancaster(RF)... OK | Philadelphia(RF)... OK | Richmond(RF)... OK
+    Baltimore: 107 60 56 67 84 80 614
+    Lancaster: 136 77 80 78 96 120 512
+    Philadelphia: 250 142 137 144 185 238 1251
+    Richmond: 70 39 40 41 48 60 336
+  PREV actualizado | upper J max=209 X max=179
+  profit(S_test) = 4038.00 | units = 24300
+  [MC O1] ... med=16868.00
+  [MC O2] ... med=-137.00
+  [HC O1] ... med=18583.00
+  [HC O2] ... med=-924.00
+  [SANN O1] ... med=17443.00
+  [SANN O2] ... med=948.00
+  [GA O1]  ... med=23162.00
+  [GA O2]  ... med=166.00
+  [NSGA2 O3] ... med_lucro=688.00 | med_HV=3.4e+03
+  Semana 9 concluida em 52.3s
+
+========================================
+SEMANA 10 / 12
+========================================
+  [Forecasting] Semana 10: Baltimore(ETS)... OK | Lancaster(RF)... OK | Philadelphia(RF)... OK | Richmond(RF)... OK
+    Baltimore: 531 436 95 59 58 96 162
+    Lancaster: 542 524 148 93 93 111 158
+    Philadelphia: 1148 919 290 155 175 231 315
+    Richmond: 289 215 63 46 52 61 96
+  PREV actualizado | upper J max=192 X max=164
+  profit(S_test) = 4565.00 | units = 24858
+  [MC O1] ... med=26156.00
+  [MC O2] ... med=NA
+  [HC O1] ... med=31357.00
+  [HC O2] ... med=-898.00
+  [SANN O1] ... med=24089.00
+  [SANN O2] ... med=1010.00
+  [GA O1]  ... med=36039.00
+  [GA O2]  ... med=168.00
+  [NSGA2 O3] ... med_lucro=653.00 | med_HV=3.36e+03
+  Semana 10 concluida em 50.6s
+
+========================================
+SEMANA 11 / 12
+========================================
+  [Forecasting] Semana 11: Baltimore(ETS)... OK | Lancaster(RF)... OK | Philadelphia(RF)... OK | Richmond(RF)... OK
+    Baltimore: 72 90 50 63 56 87 147
+    Lancaster: 192 96 84 87 94 113 155
+    Philadelphia: 457 280 167 178 204 261 336
+    Richmond: 111 59 46 49 51 65 92
+  PREV actualizado | upper J max=77 X max=66
+  profit(S_test) = 4516.00 | units = 24806
+  [MC O1] ... med=11968.00
+  [MC O2] ... med=56.00
+  [HC O1] ... med=14059.00
+  [HC O2] ... med=-944.00
+  [SANN O1] ... med=11069.00
+  [SANN O2] ... med=1020.00
+  [GA O1]  ... med=17355.00
+  [GA O2]  ... med=314.00
+  [NSGA2 O3] ... med_lucro=906.00 | med_HV=3.78e+03
+  Semana 11 concluida em 53.3s
+
+========================================
+SEMANA 12 / 12
+========================================
+  [Forecasting] Semana 12: Baltimore(ETS)... OK | Lancaster(RF)... OK | Philadelphia(RF)... OK | Richmond(RF)... OK
+    Baltimore: 80 38 46 50 50 70 130
+    Lancaster: 118 88 84 82 84 94 133
+    Philadelphia: 242 164 154 164 167 198 309
+    Richmond: 76 49 45 46 50 56 79
+  PREV actualizado | upper J max=52 X max=45
+  profit(S_test) = 4112.00 | units = 24376
+  [MC O1] ... med=8819.00
+  [MC O2] ... med=242.00
+  [HC O1] ... med=11340.00
+  [HC O2] ... med=-925.00
+  [SANN O1] ... med=9278.00
+  [SANN O2] ... med=958.00
+  [GA O1]  ... med=13001.00
+  [GA O2]  ... med=329.00
+  [NSGA2 O3] ... med_lucro=861.00 | med_HV=5.68e+03
+  Semana 12 concluida em 51.7s
+
+=== Loop completo em 633.2s (10.6 min) ===
+
+=== TABELA COMPARATIVA FINAL ===
+Metrica: mediana dos lucros medianos das 12 semanas
+
+ Algoritmo Objetivo Mediana    Media   Min   Max      SD
+        MC       O1  9461.0 11625.75  8819 26156 5110.76
+        MC       O2   145.0   132.55  -137   242  101.96
+        HC       O1 12146.5 14291.75 10856 31357 5771.48
+        HC       O2  -927.5  -992.58 -1792  -891  252.28
+      SANN       O1 10915.5 12406.42  9278 24089 4232.07
+      SANN       O2   958.5   948.25   782  1041   69.01
+ GA (rbga)       O1 14229.5 16907.08 13001 36039 6654.30
+ GA (rbga)       O2   234.5   240.83   166   338   59.24
+   NSGA-II       O3   899.0   865.33   653   975  103.52
+G1 boxplot O1/O2 guardado.
+G2 lucro por semana O1 guardado.
+G3 lucro por semana O2 guardado.
+G4 barplot medianas guardado.
+G5 NSGA2 O3 por semana guardado.
+G6 heatmap profits guardado.
+G7 PREV por semana guardado.
+RDS completo guardado.
+
+=== SUMÁRIO FASE INTEGRADA — 12 SEMANAS ===
+Algoritmo  Obj         Mediana          Min          Max
+------------------------------------------------------- 
+MC         O1          9461.00      8819.00     26156.00
+MC         O2           145.00      -137.00       242.00
+HC         O1         12146.50     10856.00     31357.00
+HC         O2          -927.50     -1792.00      -891.00
+SANN       O1         10915.50      9278.00     24089.00
+SANN       O2           958.50       782.00      1041.00
+GA (rbga)  O1         14229.50     13001.00     36039.00
+GA (rbga)  O2           234.50       166.00       338.00
+NSGA-II    O3           899.00       653.00       975.00

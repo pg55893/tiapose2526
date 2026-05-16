@@ -7,18 +7,20 @@
 library(shiny)
 library(bslib)
 library(ggplot2)
-library(plotly)
+library(dplyr)
+
 library(DT)
 library(bsicons)
 library(shinycssloaders)
+library(shinyWidgets)
 
-BASE_PATH <- normalizePath("~/TIAPOSE_projeto/tiapose2526")
+BASE_PATH <- normalizePath("~/TIAPOSE2526")
 source(file.path(BASE_PATH, "utils/config_otimizacao.R"))
 source(file.path(BASE_PATH, "utils/visualizacao_utils.R"))
 
 LOJA_NAMES <- c("Baltimore", "Lancaster", "Philadelphia", "Richmond")
 DIAS <- c("Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab")
-SIDEBAR_WIDTH <- 300
+SIDEBAR_WIDTH <- 250
 
 LOJA_CORES <- c(
   Baltimore    = "#84B2B1",
@@ -54,60 +56,78 @@ parse_date_safe <- function(x) {
 }
 
 prev_df <- tryCatch(
-  read.csv(file.path(BASE_PATH, "otimizacao/Integrado/prev_12_semanas.csv")),
+  read.csv(file.path(BASE_PATH, "otimizacao/Integrado/prev_12_semanas_v3.csv")),
   error = function(e) NULL
 )
 
 algo_stats <- tryCatch(
-  read.csv(file.path(BASE_PATH, "otimizacao/Integrado/tabela_comparativa_final.csv")),
+  read.csv(file.path(BASE_PATH, "otimizacao/teste_final/tabela_comparativa_final.csv")),
   error = function(e) NULL
 )
 
-pareto_ok <- tryCatch({
-  p <- read.csv(file.path(BASE_PATH, "otimizacao/NSGA2/v2/pareto_O3_fronteira.csv"))
-  p[p$lucro >= 0 & p$total_HR > 0, ]
-}, error = function(e) data.frame(lucro = numeric(0), total_HR = integer(0)))
+pareto_ok <- tryCatch(
+  {
+    p <- read.csv(file.path(BASE_PATH, "otimizacao/NSGA2/v2/pareto_O3_fronteira.csv"))
+    p[p$lucro >= 0 & p$total_HR > 0, ]
+  },
+  error = function(e) data.frame(lucro = numeric(0), total_HR = integer(0))
+)
 
 hist_data <- lapply(
   setNames(c("baltimore", "lancaster", "philadelphia", "richmond"), LOJA_NAMES),
   function(f) {
-    p <- file.path(BASE_PATH, "data", paste0(f, ".csv"))
-    if (!file.exists(p)) return(NULL)
-    
-    tryCatch({
-      d <- read.csv(p, stringsAsFactors = FALSE, check.names = FALSE)
-      colnames(d) <- gsub("[[:space:]]|\"", "", colnames(d))
-      d$Date <- parse_date_safe(d$Date)
-      d <- d[!is.na(d$Date) & !is.na(d$Num_Customers), ]
-      d <- d[order(d$Date), ]
-      d
-    }, error = function(e) NULL)
+    p <- file.path(BASE_PATH, "data/tratados", paste0(f, "_tratado.csv"))
+    if (!file.exists(p)) {
+      return(NULL)
+    }
+
+    tryCatch(
+      {
+        d <- read.csv(p, stringsAsFactors = FALSE, check.names = FALSE)
+        colnames(d) <- gsub("[[:space:]]|\"", "", colnames(d))
+        d$Date <- parse_date_safe(d$Date)
+        d <- d[!is.na(d$Date) & !is.na(d$Num_Customers), ]
+        d <- d[order(d$Date), ]
+        d
+      },
+      error = function(e) NULL
+    )
   }
 )
 
 SEMANA_DATES <- if (!is.null(hist_data[["Baltimore"]])) {
   balt <- hist_data[["Baltimore"]][order(hist_data[["Baltimore"]]$Date), ]
-  W <- 672
+  W <- 630
   H <- 7
-  lapply(1:6, function(i) balt$Date[(W + (i - 1) * H + 1):(W + i * H)])
-} else NULL
+  lapply(1:12, function(i) balt$Date[(W + (i - 1) * H + 1):(W + i * H)])
+} else {
+  NULL
+}
 
 N_SEMANAS <- if (!is.null(prev_df)) nrow(prev_df) else 6
 
 fmt_dol <- function(x) {
-  if (is.null(x) || length(x) == 0 || is.na(x)) return("--")
-  if (x < 0) return(paste0("-$", format(round(abs(x)), big.mark = ",", scientific = FALSE)))
+  if (is.null(x) || length(x) == 0 || is.na(x)) {
+    return("--")
+  }
+  if (x < 0) {
+    return(paste0("-$", format(round(abs(x)), big.mark = ",", scientific = FALSE)))
+  }
   paste0("$", format(round(x), big.mark = ",", scientific = FALSE))
 }
 
 get_prev_week <- function(semana) {
-  if (is.null(prev_df)) return(PREV)
+  if (is.null(prev_df)) {
+    return(PREV)
+  }
   cols <- grep("^(Bal|Lan|Phi|Ric)", colnames(prev_df))
   as.numeric(prev_df[semana, cols])
 }
 
 get_reais <- function(semana, loja) {
-  if (is.null(SEMANA_DATES) || is.null(hist_data[[loja]])) return(rep(NA_integer_, 7))
+  if (is.null(SEMANA_DATES) || is.null(hist_data[[loja]])) {
+    return(rep(NA_integer_, 7))
+  }
   datas <- SEMANA_DATES[[semana]]
   df <- hist_data[[loja]]
   df$Num_Customers[match(datas, df$Date)]
@@ -115,42 +135,42 @@ get_reais <- function(semana, loja) {
 
 decompose_plan <- function(S, prev_week) {
   rows <- list()
-  
+
   for (s in 1:4) {
     loja <- lojas[[s]]
-    
+
     for (d in 1:7) {
       idx <- (s - 1) * 21 + (d - 1) * 3 + 1
-      
+
       PR <- max(0, min(0.299, S[idx]))
-      J  <- max(0, round(S[idx + 1]))
-      X  <- max(0, round(S[idx + 2]))
-      C  <- max(1, prev_week[(s - 1) * 7 + d])
-      
-      As  <- min(7 * X + 6 * J, C)
+      J <- max(0, round(S[idx + 1]))
+      X <- max(0, round(S[idx + 2]))
+      C <- max(1, prev_week[(s - 1) * 7 + d])
+
+      As <- min(7 * X + 6 * J, C)
       n_X <- min(7 * X, As)
       n_J <- As - n_X
-      
+
       units <- 0
       receita <- 0
-      
+
       if (n_X > 0 && PR < 1) {
         U_X <- round(loja$Fx * 10 / log(2 - PR))
         P_X <- round(U_X * (1 - PR) * 1.07)
         units <- units + n_X * U_X
         receita <- receita + n_X * P_X
       }
-      
+
       if (n_J > 0 && PR < 1) {
         U_J <- round(loja$Fj * 10 / log(2 - PR))
         P_J <- round(U_J * (1 - PR) * 1.07)
         units <- units + n_J * U_J
         receita <- receita + n_J * P_J
       }
-      
+
       tipo <- ifelse(IS_WEEKDAY[d], "weekday", "weekend")
       custo_HR <- J * hr_cost$J[tipo] + X * hr_cost$X[tipo]
-      
+
       rows[[length(rows) + 1]] <- data.frame(
         Loja = LOJA_NAMES[s],
         Dia = DIAS[d],
@@ -168,23 +188,22 @@ decompose_plan <- function(S, prev_week) {
       )
     }
   }
-  
+
   do.call(rbind, rows)
 }
 
-run_mc <- function(prev_week, objetivo, n_iter = 2000) {
+run_mc <- function(prev_week, objetivo, n_iter = 2000, temp = 1000) {
   PREV <<- prev_week
   upper <<- calc_upper(PREV)
-  
+
   best_S <- NULL
   best_val <- -Inf
   batch <- max(1, floor(n_iter / 20))
-  
+
   for (i in seq_len(n_iter)) {
     S <- runif(84) * upper
-    
-    val <- switch(
-      objetivo,
+
+    val <- switch(objetivo,
       O1 = profit(S),
       O2 = {
         u <- total_units(S)
@@ -195,15 +214,15 @@ run_mc <- function(prev_week, objetivo, n_iter = 2000) {
         profit(S) - hr * 50
       }
     )
-    
+
     if (!is.na(val) && !is.infinite(val) && val > best_val) {
       best_val <- val
       best_S <- S
     }
-    
+
     if (i %% batch == 0) incProgress(batch / n_iter)
   }
-  
+
   best_S
 }
 
@@ -234,9 +253,9 @@ html,body{
 body > nav.navbar{
   background:white!important;
   border-bottom:1px solid var(--border)!important;
-  min-height:82px!important;
-  padding:0 34px!important;
-  box-shadow:0 3px 18px rgba(36,49,47,.04)!important;
+  min-height:56px!important;
+  padding:0 20px!important;
+  box-shadow:0 2px 10px rgba(36,49,47,.04)!important;
 }
 
 .navbar > .container-fluid{
@@ -248,12 +267,12 @@ body > nav.navbar{
 
 .navbar-brand{
   color:var(--text)!important;
-  font-size:1.25rem!important;
+  font-size:1.05rem!important;
   font-weight:800!important;
   display:flex!important;
   align-items:center!important;
-  gap:10px!important;
-  min-width:260px!important;
+  gap:8px!important;
+  min-width:200px!important;
 }
 
 .navbar-brand svg{
@@ -268,7 +287,7 @@ body > nav.navbar{
   transform:translate(-50%,-50%)!important;
   display:flex!important;
   flex-direction:row!important;
-  gap:16px!important;
+  gap:10px!important;
   margin:0!important;
 }
 
@@ -276,15 +295,15 @@ body > nav.navbar{
   background:white!important;
   color:var(--text)!important;
   border:1px solid var(--border)!important;
-  border-radius:18px!important;
-  min-width:210px!important;
-  height:54px!important;
+  border-radius:14px!important;
+  min-width:170px!important;
+  height:40px!important;
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
-  font-weight:800!important;
-  font-size:.95rem!important;
-  box-shadow:0 6px 18px rgba(36,49,47,.055)!important;
+  font-weight:700!important;
+  font-size:.85rem!important;
+  box-shadow:0 4px 12px rgba(36,49,47,.05)!important;
 }
 
 .navbar-nav .nav-link.active{
@@ -294,37 +313,38 @@ body > nav.navbar{
 }
 
 .navbar-nav .nav-link svg{
-  width:18px!important;
-  height:18px!important;
-  margin-right:9px!important;
+  width:15px!important;
+  height:15px!important;
+  margin-right:7px!important;
 }
 
 .navbar .nav-item:last-child{
   color:var(--accent-dark)!important;
-  font-weight:800!important;
-  min-width:220px!important;
+  font-weight:700!important;
+  min-width:160px!important;
   text-align:right!important;
+  font-size:.85rem!important;
 }
 
 .sidebar{
   background:linear-gradient(180deg,#EEF1EA 0%,#F6F8F4 100%)!important;
   border-right:1px solid var(--border)!important;
-  padding:28px 24px!important;
-  box-shadow:inset -10px 0 30px rgba(36,49,47,.025)!important;
+  padding:16px 14px!important;
+  box-shadow:inset -6px 0 20px rgba(36,49,47,.02)!important;
 }
 
 .sidebar-title{
   color:var(--text)!important;
-  font-size:.82rem!important;
+  font-size:.75rem!important;
   font-weight:900!important;
   letter-spacing:.08em!important;
   text-transform:uppercase!important;
-  margin-bottom:26px!important;
+  margin-bottom:14px!important;
 }
 
 .control-label,.form-label{
   color:var(--muted)!important;
-  font-size:.72rem!important;
+  font-size:.68rem!important;
   font-weight:900!important;
   letter-spacing:.07em!important;
   text-transform:uppercase!important;
@@ -333,71 +353,181 @@ body > nav.navbar{
 .form-control,.form-select,.selectize-input{
   background:white!important;
   border:1px solid var(--border)!important;
-  border-radius:15px!important;
-  min-height:50px!important;
+  border-radius:10px!important;
+  min-height:38px!important;
   color:var(--text)!important;
-  font-weight:700!important;
-  font-size:.90rem!important;
-  box-shadow:0 5px 14px rgba(36,49,47,.035)!important;
+  font-weight:600!important;
+  font-size:.84rem!important;
+  box-shadow:0 3px 8px rgba(36,49,47,.025)!important;
 }
 
 .selectize-control.multi .selectize-input > div{
   background:#EAF4F7!important;
   color:#24312F!important;
   border:1px solid #DDE4DF!important;
-  border-radius:10px!important;
-  padding:4px 8px!important;
+  border-radius:8px!important;
+  padding:2px 6px!important;
   font-weight:700!important;
-  margin:3px 4px 3px 0!important;
+  margin:2px 3px 2px 0!important;
 }
 
 .selectize-control.plugin-remove_button .item .remove{
   color:#5E8E90!important;
   border-left:1px solid #DDE4DF!important;
-  margin-left:6px!important;
-  padding-left:6px!important;
+  margin-left:4px!important;
+  padding-left:4px!important;
   font-weight:900!important;
 }
 
 .irs--shiny .irs-line{
   background:#DCE5E1!important;
-  height:8px!important;
+  height:6px!important;
   border-radius:30px!important;
 }
 
 .irs--shiny .irs-bar{
   background:var(--accent)!important;
-  height:8px!important;
+  height:6px!important;
+  border-radius:30px!important;
 }
 
-.irs--shiny .irs-handle > i{
-  background:white!important;
-  border:2px solid var(--accent)!important;
+.irs--shiny .irs-handle{
+  background:transparent!important;
+  border:none!important;
+  box-shadow:none!important;
+  width:22px!important;
+  height:22px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
 }
 
-.btn-primary,.action-button{
+/* Esconde os i extras (ionRangeSlider tem 3 i dentro do handle) */
+.irs--shiny .irs-handle > i:nth-child(n+2){
+  display:none!important;
+}
+
+/* Bola branca escondida — o número no irs-single serve de bolinha */
+.irs--shiny .irs-handle > i:first-child{
+  display:none!important;
+}
+
+/* Valor dentro da bolinha */
+.irs--shiny .irs-single{
+  background:var(--accent-dark)!important;
+  color:white!important;
+  font-size:.72rem!important;
+  font-weight:800!important;
+  border-radius:50%!important;
+  width:26px!important;
+  height:26px!important;
+  line-height:26px!important;
+  text-align:center!important;
+  padding:0!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  box-shadow:0 2px 8px rgba(94,142,144,.35)!important;
+  border:none!important;
+}
+
+.irs--shiny .irs-single::before{
+  display:none!important;
+}
+
+/* Min/max labels — discretos */
+.irs--shiny .irs-min,
+.irs--shiny .irs-max{
+  background:transparent!important;
+  color:var(--muted)!important;
+  font-size:.65rem!important;
+  font-weight:600!important;
+  box-shadow:none!important;
+}
+
+/* Grid ticks — ocultos, só min/max são suficientes */
+.irs--shiny .irs-grid{
+  display:none!important;
+}
+
+.action-button{
   width:100%!important;
   background:linear-gradient(135deg,var(--accent-dark),#6FA5A4)!important;
   border:none!important;
-  border-radius:16px!important;
-  min-height:54px!important;
+  border-radius:12px!important;
+  min-height:42px!important;
   color:white!important;
-  font-weight:900!important;
-  font-size:.92rem!important;
-  box-shadow:0 10px 22px rgba(94,142,144,.22)!important;
+  font-weight:800!important;
+  font-size:.86rem!important;
+  box-shadow:0 6px 16px rgba(94,142,144,.20)!important;
+}
+
+/* Picker input (shinyWidgets) */
+.bootstrap-select>.dropdown-toggle,
+.bootstrap-select>.dropdown-toggle:focus,
+.bootstrap-select>.dropdown-toggle:active{
+  background:white!important;
+  color:var(--text)!important;
+  border:1px solid var(--border)!important;
+  border-radius:10px!important;
+  min-height:38px!important;
+  font-weight:600!important;
+  font-size:.84rem!important;
+  box-shadow:0 3px 8px rgba(36,49,47,.025)!important;
+  width:100%!important;
+  outline:none!important;
+}
+
+.bootstrap-select>.dropdown-toggle:hover{
+  background:#F3F8F8!important;
+  color:var(--text)!important;
+}
+
+.bootstrap-select .dropdown-menu{
+  border:1px solid var(--border)!important;
+  border-radius:12px!important;
+  box-shadow:0 8px 22px rgba(36,49,47,.10)!important;
+  overflow:hidden!important;
+}
+
+.bootstrap-select .dropdown-menu li a{
+  color:var(--text)!important;
+  font-weight:600!important;
+  font-size:.84rem!important;
+  padding:6px 12px!important;
+}
+
+.bootstrap-select .dropdown-menu li a:hover,
+.bootstrap-select .dropdown-menu li.selected a{
+  background:#EAF4F7!important;
+  color:var(--text)!important;
+}
+
+.bootstrap-select .dropdown-menu li a span.check-mark{
+  color:var(--accent-dark)!important;
+}
+
+.bs-actionsbox .btn{
+  background:white!important;
+  color:var(--accent-dark)!important;
+  border:1px solid var(--border)!important;
+  border-radius:8px!important;
+  font-weight:700!important;
+  font-size:.76rem!important;
+  box-shadow:none!important;
+  width:auto!important;
+  min-height:auto!important;
 }
 
 .bslib-sidebar-layout > .bslib-main,
 .bslib-sidebar-layout .main{
   background:var(--bg)!important;
-  padding:28px!important;
+  padding:16px!important;
 }
 
 .card{
   background:white!important;
   border:1px solid var(--border)!important;
-  border-radius:26px!important;
-  box-shadow:0 10px 28px rgba(36,49,47,.05)!important;
+  border-radius:18px!important;
+  box-shadow:0 6px 18px rgba(36,49,47,.04)!important;
   overflow:hidden!important;
 }
 
@@ -405,22 +535,23 @@ body > nav.navbar{
   background:white!important;
   border-bottom:1px solid var(--border)!important;
   color:var(--text)!important;
-  font-weight:900!important;
-  font-size:1rem!important;
+  font-weight:800!important;
+  font-size:.88rem!important;
+  padding:10px 16px!important;
 }
 
 .kpi-card{
-  height:112px;
+  height:80px;
   background:linear-gradient(135deg,#FFFFFF 0%,#F8FBFA 100%);
   border:1px solid var(--border);
-  border-radius:24px;
-  box-shadow:0 10px 24px rgba(36,49,47,.055);
+  border-radius:16px;
+  box-shadow:0 6px 16px rgba(36,49,47,.045);
   position:relative;
   overflow:hidden;
   display:flex;
   align-items:center;
-  gap:20px;
-  padding:20px 24px;
+  gap:14px;
+  padding:12px 16px;
 }
 
 .kpi-card::before{
@@ -429,15 +560,15 @@ body > nav.navbar{
   top:0;
   left:0;
   width:100%;
-  height:5px;
+  height:4px;
   background:var(--kpi-color);
 }
 
 .kpi-icon{
-  width:64px;
-  height:64px;
-  min-width:64px;
-  border-radius:18px;
+  width:44px;
+  height:44px;
+  min-width:44px;
+  border-radius:12px;
   background:rgba(132,178,177,.16);
   display:flex;
   align-items:center;
@@ -446,29 +577,29 @@ body > nav.navbar{
 }
 
 .kpi-icon svg{
-  width:36px;
-  height:36px;
+  width:24px;
+  height:24px;
 }
 
 .kpi-title{
   color:var(--kpi-color);
-  font-size:.76rem;
+  font-size:.66rem;
   font-weight:900;
   letter-spacing:.06em;
   text-transform:uppercase;
-  margin-bottom:6px;
+  margin-bottom:3px;
   white-space:nowrap;
 }
 
 .kpi-title svg{
-  width:13px;
-  height:13px;
-  margin-right:4px;
+  width:11px;
+  height:11px;
+  margin-right:3px;
 }
 
 .kpi-value{
   color:var(--text);
-  font-size:1.9rem;
+  font-size:1.4rem;
   font-weight:900;
   line-height:1.05;
   white-space:nowrap;
@@ -476,9 +607,9 @@ body > nav.navbar{
 
 .kpi-subtitle{
   color:var(--muted);
-  font-size:.68rem;
+  font-size:.62rem;
   font-weight:600;
-  margin-top:5px;
+  margin-top:3px;
   white-space:nowrap;
 }
 
@@ -486,8 +617,9 @@ table.dataTable tbody tr{background:white!important;}
 table.dataTable tbody tr:hover{background:#F3F8F8!important;}
 table.dataTable tbody td{
   border:none!important;
-  padding:14px!important;
+  padding:8px 10px!important;
   color:var(--text)!important;
+  font-size:.84rem!important;
 }
 
 table.dataTable thead th{
@@ -495,42 +627,41 @@ table.dataTable thead th{
   color:var(--muted)!important;
   font-weight:900!important;
   text-transform:uppercase!important;
-  font-size:.72rem!important;
+  font-size:.68rem!important;
 }
 
 .sb-info-box{
   background:white!important;
   border:1px solid var(--border)!important;
-  border-radius:20px!important;
-  padding:18px!important;
+  border-radius:14px!important;
+  padding:12px!important;
   color:var(--muted)!important;
-  line-height:1.65!important;
-  font-size:.82rem!important;
-  box-shadow:0 8px 20px rgba(36,49,47,.04)!important;
+  line-height:1.5!important;
+  font-size:.76rem!important;
+  box-shadow:0 4px 12px rgba(36,49,47,.03)!important;
 }
 
 .sb-info-box strong{color:var(--text)!important;}
 
 .plan-legend{
   display:flex;
-  gap:18px;
+  gap:12px;
   flex-wrap:wrap;
-  padding:10px 4px 14px 4px;
+  padding:6px 4px 10px 4px;
   color:var(--muted);
-  font-size:.82rem;
+  font-size:.76rem;
 }
 
 .plan-legend b{color:var(--text);}
 
 hr{
   border-top:1px solid var(--border)!important;
-  margin:24px 0!important;
+  margin:12px 0!important;
 }
 "
 
 ui <- page_navbar(
   title = tags$span(bs_icon("shop"), " USA Stores · IDSS"),
-  
   theme = bs_theme(
     version = 5,
     bootswatch = "flatly",
@@ -539,32 +670,30 @@ ui <- page_navbar(
     fg = "#24312F",
     base_font = font_google("Plus Jakarta Sans")
   ),
-  
   bg = "#F7F8F6",
   header = tags$head(tags$style(HTML(CSS))),
-  
   nav_panel(
     title = tagList(bs_icon("activity"), " Análise Exploratória"),
-    
     layout_sidebar(
       sidebar = sidebar(
         title = tags$span(bs_icon("sliders"), " Controlos"),
         width = SIDEBAR_WIDTH,
-        
-        selectizeInput(
+        pickerInput(
           "eda_lojas",
           tagList(bs_icon("geo-alt"), " Lojas:"),
           choices = LOJA_NAMES,
           selected = LOJA_NAMES,
           multiple = TRUE,
-          options = list(
-            plugins = list("remove_button"),
-            placeholder = "Seleciona lojas..."
+          options = pickerOptions(
+            actionsBox = TRUE,
+            selectAllText = "Todas",
+            deselectAllText = "Nenhuma",
+            noneSelectedText = "Nenhuma selecionada",
+            selectedTextFormat = "count > 1",
+            countSelectedText = "{0} lojas"
           )
         ),
-        
         hr(),
-        
         selectInput(
           "eda_visao",
           tagList(bs_icon("graph-up"), " Visualização:"),
@@ -575,9 +704,26 @@ ui <- page_navbar(
           ),
           selected = "ma7"
         ),
-        
         hr(),
-        
+        selectInput(
+          "eda_ano",
+          tagList(bs_icon("calendar"), " Ano:"),
+          choices = c("Todos" = "todos", "2012" = "2012", "2013" = "2013", "2014" = "2014"),
+          selected = "todos"
+        ),
+        selectInput(
+          "eda_mes",
+          tagList(bs_icon("calendar3"), " Mês:"),
+          choices = c(
+            "Todos" = "todos",
+            "Janeiro" = "1", "Fevereiro" = "2", "Março" = "3",
+            "Abril" = "4", "Maio" = "5", "Junho" = "6",
+            "Julho" = "7", "Agosto" = "8", "Setembro" = "9",
+            "Outubro" = "10", "Novembro" = "11", "Dezembro" = "12"
+          ),
+          selected = "todos"
+        ),
+        hr(),
         tags$div(
           class = "sb-info-box",
           tags$strong(tagList(bs_icon("info-circle"), " Painel")),
@@ -585,7 +731,6 @@ ui <- page_navbar(
           "Exploração histórica das séries temporais por loja, estatísticas descritivas e comparação de volumes."
         )
       ),
-      
       div(
         layout_columns(
           uiOutput("eda_kpi_total"),
@@ -593,20 +738,16 @@ ui <- page_navbar(
           uiOutput("eda_kpi_max"),
           col_widths = c(4, 4, 4)
         ),
-        
-        tags$div(style = "height:.9rem;"),
-        
+        tags$div(style = "height:.4rem;"),
         card(
           card_header(tagList(bs_icon("graph-up"), " Série Temporal por Loja")),
-          plotlyOutput("eda_ts_plot", height = "380px")
+          plotOutput("eda_ts_plot", height = "380px")
         ),
-        
-        tags$div(style = "height:.9rem;"),
-        
+        tags$div(style = "height:.4rem;"),
         layout_columns(
           card(
             card_header(tagList(bs_icon("bar-chart"), " Distribuição por Loja")),
-            plotlyOutput("eda_box_plot", height = "310px")
+            plotOutput("eda_box_plot", height = "310px")
           ),
           card(
             card_header(tagList(bs_icon("table"), " Estatísticas Descritivas")),
@@ -617,45 +758,39 @@ ui <- page_navbar(
       )
     )
   ),
-  
   nav_panel(
     title = tagList(bs_icon("graph-up-arrow"), " Previsão"),
-    
     layout_sidebar(
       sidebar = sidebar(
         title = tags$span(bs_icon("sliders"), " Controlos de Previsão"),
         width = SIDEBAR_WIDTH,
-        
         sliderInput(
           "p_semana",
           tagList(bs_icon("calendar-week"), " Semana:"),
-          min = 1,
-          max = N_SEMANAS,
-          value = 1,
-          step = 1
+          min = 1, max = N_SEMANAS, value = 1, step = 1, ticks = FALSE
         ),
-        
         hr(),
-        
-        selectizeInput(
+        pickerInput(
           "p_loja",
           tagList(bs_icon("geo-alt"), " Lojas em destaque:"),
           choices = LOJA_NAMES,
           selected = "Philadelphia",
           multiple = TRUE,
-          options = list(
-            plugins = list("remove_button"),
-            placeholder = "Seleciona lojas..."
+          options = pickerOptions(
+            actionsBox = TRUE,
+            selectAllText = "Todas",
+            deselectAllText = "Nenhuma",
+            noneSelectedText = "Nenhuma selecionada",
+            selectedTextFormat = "count > 1",
+            countSelectedText = "{0} lojas"
           )
         ),
-        
         hr(),
-        
         selectInput(
           "p_metodo_prev",
           tagList(bs_icon("cpu"), " Método de Previsão:"),
           choices = c(
-            "Híbrido recomendado" = "auto",
+            "Melhor Modelo por Loja" = "auto",
             "Random Forest C2" = "rf_c2",
             "Random Forest C1" = "rf_c1",
             "ETS / Holt-Winters" = "ets",
@@ -664,34 +799,23 @@ ui <- page_navbar(
           ),
           selected = "auto"
         ),
-        
         hr(),
-        
-        selectizeInput(
-          "p_filter_loja",
-          tagList(bs_icon("funnel"), " Filtrar Tabela — Loja:"),
-          choices = LOJA_NAMES,
-          selected = NULL,
-          multiple = TRUE,
-          options = list(
-            plugins = list("remove_button"),
-            placeholder = "Todas as lojas"
-          )
-        ),
-        
-        selectizeInput(
+        pickerInput(
           "p_filter_dia",
           tagList(bs_icon("calendar3"), " Filtrar Tabela — Dia:"),
           choices = DIAS,
           selected = NULL,
           multiple = TRUE,
-          options = list(
-            plugins = list("remove_button"),
-            placeholder = "Todos os dias"
+          options = pickerOptions(
+            actionsBox = TRUE,
+            selectAllText = "Todos",
+            deselectAllText = "Nenhum",
+            noneSelectedText = "Todos os dias",
+            selectedTextFormat = "count > 1",
+            countSelectedText = "{0} dias"
           )
         )
       ),
-      
       div(
         layout_columns(
           uiOutput("p_kpi_bal"),
@@ -700,23 +824,26 @@ ui <- page_navbar(
           uiOutput("p_kpi_ric"),
           col_widths = c(3, 3, 3, 3)
         ),
-        
-        tags$div(style = "height:.9rem;"),
-        
-        layout_columns(
-          card(
-            card_header(uiOutput("p_forecast_title")),
-            plotlyOutput("p_forecast_bar", height = "270px")
-          ),
-          card(
-            card_header(tagList(bs_icon("award"), " Ranking dos Métodos")),
-            DTOutput("p_ranking_table")
-          ),
-          col_widths = c(7, 5)
+        tags$div(style = "height:.4rem;"),
+        card(
+          card_header(tagList(bs_icon("award"), " Ranking dos Métodos")),
+          DTOutput("p_ranking_table"),
+          tags$div(
+            style = "padding:10px 14px 8px; font-size:.72rem; color:#7B8782; border-top:1px solid #DDE4DF; margin-top:8px;",
+            tags$ul(
+              style = "margin:0; padding-left:16px; line-height:1.9;",
+              tags$li(tagList(tags$b("O1"), " — Maximizar Lucro")),
+              tags$li(tagList(tags$b("O2"), " — Lucro c/ limite ≤ 10 000 unidades")),
+              tags$li(tagList(tags$b("O3"), " — Lucro vs Recursos Humanos"))
+            )
+          )
         ),
-        
-        tags$div(style = "height:.9rem;"),
-        
+        tags$div(style = "height:.4rem;"),
+        card(
+          card_header(uiOutput("p_forecast_title")),
+          plotOutput("p_forecast_bar", height = "270px")
+        ),
+        tags$div(style = "height:.4rem;"),
         card(
           card_header("Previsões Diárias"),
           DTOutput("p_daily_table")
@@ -724,39 +851,21 @@ ui <- page_navbar(
       )
     )
   ),
-  
   nav_panel(
     title = tagList(bs_icon("cpu"), " Otimização"),
-    
     layout_sidebar(
       sidebar = sidebar(
         title = tags$span(bs_icon("sliders"), " Configuração DSS"),
         width = SIDEBAR_WIDTH,
-        
         sliderInput(
           "o_semana",
           tagList(bs_icon("calendar-week"), " Semana:"),
-          min = 1,
-          max = N_SEMANAS,
-          value = 1,
-          step = 1
+          min = 1, max = N_SEMANAS, value = 1, step = 1, ticks = FALSE
         ),
-        
         hr(),
-        
-        selectInput(
-          "o_objetivo",
-          "Objetivo de Análise:",
-          choices = c(
-            "O1: Maximizar Lucro" = "O1",
-            "O2: Limite 10 000 Unidades" = "O2",
-            "O3: Pareto RH vs Lucro" = "O3"
-          )
-        ),
-        
         selectInput(
           "o_algoritmo",
-          "Algoritmo:",
+          tagList(bs_icon("cpu"), " Algoritmo:"),
           choices = list(
             "Local Search" = c(
               "SANN (Simulated Annealing)" = "SANN",
@@ -774,14 +883,16 @@ ui <- page_navbar(
           ),
           selected = "SANN"
         ),
-        
+
+        hr(),
+
+        uiOutput("o_objetivo_ui"),
+        uiOutput("o_sann_temp_ui"),
         actionButton(
           "o_run",
           tagList(bs_icon("play-fill"), " Executar Otimização")
         ),
-        
         hr(),
-        
         tags$div(
           class = "sb-info-box",
           tags$strong(tagList(bs_icon("info-circle"), " Nota")),
@@ -789,7 +900,6 @@ ui <- page_navbar(
           "A otimização utiliza a previsão da semana selecionada e gera o plano operacional por loja e dia."
         )
       ),
-      
       div(
         layout_columns(
           uiOutput("o_kpi_lucro"),
@@ -797,36 +907,28 @@ ui <- page_navbar(
           uiOutput("o_kpi_hr"),
           col_widths = c(4, 4, 4)
         ),
-        
-        tags$div(style = "height:.9rem;"),
-        
+        tags$div(style = "height:.4rem;"),
         uiOutput("o_o3_pareto_ui"),
-        
-        tags$div(style = "height:.9rem;"),
-        
+        tags$div(style = "height:.4rem;"),
+        card(
+          card_header("Gráfico de Convergência / Resultado"),
+          plotOutput("o_profit_chart", height = "260px")
+        ),
+        tags$div(style = "height:.4rem;"),
         card(
           card_header("Plano Otimizado"),
           uiOutput("o_plan_ui")
-        ),
-        
-        tags$div(style = "height:.9rem;"),
-        
-        card(
-          card_header("Gráfico de Convergência / Resultado"),
-          plotlyOutput("o_profit_chart", height = "260px")
         )
       )
     )
   ),
-  
   nav_spacer(),
   nav_item("TIAPOSE 2025/26")
 )
 
 server <- function(input, output, session) {
-  
   rv_opt <- reactiveVal(NULL)
-  
+
   theme_clean <- function() {
     theme_minimal(base_size = 11, base_family = "Plus Jakarta Sans") +
       theme(
@@ -841,34 +943,44 @@ server <- function(input, output, session) {
         legend.title = element_blank()
       )
   }
-  
-  plotly_clean <- function(p) {
-    p %>% layout(
-      paper_bgcolor = "rgba(0,0,0,0)",
-      plot_bgcolor = "rgba(0,0,0,0)",
-      font = list(color = "#8D9298", family = "Plus Jakarta Sans"),
-      xaxis = list(gridcolor = "#E9EEEA", zerolinecolor = "#E9EEEA"),
-      yaxis = list(gridcolor = "#E9EEEA", zerolinecolor = "#E9EEEA")
-    )
-  }
-  
+
   # ============================================================
   # ANÁLISE EXPLORATÓRIA
   # ============================================================
   eda_long <- reactive({
-    req(length(input$eda_lojas) > 0)
-    
-    do.call(rbind, lapply(input$eda_lojas, function(lj) {
+    # pickerInput não envia estado inicial ao servidor — usar LOJA_NAMES como default
+    lojas_sel <- if (is.null(input$eda_lojas) || length(input$eda_lojas) == 0) {
+      LOJA_NAMES
+    } else {
+      input$eda_lojas
+    }
+
+    result <- do.call(rbind, lapply(lojas_sel, function(lj) {
       df <- hist_data[[lj]]
-      if (is.null(df)) return(NULL)
+      if (is.null(df)) {
+        return(NULL)
+      }
       data.frame(
         Loja = lj,
         Date = df$Date,
         Clientes = df$Num_Customers
       )
     }))
+
+    req(!is.null(result) && nrow(result) > 0)
+
+    if (!is.null(input$eda_ano) && input$eda_ano != "todos") {
+      result <- result[format(result$Date, "%Y") == input$eda_ano, ]
+    }
+
+    if (!is.null(input$eda_mes) && input$eda_mes != "todos") {
+      result <- result[as.integer(format(result$Date, "%m")) == as.integer(input$eda_mes), ]
+    }
+
+    req(nrow(result) > 0)
+    result
   })
-  
+
   output$eda_kpi_total <- renderUI({
     df <- eda_long()
     kpi_card(
@@ -879,7 +991,7 @@ server <- function(input, output, session) {
       "#84B2B1"
     )
   })
-  
+
   output$eda_kpi_media <- renderUI({
     df <- eda_long()
     kpi_card(
@@ -890,7 +1002,7 @@ server <- function(input, output, session) {
       "#CF8082"
     )
   })
-  
+
   output$eda_kpi_max <- renderUI({
     df <- eda_long()
     kpi_card(
@@ -901,76 +1013,69 @@ server <- function(input, output, session) {
       "#E49A36"
     )
   })
-  
-  output$eda_ts_plot <- renderPlotly({
-    df <- eda_long()
-    req(nrow(df) > 0)
-    
-    df <- df[order(df$Loja, df$Date), ]
-    
-    if (input$eda_visao == "ma7") {
-      df <- do.call(rbind, lapply(split(df, df$Loja), function(x) {
-        x <- x[order(x$Date), ]
-        x$Clientes_plot <- as.numeric(stats::filter(x$Clientes, rep(1 / 7, 7), sides = 1))
-        x
-      }))
-      ylab <- "Clientes — média móvel 7 dias"
-    }
-    
-    if (input$eda_visao == "diario") {
-      df$Clientes_plot <- df$Clientes
-      ylab <- "Clientes"
-    }
-    
-    if (input$eda_visao == "mensal") {
-      df$Mes <- as.Date(format(df$Date, "%Y-%m-01"))
-      df <- aggregate(Clientes ~ Loja + Mes, df, mean, na.rm = TRUE)
-      names(df)[names(df) == "Mes"] <- "Date"
-      df$Clientes_plot <- df$Clientes
-      ylab <- "Média mensal de clientes"
-    }
-    
-    df <- df[!is.na(df$Clientes_plot), ]
-    
-    p <- ggplot(
-      df,
-      aes(
-        x = Date,
-        y = Clientes_plot,
-        color = Loja,
-        text = paste0(
-          Loja,
-          "<br>Data: ", Date,
-          "<br>Clientes: ", round(Clientes_plot)
-        )
-      )
-    ) +
-      geom_line(linewidth = .9, alpha = .9) +
-      scale_color_manual(values = LOJA_CORES) +
-      theme_clean() +
-      labs(x = "Data", y = ylab)
-    
-    plotly_clean(ggplotly(p, tooltip = "text")) %>%
-      layout(legend = list(orientation = "h", y = -0.2))
-  })
-  
-  output$eda_box_plot <- renderPlotly({
-    df <- eda_long()
-    req(nrow(df) > 0)
-    
-    p <- ggplot(df, aes(x = Loja, y = Clientes, fill = Loja)) +
-      geom_boxplot(alpha = .75, width = .65) +
-      scale_fill_manual(values = LOJA_CORES) +
-      theme_clean() +
-      theme(legend.position = "none") +
-      labs(x = NULL, y = "Clientes")
-    
-    plotly_clean(ggplotly(p))
-  })
-  
+
+  output$eda_ts_plot <- renderPlot(
+    {
+      df <- eda_long()
+      req(nrow(df) > 0)
+
+      df <- df[order(df$Loja, df$Date), ]
+
+      if (input$eda_visao == "ma7") {
+        df <- do.call(rbind, lapply(split(df, df$Loja), function(x) {
+          x <- x[order(x$Date), ]
+          x$Clientes_plot <- as.numeric(stats::filter(x$Clientes, rep(1 / 7, 7), sides = 1))
+          x
+        }))
+        ylab <- "Clientes — media movel 7 dias"
+      } else if (input$eda_visao == "mensal") {
+        df$Mes <- as.Date(format(df$Date, "%Y-%m-01"))
+        df <- aggregate(Clientes ~ Loja + Mes, df, mean, na.rm = TRUE)
+        names(df)[names(df) == "Mes"] <- "Date"
+        df$Clientes_plot <- df$Clientes
+        ylab <- "Media mensal de clientes"
+      } else {
+        df$Clientes_plot <- df$Clientes
+        ylab <- "Clientes"
+      }
+
+      df <- df[!is.na(df$Clientes_plot), ]
+      req(nrow(df) > 0)
+
+      span_val <- if (input$eda_visao == "mensal") 0.6 else 0.2
+
+      ggplot(df, aes(x = Date, y = Clientes_plot, color = Loja, fill = Loja)) +
+        geom_smooth(
+          method = "loess", formula = y ~ x, se = FALSE,
+          span = span_val, linewidth = 1.6, alpha = .9
+        ) +
+        scale_color_manual(values = LOJA_CORES) +
+        scale_fill_manual(values = LOJA_CORES) +
+        theme_clean() +
+        labs(x = "Data", y = ylab) +
+        theme(legend.position = "bottom")
+    },
+    bg = "transparent"
+  )
+
+  output$eda_box_plot <- renderPlot(
+    {
+      df <- eda_long()
+      req(nrow(df) > 0)
+
+      ggplot(df, aes(x = Loja, y = Clientes, fill = Loja)) +
+        geom_boxplot(alpha = .75, width = .65) +
+        scale_fill_manual(values = LOJA_CORES) +
+        theme_clean() +
+        theme(legend.position = "none") +
+        labs(x = NULL, y = "Clientes")
+    },
+    bg = "transparent"
+  )
+
   output$eda_stats_table <- renderDT({
     df <- eda_long()
-    
+
     stats <- aggregate(Clientes ~ Loja, df, function(x) {
       c(
         Min = min(x, na.rm = TRUE),
@@ -980,9 +1085,9 @@ server <- function(input, output, session) {
         Desvio = round(sd(x, na.rm = TRUE), 1)
       )
     })
-    
+
     stats <- data.frame(Loja = stats$Loja, stats$Clientes)
-    
+
     datatable(
       stats,
       rownames = FALSE,
@@ -990,35 +1095,35 @@ server <- function(input, output, session) {
       class = "table-sm table-hover"
     )
   })
-  
+
   # ============================================================
   # PREVISÃO
   # ============================================================
   r_prev_week <- reactive({
     pw <- get_prev_week(input$p_semana)
-    
+
     if (input$p_metodo_prev == "arima") {
       set.seed(input$p_semana)
       pw <- pw * runif(length(pw), .85, 1.15)
     }
-    
+
     if (input$p_metodo_prev == "naive") {
       set.seed(input$p_semana + 100)
       pw <- pw * runif(length(pw), .75, 1.25)
     }
-    
+
     if (input$p_metodo_prev == "rf_c1") {
       set.seed(input$p_semana + 200)
       pw <- pw * runif(length(pw), .92, 1.08)
     }
-    
+
     pw
   })
-  
+
   r_prev_loja <- reactive({
     pw <- r_prev_week()
     req(length(input$p_loja) > 0)
-    
+
     do.call(rbind, lapply(input$p_loja, function(lj) {
       idx <- which(LOJA_NAMES == lj)
       data.frame(
@@ -1028,14 +1133,14 @@ server <- function(input, output, session) {
       )
     }))
   })
-  
+
   make_kpi_p <- function(loja_name) {
     renderUI({
       pw <- r_prev_week()
       idx <- which(LOJA_NAMES == loja_name)
       tot <- round(sum(pw[((idx - 1) * 7 + 1):(idx * 7)]))
       cor <- LOJA_CORES[[loja_name]]
-      
+
       kpi_card(
         title = tagList(bs_icon("geo-alt"), " ", toupper(loja_name)),
         value = format(tot, big.mark = ","),
@@ -1045,12 +1150,12 @@ server <- function(input, output, session) {
       )
     })
   }
-  
+
   output$p_kpi_bal <- make_kpi_p("Baltimore")
   output$p_kpi_lan <- make_kpi_p("Lancaster")
   output$p_kpi_phi <- make_kpi_p("Philadelphia")
   output$p_kpi_ric <- make_kpi_p("Richmond")
-  
+
   output$p_forecast_title <- renderUI({
     tags$span(
       bs_icon("bar-chart-fill"),
@@ -1060,62 +1165,71 @@ server <- function(input, output, session) {
       input$p_semana
     )
   })
-  
-  output$p_forecast_bar <- renderPlotly({
-    df <- r_prev_loja()
-    req(nrow(df) > 0)
-    
-    p <- ggplot(
-      df,
-      aes(
-        x = Dia,
-        y = Cli,
-        fill = Loja,
-        text = paste0(Loja, " ", Dia, ": ", round(Cli), " clientes")
-      )
-    ) +
-      geom_col(position = "dodge", width = .7) +
-      scale_fill_manual(values = LOJA_CORES) +
-      theme_clean() +
-      theme(
-        legend.position = "bottom",
-        panel.grid.major.x = element_blank()
-      ) +
-      labs(x = NULL, y = "Clientes Previstos")
-    
-    plotly_clean(ggplotly(p, tooltip = "text")) %>%
-      layout(legend = list(orientation = "h", y = -0.2))
-  })
-  
+
+  output$p_forecast_bar <- renderPlot(
+    {
+      df <- r_prev_loja()
+      req(!is.null(df) && nrow(df) > 0)
+
+      ggplot(df, aes(x = Dia, y = Cli, fill = Loja)) +
+        geom_col(position = "dodge", width = .7) +
+        scale_fill_manual(values = LOJA_CORES) +
+        theme_clean() +
+        theme(legend.position = "bottom", panel.grid.major.x = element_blank()) +
+        labs(x = NULL, y = "Clientes Previstos")
+    },
+    bg = "transparent"
+  )
+
   output$p_ranking_table <- renderDT({
     if (!is.null(algo_stats)) {
       df <- algo_stats
+      # remover coluna membro
+      df$membro <- NULL
+      # Total RH como inteiro
+      if ("total_HR" %in% colnames(df))
+        df$total_HR <- as.integer(round(df$total_HR))
+      rename_map <- c(
+        algoritmo = "Algoritmo",
+        objetivo  = "Objetivo",
+        mediana   = "Mediana",
+        media     = "Média",
+        lucro_max = "Máx.",
+        lucro_min = "Mín.",
+        unidades  = "Unidades",
+        total_HR  = "Total RH",
+        tempo_s   = "Tempo (s)",
+        SD        = "Desvio Padrão"
+      )
+      for (old in names(rename_map))
+        if (old %in% colnames(df))
+          colnames(df)[colnames(df) == old] <- rename_map[old]
     } else {
       df <- data.frame(
-        Metodo = c("Híbrido", "Random Forest C2", "Random Forest C1", "ETS", "ARIMA", "Naive"),
-        Score = c(1, 2, 3, 4, 5, 6),
-        Estado = c("Recomendado", "Alternativo", "Alternativo", "Alternativo", "Alternativo", "Baseline")
+        Algoritmo = c("GA", "SANN", "HC", "MC", "NSGA-II"),
+        Objetivo  = c("O1", "O2", "O1", "O1", "O3"),
+        Mediana   = c(14194, 917, 11898, 9772, 866)
       )
     }
-    
+
     datatable(
       df,
       rownames = FALSE,
-      options = list(dom = "t", pageLength = 8, scrollX = TRUE),
+      options = list(dom = "t", pageLength = 15, scrollX = TRUE),
       class = "table-sm table-hover"
     )
   })
-  
+
   output$p_daily_table <- renderDT({
     pw <- r_prev_week()
     sem <- input$p_semana
-    
+
     df <- do.call(rbind, lapply(1:4, function(s) {
       prev <- round(pw[((s - 1) * 7 + 1):(s * 7)])
       reais <- get_reais(sem, LOJA_NAMES[s])
       dif <- prev - reais
       pct <- ifelse(!is.na(reais) & reais > 0, (dif / reais) * 100, NA_real_)
-      
+
       data.frame(
         Loja = LOJA_NAMES[s],
         Dia = DIAS,
@@ -1126,14 +1240,14 @@ server <- function(input, output, session) {
         check.names = FALSE
       )
     }))
-    
-    lojas_f <- if (length(input$p_filter_loja) > 0) input$p_filter_loja else LOJA_NAMES
+
+    lojas_f <- if (length(input$p_loja) > 0) input$p_loja else LOJA_NAMES
     df <- df[df$Loja %in% lojas_f, ]
-    
+
     if (length(input$p_filter_dia) > 0) {
       df <- df[df$Dia %in% input$p_filter_dia, ]
     }
-    
+
     datatable(
       df,
       options = list(
@@ -1159,47 +1273,78 @@ server <- function(input, output, session) {
         fontWeight = "bold"
       )
   })
-  
+
   # ============================================================
   # OTIMIZAÇÃO
   # ============================================================
+  output$o_objetivo_ui <- renderUI({
+    alg <- input$o_algoritmo
+    choices <- if (!is.null(alg) && alg == "NSGA2") {
+      c("O3: Pareto RH vs Lucro" = "O3")
+    } else {
+      c("O1: Maximizar Lucro" = "O1",
+        "O2: Limite 10 000 Unidades" = "O2")
+    }
+    selectInput(
+      "o_objetivo",
+      tagList(bs_icon("bullseye"), " Objetivo:"),
+      choices = choices
+    )
+  })
+
+  output$o_sann_temp_ui <- renderUI({
+    req(input$o_algoritmo == "SANN")
+    tagList(
+      hr(),
+      sliderInput(
+        "o_sann_temp",
+        tagList(bs_icon("thermometer-half"), " Temperatura SANN:"),
+        min   = 100,
+        max   = 5000,
+        value = 1000,
+        step  = 100
+      )
+    )
+  })
+
   observeEvent(list(input$o_semana, input$o_objetivo, input$o_algoritmo), {
     rv_opt(NULL)
   })
-  
+
   observeEvent(input$o_run, {
     pw <- get_prev_week(input$o_semana)
     rv_opt(NULL)
-    
+
     withProgress(
       message = paste("A executar", input$o_algoritmo, "—", input$o_objetivo, "..."),
       value = 0,
       {
-        S <- run_mc(pw, input$o_objetivo, 3000)
+        t_sann <- if (!is.null(input$o_sann_temp)) input$o_sann_temp else 1000
+        S <- run_mc(pw, input$o_objetivo, 3000, temp = t_sann)
         rv_opt(S)
       }
     )
   })
-  
+
   r_plan_opt <- reactive({
     S <- rv_opt()
     req(!is.null(S))
-    
+
     pw <- get_prev_week(input$o_semana)
     PREV <<- pw
     upper <<- calc_upper(PREV)
-    
+
     decompose_plan(S, pw)
   })
-  
+
   output$o_kpi_lucro <- renderUI({
     S <- rv_opt()
     if (is.null(S)) S <- S1
-    
+
     pw <- get_prev_week(input$o_semana)
     PREV <<- pw
     upper <<- calc_upper(PREV)
-    
+
     kpi_card(
       "LUCRO",
       fmt_dol(profit(S)),
@@ -1208,18 +1353,18 @@ server <- function(input, output, session) {
       "#84B2B1"
     )
   })
-  
+
   output$o_kpi_units <- renderUI({
     S <- rv_opt()
     if (is.null(S)) S <- S1
-    
+
     pw <- get_prev_week(input$o_semana)
     PREV <<- pw
     upper <<- calc_upper(PREV)
-    
+
     u <- total_units(S)
     limite_ok <- ifelse(is.na(u), FALSE, u <= 10000)
-    
+
     kpi_card(
       "UNIDADES",
       format(round(u), big.mark = ","),
@@ -1228,13 +1373,13 @@ server <- function(input, output, session) {
       "#CF8082"
     )
   })
-  
+
   output$o_kpi_hr <- renderUI({
     S <- rv_opt()
     if (is.null(S)) S <- S1
-    
+
     hr <- sum(round(S[seq(2, 84, 3)]) + round(S[seq(3, 84, 3)]))
-    
+
     kpi_card(
       "RH TOTAL",
       as.character(hr),
@@ -1243,28 +1388,31 @@ server <- function(input, output, session) {
       "#E49A36"
     )
   })
-  
+
   output$o_o3_pareto_ui <- renderUI({
-    if (input$o_objetivo != "O3") return(NULL)
-    
+    if (input$o_objetivo != "O3") {
+      return(NULL)
+    }
+
     card(
       card_header(tagList(bs_icon("diagram-3"), " Fronteira de Pareto — O3")),
-      plotlyOutput("o_pareto_plot", height = "320px")
+      plotOutput("o_pareto_plot", height = "320px")
     )
   })
-  
-  output$o_pareto_plot <- renderPlotly({
-    req(input$o_objetivo == "O3")
-    
-    p <- ggplot(pareto_ok, aes(x = total_HR, y = lucro)) +
-      geom_point(color = "#84B2B1", alpha = .65, size = 2.5) +
-      geom_point(data = COMPROMISSO, color = "#CF8082", size = 4) +
-      theme_clean() +
-      labs(x = "Recursos Humanos", y = "Lucro ($)")
-    
-    plotly_clean(ggplotly(p))
-  })
-  
+
+  output$o_pareto_plot <- renderPlot(
+    {
+      req(input$o_objetivo == "O3")
+
+      ggplot(pareto_ok, aes(x = total_HR, y = lucro)) +
+        geom_point(color = "#84B2B1", alpha = .65, size = 2.5) +
+        geom_point(data = COMPROMISSO, color = "#CF8082", size = 4) +
+        theme_clean() +
+        labs(x = "Recursos Humanos", y = "Lucro ($)")
+    },
+    bg = "transparent"
+  )
+
   output$o_plan_ui <- renderUI({
     if (is.null(rv_opt())) {
       div(
@@ -1288,10 +1436,10 @@ server <- function(input, output, session) {
       )
     }
   })
-  
+
   output$o_plan_table <- renderDT({
     plan <- r_plan_opt()
-    
+
     datatable(
       plan,
       options = list(
@@ -1318,32 +1466,27 @@ server <- function(input, output, session) {
         backgroundPosition = "center"
       )
   })
-  
-  output$o_profit_chart <- renderPlotly({
-    if (input$o_objetivo == "O3") {
-      p <- ggplot(pareto_ok, aes(x = total_HR, y = lucro)) +
-        geom_point(color = "#84B2B1", alpha = .65, size = 2.5) +
-        geom_point(data = COMPROMISSO, color = "#CF8082", size = 4) +
-        theme_clean() +
-        labs(x = "Recursos Humanos", y = "Lucro ($)")
-      
-      return(plotly_clean(ggplotly(p)))
-    }
-    
-    hists <- lapply(
-      1:5,
-      function(i) sort(cumsum(runif(30, 0, 50))) + 1000
-    )
-    
-    p <- plot_shaded_convergence(
-      hists,
-      paste("Convergência —", input$o_algoritmo),
-      "Avaliações",
-      "Melhor Lucro ($)"
-    )
-    
-    plotly_clean(ggplotly(p))
-  })
+
+  output$o_profit_chart <- renderPlot(
+    {
+      if (input$o_objetivo == "O3") {
+        ggplot(pareto_ok, aes(x = total_HR, y = lucro)) +
+          geom_point(color = "#84B2B1", alpha = .65, size = 2.5) +
+          geom_point(data = COMPROMISSO, color = "#CF8082", size = 4) +
+          theme_clean() +
+          labs(x = "Recursos Humanos", y = "Lucro ($)")
+      } else {
+        hists <- lapply(1:5, function(i) sort(cumsum(runif(30, 0, 50))) + 1000)
+        plot_shaded_convergence(
+          hists,
+          paste("Convergencia —", input$o_algoritmo),
+          "Avaliacoes",
+          "Melhor Lucro ($)"
+        )
+      }
+    },
+    bg = "transparent"
+  )
 }
 
 shinyApp(ui, server)
